@@ -1,0 +1,20 @@
+{
+  "standard": {
+    "jobId": 41,
+    "jobTitle": "Campus Dining",
+    "jobStatus": "In Progress",
+    "initialUrl": "https://example.com/proof/campus-dining",
+    "secondUrl": "https://example.com/proof/distribution-report",
+    "uploadAt": "2026-10-24T04:20:00.000Z",
+    "secondUploadAt": "2026-10-24T03:10:00.000Z"
+  },
+  "long": {
+    "jobId": 41,
+    "jobTitle": "Campus Dining",
+    "jobStatus": "In Progress",
+    "initialUrl": "https://example.com/proof/campus-dining/distribution?campaign=undergraduate-lunch-week&source=faculty-notice-board&report=final-summary-2026",
+    "secondUrl": "https://example.com/proof/campus-dining/photographic-evidence-from-campus-common-areas",
+    "uploadAt": "2026-10-24T04:20:00.000Z",
+    "secondUploadAt": "2026-10-24T03:10:00.000Z"
+  }
+}

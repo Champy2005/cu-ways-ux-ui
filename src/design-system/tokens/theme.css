@@ -1,0 +1,113 @@
+/* Canonical current palette migrated from Rose × Slate 1.9.1. Palette acceptance pending. */
+[data-cu-theme="light"] {
+  --surface-canvas: #f3f4f7;
+  --surface-card: #ffffff;
+  --surface-header: #eef2f7;
+  --surface-field: #edeff4;
+  --surface-input: #fafbfd;
+  --text-body: #0d111a;
+  --text-muted: #596273;
+  --link-inline: #225f9d;
+  --action-primary-fill: #cb1c66;
+  --action-primary-ink: #ffffff;
+  --action-destructive-fill: #cf3447;
+  --action-destructive-ink: #ffffff;
+  --action-secondary-fill: #315d91;
+  --action-secondary-ink: #ffffff;
+  --action-tonal-fill: #edf2f7;
+  --action-tonal-ink: #36516e;
+  --action-tonal-border: #bcc9d7;
+  --action-outline-fill: #ffffff;
+  --action-outline-ink: #3d495c;
+  --action-outline-border: #98a5b7;
+  --action-utility-fill: #f8f9fb;
+  --action-utility-ink: #394454;
+  --action-utility-border: #c5ccd6;
+  --status-info-fill: #e8f2fa;
+  --status-info-ink: #235d85;
+  --status-progress-fill: #e8f3f3;
+  --status-progress-ink: #24666f;
+  --status-success-fill: #e3f4eb;
+  --status-success-ink: #176142;
+  --status-neutral-fill: #e9edf2;
+  --status-neutral-ink: #566171;
+  --feedback-info-fill: #f1f3fa;
+  --feedback-info-signal: #5368a0;
+  --feedback-info-border: #cad3e7;
+  --feedback-success-fill: #edf7f2;
+  --feedback-success-signal: #267457;
+  --feedback-success-border: #bbdccc;
+}
+[data-cu-theme="dark"] {
+  --surface-canvas: #141519;
+  --surface-card: #202228;
+  --surface-header: #1b1e25;
+  --surface-field: #30333b;
+  --surface-input: #191c22;
+  --text-body: #f5f5f5;
+  --text-muted: #bbc0ca;
+  --link-inline: #9ec7f3;
+  --action-primary-fill: #d51b6b;
+  --action-primary-ink: #ffffff;
+  --action-destructive-fill: #c92d49;
+  --action-destructive-ink: #ffffff;
+  --action-secondary-fill: #a8c7ed;
+  --action-secondary-ink: #152941;
+  --action-tonal-fill: #2a3543;
+  --action-tonal-ink: #cddbec;
+  --action-tonal-border: #63758d;
+  --action-outline-fill: #282b33;
+  --action-outline-ink: #dde3ec;
+  --action-outline-border: #73829a;
+  --action-utility-fill: #2b2f38;
+  --action-utility-ink: #e1e5ec;
+  --action-utility-border: #606a79;
+  --status-info-fill: #213b50;
+  --status-info-ink: #acd5f6;
+  --status-progress-fill: #233a3e;
+  --status-progress-ink: #a3d3da;
+  --status-success-fill: #203f2e;
+  --status-success-ink: #a4e4ba;
+  --status-neutral-fill: #333d4b;
+  --status-neutral-ink: #c0c8d3;
+  --feedback-info-fill: #272d40;
+  --feedback-info-signal: #b7c4eb;
+  --feedback-info-border: #4b5677;
+  --feedback-success-fill: #1e302a;
+  --feedback-success-signal: #89ccae;
+  --feedback-success-border: #3d6554;
+}
+[data-cu-theme="light"] {
+  color-scheme: light;
+  --border: #dfe3ea;
+  --warning-fill: #fcf6e9;
+  --warning-ink: #805a19;
+  --error-fill: #fbeff0;
+  --error-ink: #a72c3d;
+}
+[data-cu-theme="dark"] {
+  color-scheme: dark;
+  --border: #3d424d;
+  --warning-fill: #352d20;
+  --warning-ink: #e7c580;
+  --error-fill: #39252c;
+  --error-ink: #f2a7b2;
+}
+
+:root {
+  --overlay: rgb(15 22 35 / 0.48);
+  --overlay-opaque: rgb(15 22 35 / 0.7);
+  --shadow-deep: rgb(0 0 0 / 0.2);
+  --shadow-menu: rgb(0 0 0 / 0.15);
+  --shadow-contact: rgb(0 0 0 / 0.12);
+  --shadow-header: rgb(0 0 0 / 0.07);
+}
+
+:root {
+  --depth-dialog: 0 20px 70px var(--shadow-deep);
+  --depth-menu: 0 8px 24px var(--shadow-menu);
+  --depth-action-hover: 0 2px 6px var(--shadow-contact);
+  --depth-pagination: inset 0 0 0 1px var(--action-tonal-border);
+  --depth-header: 0 2px 6px var(--shadow-header);
+  --depth-dropdown: 0 8px 20px var(--shadow-contact);
+}

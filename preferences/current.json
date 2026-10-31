@@ -1,0 +1,207 @@
+{
+  "schemaVersion": 1,
+  "humanAcceptance": {
+    "palette": "pending",
+    "direction": "Rose × Slate; purple/violet rejected"
+  },
+  "global": [
+    {
+      "id": "minimal-copy",
+      "statement": "Keep descriptions only for meaningful consequences, validation, permissions, uncertainty or a necessary next step. No repeated statuses or filler paragraphs."
+    },
+    {
+      "id": "color-direction",
+      "statement": "Preserve current pink primary, blue supporting and restrained surfaces. No purple/violet. Color changes require human judgment."
+    },
+    {
+      "id": "responsive",
+      "statement": "Intrinsic responsive layout; comfortable targets; check mobile, desktop, large desktop, short height and enlarged text. Do not copy screenshot coordinates."
+    },
+    {
+      "id": "escapable-operations",
+      "statement": "Closing pending presentation does not cancel dispatch. Preserve progress, prevent duplicate writes and reconcile unknown outcomes.",
+      "checks": [
+        "tests/architecture/contracts.test.ts",
+        "src/testing/scenario.ts"
+      ]
+    },
+    {
+      "id": "scope",
+      "statement": "Local changes cannot repaint shared owners. Shared changes must propagate; check protected surroundings. Never widen scope just to pass.",
+      "checks": [
+        "tests/architecture/contracts.test.ts",
+        "scripts/ui/rendered.spec.mjs"
+      ]
+    }
+  ],
+  "components": [
+    {
+      "id": "Action",
+      "aliases": [
+        "button",
+        "Start job",
+        "Keep job",
+        "Got it",
+        "View activity",
+        "Stop waiting"
+      ],
+      "source": "src/design-system/components/primitives.tsx",
+      "style": "src/design-system/components/system.module.css",
+      "rules": [
+        "Use semantic roles. Functional supporting actions need visible boundaries. Quiet content text stays transparent on hover; safe alternatives remain visible above critical confirmation on mobile."
+      ],
+      "checks": [
+        "src/design-system/components/System.stories.tsx",
+        "tests/architecture/contracts.test.ts"
+      ]
+    },
+    {
+      "id": "LifecycleBadge",
+      "aliases": [
+        "badge",
+        "Accepted",
+        "Pending",
+        "In Progress",
+        "Completed",
+        "Cancelled"
+      ],
+      "source": "src/design-system/components/primitives.tsx",
+      "style": "src/design-system/components/system.module.css",
+      "rules": [
+        "Job lifecycle owns label, icon and paint. Separate operation outcomes and attachment tags. Equivalent status/theme/size/state instances must share component-owned styling."
+      ],
+      "checks": [
+        "scripts/ui/rendered.spec.mjs",
+        "tests/architecture/contracts.test.ts"
+      ]
+    },
+    {
+      "id": "StatusHeading",
+      "aliases": ["status placement", "top right", "job heading"],
+      "source": "src/design-system/compositions/layout.tsx",
+      "style": "src/design-system/compositions/layout.module.css",
+      "rules": [
+        "Place lifecycle at upper right relative to heading. Preserve wrapping and separation without fixed page coordinates."
+      ],
+      "checks": ["scripts/ui/rendered.spec.mjs"]
+    },
+    {
+      "id": "ConfirmationActions",
+      "aliases": ["confirmation", "footer", "Keep In Progress", "Keep job"],
+      "source": "src/design-system/compositions/layout.tsx",
+      "style": "src/design-system/compositions/layout.module.css",
+      "rules": [
+        "Safe alternative has a visible boundary; critical confirmation is last on mobile. No competing filled dismissal."
+      ],
+      "checks": ["src/testing/scenario.ts", "scripts/ui/rendered.spec.mjs"]
+    },
+    {
+      "id": "ContentDialog",
+      "aliases": ["popup", "modal", "Add proof", "proof form"],
+      "source": "src/design-system/components/primitives.tsx",
+      "style": "src/design-system/components/system.module.css",
+      "rules": [
+        "Content modal dims/blurs backdrop, has bounded responsive width and usable overflow. Escape/X remain available during pending work. Navigation menus do not use this backdrop."
+      ],
+      "checks": ["src/testing/scenario.ts"]
+    },
+    {
+      "id": "CloseControl",
+      "aliases": ["Close", "X"],
+      "source": "src/design-system/components/primitives.tsx",
+      "style": "src/design-system/components/system.module.css",
+      "rules": [
+        "One borderless close control with accessible name and comfortable target. No filled rectangle hover."
+      ],
+      "checks": ["src/testing/scenario.ts"]
+    },
+    {
+      "id": "BackLink",
+      "aliases": [
+        "Back to workspace",
+        "Back to My Jobs",
+        "Story library",
+        "go back"
+      ],
+      "source": "src/design-system/components/primitives.tsx",
+      "style": "src/design-system/components/system.module.css",
+      "rules": [
+        "Shared top-left back pattern: readable responsive size, transparent hover, keyboard focus, no raised action treatment."
+      ],
+      "checks": ["src/design-system/components/System.stories.tsx"]
+    },
+    {
+      "id": "Pagination",
+      "aliases": ["Next", "Previous", "pager"],
+      "source": "src/design-system/components/primitives.tsx",
+      "style": "src/design-system/components/system.module.css",
+      "rules": [
+        "Omit unavailable directions entirely. Borderless at rest; enabled icons show a soft tonal circle/fine inset edge on hover without geometry shift."
+      ],
+      "checks": ["scripts/ui/rendered.spec.mjs"]
+    },
+    {
+      "id": "Select",
+      "aliases": ["dropdown", "filter", "Status", "rating"],
+      "source": "src/design-system/components/primitives.tsx",
+      "style": "src/design-system/components/system.module.css",
+      "rules": [
+        "Comfortable arrow inset, rounded shadowed panel, faint item separators and keyboard navigation."
+      ],
+      "checks": ["src/design-system/components/System.stories.tsx"]
+    },
+    {
+      "id": "RecoveryPanel",
+      "aliases": ["banner", "feedback", "warning", "error", "success"],
+      "source": "src/design-system/components/primitives.tsx",
+      "style": "src/design-system/components/system.module.css",
+      "rules": [
+        "One coherent message/action grouping. Keep actions outside painted live region. Use semantic restrained tones and consistent icon/text alignment."
+      ],
+      "checks": ["src/testing/scenario.ts"]
+    },
+    {
+      "id": "ApplicationFrame",
+      "aliases": ["header", "bottom nav", "navigation", "shell"],
+      "source": "src/design-system/compositions/layout.tsx",
+      "style": "src/design-system/compositions/layout.module.css",
+      "rules": [
+        "Sticky header, stable page bounds, bottom clearance and short-height fallback. Global shell changes require full checks."
+      ],
+      "checks": ["scripts/ui/rendered.spec.mjs"]
+    },
+    {
+      "id": "ProofRecord",
+      "aliases": [
+        "proof link",
+        "timestamp",
+        "Saved proof",
+        "Delivery evidence"
+      ],
+      "source": "src/features/us026/ProofDelivery.tsx",
+      "style": "src/features/shared/features.module.css",
+      "rules": [
+        "Separate neutral attachment tag, readable blue destination and timestamp. No Newest first or saving-does-not-complete reminder."
+      ],
+      "checks": ["src/testing/scenario.ts"]
+    },
+    {
+      "id": "ReviewCard",
+      "aliases": ["review", "Read more", "comment", "verified reviews"],
+      "source": "src/features/us034/Reviews.tsx",
+      "style": "src/features/shared/features.module.css",
+      "rules": [
+        "Long multilingual comments disclose. Public cards show job reference text without inaccessible private navigation. No verification explainer."
+      ],
+      "checks": ["src/testing/scenario.ts"]
+    }
+  ],
+  "exceptions": [
+    {
+      "id": "icon-pagination-hover",
+      "target": "Pagination",
+      "reason": "Compact navigation icons need a bounded tonal circle; quiet content text still stays transparent.",
+      "story": "system--contracts"
+    }
+  ]
+}

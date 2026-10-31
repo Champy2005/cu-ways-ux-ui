@@ -1,0 +1,128 @@
+[
+  {
+    "id": "A01",
+    "group": "main",
+    "title": "Start with no proof",
+    "trigger": "The In Progress job and its saved-proof list have loaded successfully, with no rows.",
+    "expected": "Show one compact saved-proof workspace with an empty state and Add proof action. Add proof opens a separate content dialog without shifting saved proof.",
+    "action": "Open Add proof and enter a delivery link.",
+    "next": ["A02", "B01"]
+  },
+  {
+    "id": "A02",
+    "group": "main",
+    "title": "Paste a delivery link",
+    "trigger": "The marketer enters a candidate delivery URL.",
+    "expected": "Show the Delivery link field in the content dialog. Keep the attachment type fixed internally to Proof. URL shape alone does not verify remote sharing permissions.",
+    "action": "Save proof.",
+    "next": ["A03", "B01"]
+  },
+  {
+    "id": "A03",
+    "group": "main",
+    "title": "Save once",
+    "trigger": "A valid URL is submitted.",
+    "expected": "Submit once and retain the draft until confirmation. Continue browsing closes the form while saving continues; View progress reopens it. A 12-second deadline or document return restores explicit uncertainty and check-before-retry.",
+    "action": "Wait for the simulated response.",
+    "next": ["A04", "B02", "B03", "C02", "C03"]
+  },
+  {
+    "id": "A04",
+    "group": "main",
+    "title": "Proof is saved",
+    "trigger": "The save receives a confirmed success response.",
+    "expected": "Show one saved Proof URL and its server-generated timestamp. Clear the draft only after confirmation.",
+    "action": "Add another proof or review the saved evidence.",
+    "next": ["A05"]
+  },
+  {
+    "id": "A05",
+    "group": "main",
+    "title": "Add another link",
+    "trigger": "The marketer starts a second proof while existing evidence is present.",
+    "expected": "Keep existing evidence visible below the inline form in the same saved-proof workspace.",
+    "action": "Enter and save another URL.",
+    "next": ["A03", "B01"]
+  },
+  {
+    "id": "A06",
+    "group": "main",
+    "title": "Review delivery evidence",
+    "trigger": "The saved-proof list contains multiple records.",
+    "expected": "Show full clickable URLs and timestamps newest first. Saving proof does not complete the job.",
+    "action": "Review a link or add another proof while the job is In Progress.",
+    "next": ["A05"]
+  },
+  {
+    "id": "B01",
+    "group": "validation",
+    "title": "Correct the URL",
+    "trigger": "The marketer submits an empty or malformed URL.",
+    "expected": "Keep the draft, show an inline field error, focus the input, and create no saved row.",
+    "action": "Correct the URL.",
+    "next": ["A02"]
+  },
+  {
+    "id": "B02",
+    "group": "validation",
+    "title": "Attachment type rejected",
+    "trigger": "The simulated server rejects the Proof attachment type.",
+    "expected": "Show an explicit rejection, create no visible row, and retain the URL for recovery.",
+    "action": "Reopen the proof form.",
+    "next": ["A02"]
+  },
+  {
+    "id": "B03",
+    "group": "recovery",
+    "title": "Connection lost during save",
+    "trigger": "The save response is interrupted and its outcome is unknown.",
+    "expected": "Do not optimistically show a saved row or submit again. Read the authoritative list before deciding whether a retry is safe.",
+    "action": "Check saved proof.",
+    "next": ["B04", "A04"]
+  },
+  {
+    "id": "B04",
+    "group": "recovery",
+    "title": "Checked: link was not saved",
+    "trigger": "A successful reconciliation read confirms the new link is absent.",
+    "expected": "Keep the URL and make one explicit retry available. Never replay the original request automatically.",
+    "action": "Choose Save proof to make a new explicit attempt.",
+    "next": ["A03"]
+  },
+  {
+    "id": "C01",
+    "group": "availability",
+    "title": "Saved proof cannot load",
+    "trigger": "The initial list read fails.",
+    "expected": "Show a consistent top-left return, page header and one recovery group. Do not present failed loading as an empty list or enable submission without known context.",
+    "action": "Try again.",
+    "next": ["A01", "A06"]
+  },
+  {
+    "id": "C02",
+    "group": "availability",
+    "title": "Job status has changed",
+    "trigger": "A fresh response says the job is no longer In Progress.",
+    "expected": "Remove the submit action and refresh the job context before showing its current status.",
+    "action": "Refresh job.",
+    "next": ["A06"]
+  },
+  {
+    "id": "C03",
+    "group": "availability",
+    "title": "Access is no longer available",
+    "trigger": "The server denies access to the job.",
+    "expected": "Clear private job details, proof URLs, and the unsaved draft from the screen.",
+    "action": "Return to My Jobs.",
+    "next": []
+  },
+  {
+    "id": "C04",
+    "group": "availability",
+    "title": "Loading saved proof",
+    "trigger": "The initial job and saved-proof read is pending.",
+    "expected": "Show neutral progress and Stop waiting, plus navigation. After 12 seconds expose read recovery. Do not imply an empty list or enable submit while context is unknown.",
+    "action": "Wait for the simulated read.",
+    "next": ["A01", "A06", "C01"]
+  }
+]

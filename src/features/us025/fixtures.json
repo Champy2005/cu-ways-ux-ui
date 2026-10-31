@@ -1,0 +1,79 @@
+{
+  "standard": {
+    "jobId": 41,
+    "status": "Accepted",
+    "creator": "Mali Srisawat",
+    "offeredPrice": "8500.00",
+    "deliveryDate": "2026-11-15",
+    "deadline": "2026-11-18",
+    "targetResponses": 250,
+    "briefUrl": "https://example.com/brief/41",
+    "briefUploadedAt": "2026-10-22",
+    "surveys": ["Campus commute habits", "Student dining preferences"]
+  },
+  "long": {
+    "jobId": 41,
+    "status": "Accepted",
+    "creator": "Narin Pongsawat-Srisawat Chantarat",
+    "offeredPrice": "0.00",
+    "deliveryDate": "2026-11-15",
+    "deadline": "2026-11-18",
+    "targetResponses": 12000,
+    "briefUrl": "https://example.com/briefs/2026/campus-study/extended-reference/phase-two/notes-for-reviewers?source=mock&language=th-TH&version=long",
+    "briefUploadedAt": "2026-10-22",
+    "surveys": [
+      "ความคิดเห็นของนิสิตชั้นปีที่หนึ่งเกี่ยวกับการเดินทางและกิจกรรมภายในมหาวิทยาลัย — student travel and campus activity preferences",
+      "How students choose meals during a long lecture day and which dining locations they can reach on foot"
+    ]
+  },
+  "optional": {
+    "jobId": 41,
+    "status": "Accepted",
+    "creator": "Mali Srisawat",
+    "offeredPrice": "8500.00",
+    "deliveryDate": null,
+    "deadline": null,
+    "targetResponses": null,
+    "briefUrl": null,
+    "briefUploadedAt": null,
+    "surveys": ["Campus commute habits"]
+  },
+  "completed": {
+    "jobId": 41,
+    "status": "Completed",
+    "creator": "Mali Srisawat",
+    "offeredPrice": "8500.00",
+    "deliveryDate": "2026-10-20",
+    "deadline": "2026-10-22",
+    "targetResponses": 250,
+    "briefUrl": "https://example.com/brief/41",
+    "briefUploadedAt": "2026-10-22",
+    "surveys": ["Campus commute habits", "Student dining preferences"]
+  },
+  "cancelled": {
+    "jobId": 41,
+    "status": "Cancelled",
+    "creator": "Mali Srisawat",
+    "offeredPrice": "8500.00",
+    "deliveryDate": "2026-10-20",
+    "deadline": "2026-10-22",
+    "targetResponses": 250,
+    "briefUrl": "https://example.com/brief/41",
+    "briefUploadedAt": "2026-10-22",
+    "surveys": ["Campus commute habits"]
+  },
+  "rateLimit": {
+    "jobId": 41,
+    "status": "Accepted",
+    "creator": "Mali Srisawat",
+    "offeredPrice": "8500.00",
+    "deliveryDate": "2026-11-15",
+    "deadline": "2026-11-18",
+    "targetResponses": 250,
+    "briefUrl": "https://example.com/brief/41",
+    "briefUploadedAt": "2026-10-22",
+    "surveys": ["Campus commute habits"],
+    "listReadStatus": 429,
+    "retryAfterSeconds": 30
+  }
+}

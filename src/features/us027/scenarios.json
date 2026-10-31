@@ -1,0 +1,86 @@
+[
+  {
+    "id": "A01",
+    "title": "Missing proof",
+    "trigger": "Open an In Progress job with no Proof attachments.",
+    "expected": "Show missing Proof and keep the job In Progress. Run completion check opens the blocked warning."
+  },
+  {
+    "id": "A02",
+    "title": "Completion blocked warning",
+    "trigger": "Attempt completion with no Proof.",
+    "expected": "Use a compact Requirements incomplete dialog, short blocker list and clear proof route. Keep status unchanged; avoid repeated paragraphs and competing recovery buttons."
+  },
+  {
+    "id": "A03",
+    "title": "All requirements met",
+    "trigger": "A Proof record, Paid payment and correct Accepted offer exist.",
+    "expected": "Enable an explicit completion check; proof alone is not sufficient."
+  },
+  {
+    "id": "A04",
+    "title": "Confirm completion",
+    "trigger": "Run completion check when all conditions are met.",
+    "expected": "Confirm job identity and the final transition before sending a request."
+  },
+  {
+    "id": "A05",
+    "title": "Completion pending",
+    "trigger": "Confirm completion.",
+    "expected": "Submit once. Permit Close, Escape, outside dismissal and Continue browsing while preserving the operation and View progress. A 12-second deadline or document return becomes unknown/check state with no automatic resubmission."
+  },
+  {
+    "id": "A06",
+    "title": "Completion confirmed",
+    "trigger": "Receive a confirmed completion response.",
+    "expected": "Show Completed and remove the completion mutation."
+  },
+  {
+    "id": "B01",
+    "title": "Payment is not Paid",
+    "trigger": "Proof exists but payment is unpaid.",
+    "expected": "Show the missing payment prerequisite and block completion."
+  },
+  {
+    "id": "B02",
+    "title": "Accepted offer mismatch",
+    "trigger": "The selected offer is not a valid Accepted offer for this job.",
+    "expected": "Explain the offer prerequisite and keep status unchanged."
+  },
+  {
+    "id": "B03",
+    "title": "Job has not started",
+    "trigger": "The job is Accepted.",
+    "expected": "Do not expose a completion request for an unstarted job."
+  },
+  {
+    "id": "B04",
+    "title": "Cancelled job",
+    "trigger": "Read a Cancelled job.",
+    "expected": "Keep the terminal state read-only."
+  },
+  {
+    "id": "R01",
+    "title": "Unknown completion outcome",
+    "trigger": "The completion response is lost.",
+    "expected": "Offer a read-only status check; never automatically repeat completion."
+  },
+  {
+    "id": "R02",
+    "title": "Requirements unavailable",
+    "trigger": "A job read fails.",
+    "expected": "Show read failure rather than known prerequisites and disable completion."
+  },
+  {
+    "id": "R03",
+    "title": "Access removed",
+    "trigger": "Access is denied.",
+    "expected": "Remove all private job and delivery data."
+  },
+  {
+    "id": "R04",
+    "title": "Requirements loading",
+    "trigger": "The initial requirements read is pending.",
+    "expected": "Announce the read and prevent completion until resolved."
+  }
+]

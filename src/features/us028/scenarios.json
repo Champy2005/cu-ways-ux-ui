@@ -1,0 +1,92 @@
+[
+  {
+    "id": "A01",
+    "title": "Pending job",
+    "trigger": "Open a Pending unpaid job.",
+    "expected": "Cancellation is available to the creator."
+  },
+  {
+    "id": "A02",
+    "title": "Accepted job",
+    "trigger": "Open an Accepted unpaid job.",
+    "expected": "Show current contract details and an explicit cancel action."
+  },
+  {
+    "id": "A03",
+    "title": "In Progress job",
+    "trigger": "Open an In Progress unpaid job.",
+    "expected": "Allow cancellation with its consequences explained."
+  },
+  {
+    "id": "A04",
+    "title": "Cancellation confirmation",
+    "trigger": "Choose Cancel job.",
+    "expected": "Show job identity and effects; Keep job closes the dialog without changes."
+  },
+  {
+    "id": "A05",
+    "title": "Cancellation pending",
+    "trigger": "Confirm cancellation.",
+    "expected": "Submit once. Permit Close, Escape, outside dismissal and Continue browsing while preserving the operation and View progress. A 12-second deadline or document return becomes unknown/check state with no automatic resubmission."
+  },
+  {
+    "id": "A06",
+    "title": "Cancellation confirmed",
+    "trigger": "Receive confirmed cancellation.",
+    "expected": "Show Cancelled, zero active requests and zero Pending offers; remove cancellation."
+  },
+  {
+    "id": "B01",
+    "title": "Paid job",
+    "trigger": "A payment is already Paid.",
+    "expected": "Explain why cancellation is unavailable and do not enable cancellation."
+  },
+  {
+    "id": "B02",
+    "title": "Completed job",
+    "trigger": "Read a Completed job.",
+    "expected": "Preserve payment and review history; do not allow cancellation."
+  },
+  {
+    "id": "B03",
+    "title": "Already Cancelled",
+    "trigger": "Read a Cancelled job.",
+    "expected": "Keep cancellation read-only and do not resubmit."
+  },
+  {
+    "id": "B04",
+    "title": "Unverified state",
+    "trigger": "The current state is not recognized.",
+    "expected": "Do not guess eligibility; offer a fresh read."
+  },
+  {
+    "id": "R01",
+    "title": "Unknown cancellation outcome",
+    "trigger": "Lose the cancellation response.",
+    "expected": "Check current job state before a new cancellation."
+  },
+  {
+    "id": "R02",
+    "title": "Cancellation rejected",
+    "trigger": "Receive a rejection without a state change.",
+    "expected": "Keep the current contract and offer refresh."
+  },
+  {
+    "id": "R03",
+    "title": "Access removed",
+    "trigger": "Lose access to the job.",
+    "expected": "Remove private contract data and mutation controls."
+  },
+  {
+    "id": "R04",
+    "title": "Job read failed",
+    "trigger": "Cannot read job eligibility.",
+    "expected": "Show failure rather than an empty or cancellable job."
+  },
+  {
+    "id": "R05",
+    "title": "Job loading",
+    "trigger": "Read the current job.",
+    "expected": "Prevent cancellation while eligibility is unknown."
+  }
+]

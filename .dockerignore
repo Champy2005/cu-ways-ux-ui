@@ -1,0 +1,10 @@
+node_modules
+.git
+.artifacts
+storybook-static
+public
+src
+tests
+preferences
+baseline
+pnpm-lock.yaml

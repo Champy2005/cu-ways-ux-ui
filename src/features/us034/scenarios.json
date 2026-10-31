@@ -1,0 +1,62 @@
+[
+  {
+    "id": "A01",
+    "title": "Verified reviews",
+    "trigger": "Open a marketer profile with qualifying reviews.",
+    "expected": "Show average, count and verified cards from completed jobs."
+  },
+  {
+    "id": "A02",
+    "title": "No reviews yet",
+    "trigger": "There are no qualifying reviews.",
+    "expected": "Show No reviews yet and No ratings yet without a 0.00 average."
+  },
+  {
+    "id": "A03",
+    "title": "Rating-only reviews",
+    "trigger": "Reviews have no written comments.",
+    "expected": "Show rating, date and linked job without inventing a comment."
+  },
+  {
+    "id": "A04",
+    "title": "Long written review",
+    "trigger": "A review contains long Unicode text.",
+    "expected": "Show a bounded preview with native Read full review / Show less disclosure. Preserve the complete Unicode comment, author, date and rating; expansion survives appearance re-renders."
+  },
+  {
+    "id": "A05",
+    "title": "Next review page",
+    "trigger": "Open a longer review history.",
+    "expected": "Show bounded pagination and retain rating filter."
+  },
+  {
+    "id": "B01",
+    "title": "Nonqualifying records excluded",
+    "trigger": "Fixture includes uncompleted, wrong-marketer and invalid-rating records.",
+    "expected": "Exclude them from cards, count, average and distribution."
+  },
+  {
+    "id": "B02",
+    "title": "No matching rating",
+    "trigger": "Filter to 1 star when no 1-star reviews exist.",
+    "expected": "Keep the true overall rating, show a compact filter-specific empty state and Show all ratings reset. Omit redundant single-page pagination."
+  },
+  {
+    "id": "R01",
+    "title": "Reviews loading",
+    "trigger": "Review read is pending.",
+    "expected": "Do not invent a zero rating or empty review conclusion."
+  },
+  {
+    "id": "R02",
+    "title": "Reviews read failed",
+    "trigger": "Cannot read verified records.",
+    "expected": "Show retry and suppress the unavailable rating."
+  },
+  {
+    "id": "R03",
+    "title": "Profile unavailable",
+    "trigger": "Profile access is denied.",
+    "expected": "Show a generic unavailable state without review details."
+  }
+]
