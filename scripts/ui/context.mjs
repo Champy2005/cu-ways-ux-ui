@@ -67,10 +67,11 @@ export function context(query) {
     : prefs.components.filter((c) =>
         (c.id + " " + c.aliases.join(" ")).toLowerCase().includes(term),
       );
+  const ambiguous = candidates.length + scenarioMatches.length > 1;
   return {
     query,
-    ambiguous: candidates.length + scenarioMatches.length > 1,
-    global: prefs.global,
+    ambiguous,
+    global: ambiguous ? [] : prefs.global,
     humanAcceptance: prefs.humanAcceptance,
     scenarios: scenarioMatches.map((s) => ({
       feature: s.feature,
@@ -79,6 +80,7 @@ export function context(query) {
       url: `http://127.0.0.1:4191/?path=/story/us${s.feature}--${s.id[0].toLowerCase()}-${s.id.slice(1)}`,
     })),
     components: candidates.map((c) => {
+      if (ambiguous) return { id: c.id, source: c.source, aliases: c.aliases };
       const symbol =
         {
           ProofWorkspace: "ProofDelivery",

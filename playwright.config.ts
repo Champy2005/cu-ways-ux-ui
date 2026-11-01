@@ -5,6 +5,7 @@ export default defineConfig({
   testMatch: "rendered.spec.mjs",
   workers: 1,
   retries: 0,
+  updateSnapshots: "none",
   timeout: 900000,
   outputDir: `${output}/playwright`,
   reporter: [["list"], ["json", { outputFile: `${output}/playwright.json` }]],

@@ -73,6 +73,7 @@
       "id": "LifecycleBadge",
       "aliases": [
         "badge",
+        "lifecycle status",
         "Accepted",
         "Pending",
         "In Progress",
@@ -156,7 +157,7 @@
     },
     {
       "id": "Select",
-      "aliases": ["dropdown", "filter", "Status", "rating"],
+      "aliases": ["dropdown", "filter", "status filter", "rating"],
       "source": "src/design-system/components/primitives.tsx",
       "style": "src/design-system/components/system.module.css",
       "rules": [
@@ -166,7 +167,14 @@
     },
     {
       "id": "RecoveryPanel",
-      "aliases": ["banner", "feedback", "warning", "error", "success"],
+      "aliases": [
+        "banner",
+        "feedback",
+        "warning",
+        "error",
+        "success",
+        "operation status"
+      ],
       "source": "src/design-system/components/primitives.tsx",
       "style": "src/design-system/components/system.module.css",
       "rules": [

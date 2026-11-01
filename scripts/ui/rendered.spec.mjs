@@ -133,18 +133,18 @@ test("canonical scenario matrix, cross-instance contracts and protected boundari
             });
             record.errors.push(...contentProblems);
             if (story.id.startsWith("us") && viewport.width <= 700) {
-              const dock = page.getByRole("navigation", {
-                name: "Bottom navigation",
-              });
+              // Modal backgrounds are intentionally inert/aria-hidden. This is
+              // a rendered ownership assertion, not an interaction with them.
+              const dock = page.locator('[data-ui="BottomNavigation"]');
               const selected = dock.locator('[aria-current="page"]');
               await expect(selected).toHaveCount(1);
               await expect(selected).toHaveText(
                 story.id.startsWith("us034--") ? "Profile" : "Jobs",
               );
-              for (const label of ["Home", "Services", "Invites"])
-                await expect(
-                  dock.getByRole("link", { name: label, exact: true }),
-                ).not.toHaveAttribute("href");
+              const unavailable = dock.locator('[aria-disabled="true"]');
+              await expect(unavailable).toHaveCount(3);
+              for (const entry of await unavailable.all())
+                await expect(entry).not.toHaveAttribute("href");
             }
             if (configuration.stress && story.id === "us025--l-02")
               expect(
@@ -449,11 +449,10 @@ test("canonical scenario matrix, cross-instance contracts and protected boundari
               let comparison = "missing";
               if (input.referenceUsable && fs.existsSync(reference)) {
                 try {
-                  await expect(locator).toHaveScreenshot(name, {
-                    animations: "disabled",
+                  // Compare the stable capture already produced above. Avoid
+                  // recapturing every level again just to run the pixel matcher.
+                  expect(fs.readFileSync(file)).toMatchSnapshot(name, {
                     maxDiffPixelRatio: 0.0001,
-                    timeout: 3000,
-                    ...captureOptions,
                   });
                   comparison = "unchanged";
                 } catch {

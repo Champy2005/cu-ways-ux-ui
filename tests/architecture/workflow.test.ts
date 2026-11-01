@@ -2,7 +2,21 @@ import { test, expect } from "vitest";
 import { zipSync, strToU8 } from "fflate";
 import fs from "node:fs";
 import path from "node:path";
-import { componentPreviews } from "../../scripts/ui/context.mjs";
+import {
+  componentPreviews,
+  context as uiContext,
+} from "../../scripts/ui/context.mjs";
+test("generic status lookup surfaces distinct semantic owners instead of guessing", () => {
+  const packet = uiContext("status");
+  expect(packet.ambiguous).toBe(true);
+  expect(packet.components.map((c: { id: string }) => c.id)).toEqual(
+    expect.arrayContaining([
+      "LifecycleBadge",
+      "RecoveryPanel",
+      "StatusHeading",
+    ]),
+  );
+});
 test("native preview identities outrank unrelated exports in one source module", () => {
   const entries = [
     {
