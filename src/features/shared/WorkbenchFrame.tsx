@@ -14,15 +14,21 @@ const navigation: NavigationItem[] = [
   { id: "034", label: "Reviews", icon: "profile" },
 ].map((item) => ({ ...item, href: previewHref(item.id) })) as NavigationItem[];
 const mobileNavigation: NavigationItem[] = [
-  { id: "home", label: "Home", href: previewHref("025"), icon: "home" },
-  { id: "026", label: "Services", href: previewHref("026"), icon: "services" },
-  { id: "025", label: "Jobs", href: previewHref("025"), icon: "jobs" },
-  { id: "027", label: "Invites", href: previewHref("027"), icon: "invites" },
-  { id: "034", label: "Profile", href: previewHref("034"), icon: "profile" },
+  { id: "home", label: "Home", icon: "home" },
+  { id: "services", label: "Services", icon: "services" },
+  { id: "jobs", label: "Jobs", href: previewHref("025"), icon: "jobs" },
+  { id: "invites", label: "Invites", icon: "invites" },
+  {
+    id: "profile",
+    label: "Profile",
+    href: previewHref("034"),
+    icon: "profile",
+  },
 ];
 type Props = Omit<
   ComponentProps<typeof AppFrame>,
   | "activeKey"
+  | "mobileActiveKey"
   | "navigation"
   | "mobileNavigation"
   | "brandHref"
@@ -34,6 +40,7 @@ export function WorkbenchFrame({ feature, ...props }: Props) {
       {...props}
       backLabel={props.backLabel ?? "Story library"}
       activeKey={feature}
+      mobileActiveKey={feature === "034" ? "profile" : "jobs"}
       navigation={navigation}
       mobileNavigation={mobileNavigation}
       brandHref={previewHref("025")}

@@ -132,6 +132,20 @@ test("canonical scenario matrix, cross-instance contracts and protected boundari
               return issues;
             });
             record.errors.push(...contentProblems);
+            if (story.id.startsWith("us") && viewport.width <= 700) {
+              const dock = page.getByRole("navigation", {
+                name: "Bottom navigation",
+              });
+              const selected = dock.locator('[aria-current="page"]');
+              await expect(selected).toHaveCount(1);
+              await expect(selected).toHaveText(
+                story.id.startsWith("us034--") ? "Profile" : "Jobs",
+              );
+              for (const label of ["Home", "Services", "Invites"])
+                await expect(
+                  dock.getByRole("link", { name: label, exact: true }),
+                ).not.toHaveAttribute("href");
+            }
             if (configuration.stress && story.id === "us025--l-02")
               expect(
                 await page

@@ -7,6 +7,11 @@
   },
   "global": [
     {
+      "id": "preview-navigation",
+      "statement": "Product dock uses Jobs for job-flow previews and Profile for reviews. Header menu selects feature previews. Unimplemented Home/Services/Invites destinations stay explicitly unavailable; do not mislabel demo routes as those product sections.",
+      "checks": ["scripts/ui/rendered.spec.mjs"]
+    },
+    {
       "id": "minimal-copy",
       "statement": "Keep descriptions only for meaningful consequences, validation, permissions, uncertainty or a necessary next step. No repeated statuses or filler paragraphs."
     },

@@ -385,7 +385,10 @@ export async function check(options) {
             "inconclusive",
           ].map((k) => [k, statuses.filter((s) => s === k).length]),
         ),
-        inspection: "required",
+        inspection:
+          statuses.length && statuses.every((s) => s === "unchanged")
+            ? "unchanged-reference"
+            : "required",
         humanPalette: "pending",
       },
       milliseconds: Date.now() - started,

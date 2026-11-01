@@ -159,7 +159,7 @@ export function JobSummary({
 export type NavigationItem = {
   id: string;
   label: string;
-  href: string;
+  href?: string;
   icon: Parameters<typeof Icon>[0]["name"];
 };
 export function AppFrame({
@@ -168,6 +168,7 @@ export function AppFrame({
   onBack,
   backLabel = "Back",
   activeKey,
+  mobileActiveKey = activeKey,
   navigation,
   mobileNavigation = navigation,
   brandHref = navigation[0]?.href ?? "#",
@@ -181,6 +182,7 @@ export function AppFrame({
   onBack?: () => void;
   backLabel?: string;
   activeKey?: string;
+  mobileActiveKey?: string;
   navigation: NavigationItem[];
   mobileNavigation?: NavigationItem[];
   brandHref?: string;
@@ -359,12 +361,15 @@ export function AppFrame({
           data-ui="BottomNavigation"
         >
           {mobile.map(({ id, label, icon, href }) => {
-            const active = activeKey === id;
+            const active = mobileActiveKey === id;
             return (
               <a
                 key={label}
                 aria-current={active ? "page" : undefined}
                 href={href}
+                role={href ? undefined : "link"}
+                aria-disabled={!href || undefined}
+                title={href ? undefined : `${label} is outside this preview`}
               >
                 <Icon name={icon} filled={active} />
                 <span>{label}</span>
