@@ -26,6 +26,8 @@ export async function verifyScenario(
   await expect(
     canvas.getByRole("heading", { level: 1, hidden: true }),
   ).toBeVisible();
+  // A portal dialog title group is not another application banner landmark.
+  await expect(doc.getAllByRole("banner", { hidden: true })).toHaveLength(1);
   const specification = features[feature].find((s) => s.id === id);
   await expect(specification?.expected).toBeTruthy();
   if (feature === "026") {

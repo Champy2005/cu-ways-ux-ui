@@ -244,12 +244,12 @@ export function ContentDialog({
             heading.current
           }
         >
-          <header className={s.dialogHeading}>
+          <div className={s.dialogHeading}>
             <Dialog.Title ref={heading} tabIndex={-1}>
               {title}
             </Dialog.Title>
             <CloseControl onClick={onClose} />
-          </header>
+          </div>
           {children}
         </Dialog.Popup>
       </Dialog.Portal>
