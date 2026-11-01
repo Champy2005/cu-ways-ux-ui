@@ -1,5 +1,7 @@
 # CU Ways UX/UI
 
+**Checkpoint status: visual migration rejected; fidelity correction required.** The React workbench is runnable, but its layout, navigation, sizing and responsive rules do not yet reproduce the original. Keep the original HTML/reference material. See [current migration status](MIGRATION-STATUS.md) and the forthcoming detailed fidelity recovery plan. This repository has not replaced the original handoff.
+
 Independent React/TypeScript design workbench for US025/026/027/028/034. All 94 legacy cases are explicit Storybook stories with observable assertions. Application adoption and real API permissions/persistence remain separate.
 
 ## Start

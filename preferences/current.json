@@ -1,6 +1,7 @@
 {
   "schemaVersion": 1,
   "humanAcceptance": {
+    "migrationFidelity": "Rejected by the human on 2026-11-01; original-to-React parity is required before cutover or reference promotion.",
     "palette": "pending",
     "reactScenarios": "All 94 React scenarios await human review; earlier manual feedback informs current rules but does not approve the migrated renders.",
     "direction": "Rose × Slate; purple/violet rejected"
@@ -8,7 +9,7 @@
   "global": [
     {
       "id": "preview-navigation",
-      "statement": "Product dock uses Jobs for job-flow previews and Profile for reviews. Header menu selects feature previews. Unimplemented Home/Services/Invites destinations stay explicitly unavailable; do not mislabel demo routes as those product sections.",
+      "statement": "Desktop product navigation must preserve the original Overview, Services, My Jobs, Invitations and Profile labels, icons and behavior. Story selection belongs to Storybook, not the product header. Current React navigation is rejected and awaits the one-to-one fidelity repair; preserve original responsive dock semantics.",
       "checks": ["scripts/ui/rendered.spec.mjs"]
     },
     {
