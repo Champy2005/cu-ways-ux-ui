@@ -73,6 +73,19 @@ export const ownershipRule = {
       TemplateElement: previewRoute,
       JSXElement(node) {
         if (
+          context.filename.replaceAll("\\", "/").includes("/features/") &&
+          node.openingElement.name.type === "JSXIdentifier" &&
+          node.openingElement.name.name === "a"
+        )
+          context.report({
+            node,
+            messageId: "boundary",
+            data: {
+              reason:
+                "Use InlineLink or ActionLink; content anchors must not inherit browser-default paint.",
+            },
+          });
+        if (
           !context.filename.replaceAll("\\", "/").includes("/features/") ||
           node.openingElement.name.type !== "JSXIdentifier" ||
           node.openingElement.name.name !== "span"

@@ -38,7 +38,7 @@ Quiet content hover stays transparent; pagination icons have their named tonal c
 
 ## References and review
 
-Close detail captures exclude only fixed chrome outside the subject, so navigation cannot cover its controls. Context and page captures retain the real chrome; tall contexts anchor to the parent heading. Each image records this treatment, and browser checks independently enforce viewport pinning and content clearance. This does not hide controls inside the reviewed component.
+Close detail captures exclude only fixed chrome outside the subject, so navigation cannot cover its controls. Context and page captures retain the real chrome; contexts account for usable height after fixed chrome. Scrollable dialogs also receive a native footer capture. Each image records its treatment, and browser checks independently enforce viewport pinning, content clearance, short-title wrapping and semantic link paint. This does not hide controls inside the reviewed component.
 
 Private Release archives hold the active reference and one rollback set. The small `baseline/reference.json` pins checksum/environment. Missing or incompatible references return **inconclusive**; checks never create approved images automatically.
 

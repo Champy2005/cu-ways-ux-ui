@@ -148,7 +148,7 @@ export function ProofDelivery({
             context={`Job #${state.job.id}`}
             status={state.job.status}
           />
-          {notice && (
+          {notice && state.listStatus !== "failed" && (
             <Feedback
               title={notice.title}
               tone={notice.tone}
@@ -179,14 +179,16 @@ export function ProofDelivery({
             />
           ) : state.listStatus === "failed" ? (
             <Feedback
-              title="Saved proof unavailable"
+              title={notice?.title ?? "Saved proof unavailable"}
               tone="error"
               action={
                 <Action onClick={() => send({ type: "retry-list" })}>
                   Try again
                 </Action>
               }
-            />
+            >
+              {notice?.body ?? "The list may not be empty."}
+            </Feedback>
           ) : (
             <Card
               boundary="ProofWorkspace"

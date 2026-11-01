@@ -6,6 +6,7 @@ import {
   ContentDialog,
   EmptyState,
   Feedback,
+  InlineLink,
   Loading,
   Pagination,
   SelectControl,
@@ -353,13 +354,9 @@ export function MyJobs({
                         {
                           label: "Brief",
                           value: (
-                            <a
-                              href={selected.briefUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                            >
-                              Open brief ↗
-                            </a>
+                            <InlineLink href={selected.briefUrl} external>
+                              Open brief
+                            </InlineLink>
                           ),
                         },
                       ]}

@@ -4,6 +4,7 @@ import {
   BackLink,
   CloseControl,
   LifecycleBadge,
+  InlineLink,
   Pagination,
   SelectControl,
   type JobStatus,
@@ -77,6 +78,9 @@ const meta = {
           />
         </Card>
         <Card title="Navigation">
+          <InlineLink href="https://example.com/brief" external>
+            Open brief
+          </InlineLink>
           <BackLink href="#">Back to workspace</BackLink>
           <CloseControl onClick={() => {}} />
           <Pagination page={2} pages={3} onChange={() => {}} />

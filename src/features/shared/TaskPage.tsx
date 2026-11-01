@@ -93,10 +93,15 @@ export function TaskPageView({
   resolve: () => void;
 }) {
   const cancel = feature === "028";
+  const completed = !cancel && state.status === "Completed";
+  const cancelled = cancel && state.status === "Cancelled";
   const requirements = cancel
     ? []
     : [
-        { ok: state.status === "In Progress", label: "Job is In Progress" },
+        {
+          ok: state.status === "In Progress" || completed,
+          label: completed ? "Job completed" : "Job is In Progress",
+        },
         { ok: !!state.proof, label: "Proof of delivery" },
         { ok: !!state.offer, label: "Accepted offer" },
         { ok: state.paid, label: "Payment is Paid" },
@@ -223,28 +228,36 @@ export function TaskPageView({
                           : "CompletionRequirements"
                       }
                       title={
-                        cancel
-                          ? "Cancellation effects"
-                          : "Completion requirements"
+                        cancelled
+                          ? "Cancellation record"
+                          : completed
+                            ? "Completion record"
+                            : cancel
+                              ? "Cancellation effects"
+                              : "Completion requirements"
                       }
                     >
                       {cancel ? (
                         <ul className={s.blockers}>
                           <li className={s.blocker}>
-                            Close active job requests.
+                            {cancelled ? "Closed" : "Close"} active job
+                            requests.
                           </li>
                           <li className={s.blocker}>
-                            Reject remaining Pending offers.
+                            {cancelled ? "Rejected" : "Reject"} remaining
+                            Pending offers.
                           </li>
                           <li className={s.blocker}>
-                            Retain the accepted offer and previous records.
+                            {cancelled ? "Retained" : "Retain"} the accepted
+                            offer and previous records.
                           </li>
                         </ul>
                       ) : (
                         <>
                           <p className={s.muted}>
-                            {requirements.filter((r) => r.ok).length} of 4
-                            requirements met
+                            {completed
+                              ? "Completion checks confirmed"
+                              : `${requirements.filter((r) => r.ok).length} of 4 requirements met`}
                           </p>
                           <ul className={s.criteria}>
                             {requirements.map((r) => (

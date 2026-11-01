@@ -2,6 +2,30 @@ import { test, expect } from "vitest";
 import { zipSync, strToU8 } from "fflate";
 import fs from "node:fs";
 import path from "node:path";
+import { componentPreviews } from "../../scripts/ui/context.mjs";
+test("native preview identities outrank unrelated exports in one source module", () => {
+  const entries = [
+    {
+      id: "action--default",
+      componentPath: "src/design-system/components/primitives.tsx",
+    },
+    { id: "system--contracts" },
+  ];
+  expect(
+    componentPreviews(
+      entries,
+      { stories: [{ id: "system--contracts" }] },
+      "src/design-system/components/primitives.tsx",
+    ),
+  ).toEqual([entries[1]]);
+  expect(
+    componentPreviews(
+      entries,
+      null,
+      "src/design-system/components/primitives.tsx",
+    ),
+  ).toEqual([entries[1]]);
+});
 import {
   sourceScope,
   digest,

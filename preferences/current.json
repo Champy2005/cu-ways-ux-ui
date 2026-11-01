@@ -230,7 +230,20 @@
     },
     {
       "id": "InlineLink",
-      "aliases": ["URL", "external link"],
+      "aliases": ["Open brief", "text link", "external link"],
+      "source": "src/design-system/components/primitives.tsx",
+      "style": "src/design-system/components/system.module.css",
+      "rules": [
+        "Named content navigation uses the semantic inline-link color in both unvisited and visited states; no browser-default purple. Text-only hover changes the underline, never fills the target."
+      ],
+      "checks": [
+        "scripts/ui/rendered.spec.mjs",
+        "tests/architecture/contracts.test.ts"
+      ]
+    },
+    {
+      "id": "ProofLink",
+      "aliases": ["URL", "delivery destination"],
       "source": "src/design-system/components/primitives.tsx",
       "style": "src/design-system/components/system.module.css",
       "rules": [

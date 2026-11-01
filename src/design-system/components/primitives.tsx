@@ -422,6 +422,34 @@ export function Pagination({
     </nav>
   );
 }
+/** Named navigation within content; keeps visited links in the semantic palette. */
+export function InlineLink({
+  href,
+  children,
+  external = false,
+}: {
+  href: string;
+  children: ReactNode;
+  external?: boolean;
+}) {
+  return (
+    <a
+      href={href}
+      className={s.inlineLink}
+      data-ui="InlineLink"
+      target={external ? "_blank" : undefined}
+      rel={external ? "noopener noreferrer" : undefined}
+    >
+      {children}
+      {external && (
+        <>
+          <Icon name="external" />
+          <span className={s.srOnly}> (opens in a new tab)</span>
+        </>
+      )}
+    </a>
+  );
+}
 export function ProofLink({ url }: { url: string }) {
   const parsed = new URL(url);
   return (
@@ -429,8 +457,8 @@ export function ProofLink({ url }: { url: string }) {
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className={s.proofLink}
-      data-ui="InlineLink"
+      className={`${s.inlineLink} ${s.proofLink}`}
+      data-ui="ProofLink"
     >
       <span>
         <strong>

@@ -153,6 +153,27 @@
   min-width: 0;
   overflow-wrap: anywhere;
 }
+@media (max-width: 700px) {
+  html:not([data-text-scale="100"]) .dialog {
+    width: calc(100% - 24px);
+    max-height: calc(100dvh - 24px);
+    padding: 20px;
+  }
+  html:not([data-text-scale="100"]) .dialogHeading {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 44px;
+    gap: 8px;
+  }
+  html:not([data-text-scale="100"]) .dialogHeading h2 {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    padding-top: 0;
+  }
+  html:not([data-text-scale="100"]) .dialogHeading > button {
+    grid-column: 2;
+    grid-row: 1;
+  }
+}
 .select {
   min-height: 44px;
   min-width: min(10rem, 100%);
@@ -324,6 +345,20 @@
   color: var(--link-inline);
   cursor: pointer;
 }
+.inlineLink,
+.inlineLink:visited {
+  color: var(--link-inline);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.inlineLink:hover {
+  text-decoration-thickness: 2px;
+}
+.inlineLink > svg {
+  display: inline-block;
+  vertical-align: text-bottom;
+  margin-inline-start: 0.3em;
+}
 .proofLink {
   display: flex;
   justify-content: space-between;
@@ -338,6 +373,9 @@
   font-size: 0.9375rem;
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+.proofLink > svg {
+  margin-inline-start: 0;
 }
 .loading {
   display: grid;

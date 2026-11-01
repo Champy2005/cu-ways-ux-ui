@@ -84,7 +84,12 @@ export function validatePromotion(
     throw Error("Failed checks cannot publish references");
   if (
     rendered.records.some(
-      (r) => r.errors?.length || r.invariants?.length || r.images.length !== 3,
+      (r) =>
+        r.errors?.length ||
+        r.invariants?.length ||
+        ["component", "context", "page"].some(
+          (level) => !r.images.some((image) => image.level === level),
+        ),
     )
   )
     throw Error("Incomplete or failed capture records");

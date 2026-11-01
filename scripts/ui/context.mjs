@@ -2,6 +2,17 @@ import fs from "node:fs";
 import path from "node:path";
 import ts from "typescript";
 import { root, readJSON, files } from "./runtime.mjs";
+export function componentPreviews(entries, native, source) {
+  const declared = new Set((native?.stories ?? []).map((story) => story.id));
+  const exact = entries.filter((entry) => declared.has(entry.id));
+  if (exact.length) return exact;
+  // A shared module is not evidence that every export appears in each story.
+  return entries.filter((entry) =>
+    source.startsWith("src/features/")
+      ? entry.componentPath?.endsWith(source.replace(/^src\//, ""))
+      : entry.id === "system--contracts",
+  );
+}
 function definition(source, name) {
   const text = fs.readFileSync(path.join(root, source), "utf8");
   const tree = ts.createSourceFile(
@@ -70,7 +81,6 @@ export function context(query) {
     components: candidates.map((c) => {
       const symbol =
         {
-          InlineLink: "ProofLink",
           ProofWorkspace: "ProofDelivery",
           CompletionRequirements: "TaskPageView",
           CancellationEffects: "TaskPageView",
@@ -108,13 +118,7 @@ export function context(query) {
           native?.reactDocgenTypescript?.description ??
           "",
         exceptions: prefs.exceptions.filter((e) => e.target === c.id),
-        previews: entries
-          .filter(
-            (e) =>
-              native?.stories?.some((s) => s.id === e.id) ||
-              e.componentPath?.endsWith(c.source.replace(/^src\//, "")) ||
-              e.id === "system--contracts",
-          )
+        previews: componentPreviews(entries, native, c.source)
           .slice(0, 3)
           .map((e) => ({
             id: e.id,

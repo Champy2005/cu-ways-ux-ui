@@ -100,6 +100,38 @@ test("canonical scenario matrix, cross-instance contracts and protected boundari
                 document.documentElement.style.fontSize = `${scale}%`;
                 document.documentElement.dataset.textScale = String(scale);
               }, configuration.textScale);
+            const contentProblems = await page.evaluate(() => {
+              const issues = [];
+              for (const link of document.querySelectorAll(
+                '[data-ui="InlineLink"], [data-ui="ProofLink"]',
+              )) {
+                const probe = document.createElement("span");
+                probe.style.color = "var(--link-inline)";
+                link.append(probe);
+                if (
+                  getComputedStyle(link).color !== getComputedStyle(probe).color
+                )
+                  issues.push("content link bypasses semantic color");
+                probe.remove();
+              }
+              for (const heading of document.querySelectorAll(
+                '[data-ui="ContentDialog"] h2',
+              )) {
+                const text = heading.firstChild;
+                if (text?.nodeType !== Node.TEXT_NODE) continue;
+                for (const match of text.textContent.matchAll(
+                  /\b[A-Za-z]{2,10}\b/g,
+                )) {
+                  const range = document.createRange();
+                  range.setStart(text, match.index);
+                  range.setEnd(text, match.index + match[0].length);
+                  if (range.getClientRects().length > 1)
+                    issues.push(`dialog title splits short word: ${match[0]}`);
+                }
+              }
+              return issues;
+            });
+            record.errors.push(...contentProblems);
             if (configuration.stress && story.id === "us025--l-02")
               expect(
                 await page
@@ -330,11 +362,28 @@ test("canonical scenario matrix, cross-instance contracts and protected boundari
             let contextAnchor;
             if (!(await dialog.count())) {
               const parentBounds = await contextTarget.boundingBox();
-              if (parentBounds && parentBounds.height > viewport.height * 1.3) {
+              if (parentBounds) {
                 contextAnchor = await contextTarget.evaluate(
                   (e) => e.getBoundingClientRect().top + scrollY,
                 );
-                contextTarget = page;
+                const usable = await page.evaluate(() => {
+                  let height = innerHeight - 32;
+                  for (const selector of [
+                    '[data-ui="ApplicationHeader"]',
+                    '[data-ui="ApplicationDock"]',
+                  ]) {
+                    const node = document.querySelector(selector);
+                    if (
+                      node &&
+                      ["sticky", "fixed"].includes(
+                        getComputedStyle(node).position,
+                      )
+                    )
+                      height -= node.getBoundingClientRect().height;
+                  }
+                  return height;
+                });
+                if (parentBounds.height > usable) contextTarget = page;
               }
             }
             const captures = [
@@ -345,8 +394,18 @@ test("canonical scenario matrix, cross-instance contracts and protected boundari
                     ["context", contextTarget, contextOptions],
                   ]
                 : []),
+              ...((await dialog.count()) &&
+              (await dialog.evaluate(
+                (e) => e.scrollHeight > e.clientHeight + 1,
+              ))
+                ? [["component-scrolled", dialog, { style: detailStyle }]]
+                : []),
             ];
             for (const [level, locator, captureOptions] of captures) {
+              if (level === "component-scrolled")
+                await dialog.evaluate((e) => {
+                  e.scrollTop = e.scrollHeight;
+                });
               if (level === "context" && contextAnchor !== undefined)
                 await page.evaluate((top) => {
                   const header = document.querySelector(
@@ -396,11 +455,13 @@ test("canonical scenario matrix, cross-instance contracts and protected boundari
               record.images.push({
                 level,
                 treatment:
-                  level === "component" && detailStyle
-                    ? "External fixed chrome excluded from subject detail; retained in context/page."
-                    : level === "context" && contextAnchor !== undefined
-                      ? "Parent-anchored viewport"
-                      : "Native bounds",
+                  level === "component-scrolled"
+                    ? "Native dialog scrolled to footer; subject controls retained."
+                    : level === "component" && detailStyle
+                      ? "External fixed chrome excluded from subject detail; retained in context/page."
+                      : level === "context" && contextAnchor !== undefined
+                        ? "Parent-anchored viewport"
+                        : "Native bounds",
                 file: `images/${name}`,
                 sha256: digest(fs.readFileSync(file)),
                 comparison,
@@ -591,6 +652,21 @@ test("canonical scenario matrix, cross-instance contracts and protected boundari
     expect(
       await heading.evaluate((e) => getComputedStyle(e).marginBottom),
     ).not.toBe("40px");
+    await p.goto(
+      `${server.url}/iframe.html?id=us027--a-04&globals=theme:dark;textScale:200`,
+    );
+    const commit = p.getByRole("button", {
+      name: "Confirm completion",
+      exact: true,
+    });
+    await commit.waitFor();
+    await commit.focus();
+    await expect(commit).toBeInViewport({ ratio: 1 });
+    await p.keyboard.press("Escape");
+    await expect(p.getByRole("dialog")).toHaveCount(0);
+    await expect(
+      p.locator('[data-ui="LifecycleBadge"][data-status="In Progress"]'),
+    ).toBeVisible();
     writeJSON(path.join(current, "rendered.json"), {
       records,
       failures,
@@ -609,6 +685,7 @@ test("canonical scenario matrix, cross-instance contracts and protected boundari
         "canonical token propagates through three direct/transitive feature consumers",
         "rendered invariant detects injected pre-existing drift independently of baseline",
         "local spacing leaves protected sibling paint and other feature geometry unchanged",
+        "enlarged dialog footer remains keyboard reachable and Escape preserves job status",
       ],
     });
     expect(

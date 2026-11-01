@@ -115,6 +115,15 @@ describe("operation guards", () => {
 });
 describe("ownership negative fixtures", () => {
   const lint = new ESLint();
+  test("raw content links cannot fall back to browser purple", async () => {
+    const [result] = await lint.lintText(
+      'export const Bad=()=> <a href="https://example.com">Open brief</a>;',
+      { filePath: "src/features/fixture.tsx" },
+    );
+    expect(result.messages.some((m) => m.ruleId === "cuways/ownership")).toBe(
+      true,
+    );
+  });
   test("preview routes cannot leak back into reusable runtime components", async () => {
     const code = 'export const bad="?id=us025--l-02";';
     const [bad] = await lint.lintText(code, {

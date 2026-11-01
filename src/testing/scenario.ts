@@ -35,9 +35,15 @@ export async function verifyScenario(
       await expect(canvas.queryByText("Campus Dining")).not.toBeInTheDocument();
     } else if (state.listStatus === "loading")
       await expect(canvas.getByText("Loading saved proof")).toBeVisible();
-    else if (state.listStatus === "failed")
-      await expect(canvas.getByText("Saved proof unavailable")).toBeVisible();
-    else {
+    else if (state.listStatus === "failed") {
+      await expect(canvas.getByText("Couldn’t load saved proof")).toBeVisible();
+      await expect(
+        element.querySelectorAll('[data-ui="RecoveryPanel"]'),
+      ).toHaveLength(1);
+      await expect(
+        canvas.getByRole("button", { name: "Try again" }),
+      ).toBeEnabled();
+    } else {
       await expect(
         canvas.getByRole("heading", {
           name: `Saved proof (${state.rows.length})`,
@@ -118,6 +124,21 @@ export async function verifyScenario(
       await expect(
         canvas.getByRole("button", { name: "Check job status" }),
       ).toBeEnabled();
+    if (id === "A06") {
+      await expect(
+        canvas.getByRole("heading", {
+          name: feature === "027" ? "Completion record" : "Cancellation record",
+        }),
+      ).toBeVisible();
+      if (feature === "027") {
+        await expect(
+          canvas.queryByText("Job is In Progress"),
+        ).not.toBeInTheDocument();
+        await expect(
+          element.querySelectorAll('[data-missing="true"]'),
+        ).toHaveLength(0);
+      }
+    }
     if (
       interactionTest &&
       feature === "027" &&
