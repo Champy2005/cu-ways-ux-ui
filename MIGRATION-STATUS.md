@@ -6,8 +6,9 @@ The React migration is a functional checkpoint, **not an accepted visual migrati
 
 - Source revision `5974db619f74f53b20b44a5eda8c4320b2a33d8c`: 48 unit/architecture tests and 105 story tests passed; all 94 legacy scenario identities are reachable.
 - Full canonical Linux report `a841d3bea4af6792`: 476 records, 1,432 captures and 11 rendered interaction checks, with no reported automated failure.
+- Fresh GitHub Actions checkout at `e9de3b5adbbd82e14dc97ac73ddb75de4b0d56b6` also passed static gates, 48 unit tests, 105 stories and the full canonical matrix; report `1cf31c0f40b5ac9f` remains **inconclusive** because the reference is missing. The workflow is therefore not green. Secret scanning passed. The portal-title landmark regression was repaired and retested without a layout change.
 - Visual regression is **inconclusive**: the durable reference is missing. Those checks establish behavior and React-internal consistency, not original-to-React fidelity.
-- Fresh-clone install/start and focused proof-dialog interaction were exercised. Full reference retrieval and fresh-checkout visual comparison remain incomplete.
+- Fresh-clone install/start and focused proof-dialog interaction were exercised. Durable reference retrieval and original-to-React visual comparison remain incomplete.
 
 ## Required correction
 
