@@ -40,7 +40,7 @@
     "group": "main",
     "title": "Add another link",
     "trigger": "The marketer starts a second proof while existing evidence is present.",
-    "expected": "Keep existing evidence visible below the inline form in the same saved-proof workspace.",
+    "expected": "Keep existing evidence in the saved-proof workspace while editing in a separate content dialog, without shifting the list.",
     "action": "Enter and save another URL.",
     "next": ["A03", "B01"]
   },

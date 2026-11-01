@@ -100,7 +100,6 @@
   --shadow-deep: rgb(0 0 0 / 0.2);
   --shadow-menu: rgb(0 0 0 / 0.15);
   --shadow-contact: rgb(0 0 0 / 0.12);
-  --shadow-header: rgb(0 0 0 / 0.07);
 }
 
 :root {
@@ -108,6 +107,31 @@
   --depth-menu: 0 8px 24px var(--shadow-menu);
   --depth-action-hover: 0 2px 6px var(--shadow-contact);
   --depth-pagination: inset 0 0 0 1px var(--action-tonal-border);
-  --depth-header: 0 2px 6px var(--shadow-header);
   --depth-dropdown: 0 8px 20px var(--shadow-contact);
+}
+
+:root,
+[data-cu-theme="light"] {
+  --chrome-glass-header: rgb(238 242 247 / 0.92);
+  --chrome-glass-bottom: rgb(223 231 240 / 0.92);
+  --surface-bottom: #dfe7f0;
+  --chrome-blur: 18px;
+  --depth-header:
+    inset 0 -1px rgb(64 87 117 / 0.16), inset 0 -3px rgb(255 255 255 / 0.9),
+    0 3px 14px rgb(23 40 62 / 0.14);
+  --depth-bottom:
+    inset 0 1px rgb(64 87 117 / 0.16), inset 0 3px rgb(255 255 255 / 0.16),
+    0 -3px 14px rgb(23 40 62 / 0.14);
+}
+[data-cu-theme="dark"] {
+  --chrome-glass-header: rgb(27 30 37 / 0.65);
+  --chrome-glass-bottom: rgb(48 57 69 / 0.92);
+  --surface-bottom: #303945;
+  --chrome-blur: 24px;
+  --depth-header:
+    inset 0 -1px rgb(6 12 22 / 0.18), inset 0 -3px rgb(224 234 247 / 0.18),
+    0 3px 14px rgb(0 0 0 / 0.14);
+  --depth-bottom:
+    inset 0 1px rgb(6 12 22 / 0.18), inset 0 3px rgb(224 234 247 / 0.18),
+    0 -3px 14px rgb(0 0 0 / 0.14);
 }

@@ -36,8 +36,10 @@ jobs:
           path: |
             .artifacts/ui/current/report.json
             .artifacts/ui/current/rendered.json
+            .artifacts/ui/current/images/
             .artifacts/ui/current/playwright/
             .artifacts/ui/current/*.log
+            .artifacts/ui/failed/
           retention-days: 3
   secrets:
     runs-on: ubuntu-latest

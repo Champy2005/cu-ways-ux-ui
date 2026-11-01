@@ -12,7 +12,7 @@ pnpm exec playwright install chromium
 pnpm ui dev
 ```
 
-Open <http://127.0.0.1:4190/>. Storybook Controls switch deterministic hold/automatic operation timing. Hold is an author fixture; pending presentation always has a close/escape and a check/reopen path.
+Open <http://127.0.0.1:4191/>. Storybook Controls switch deterministic hold/automatic/stalled timing. Hold pauses simulated completion and deadlines for visual inspection; presentation still has a close/escape and check/reopen path. Stalled exercises the 12-second recovery deadline. Automatic resolves the simulated request. Ordinary previews keep their named state; test-only transitions run in Vitest.
 
 ## One tool
 
@@ -46,10 +46,10 @@ After explicit user approval of a scoped report, use:
 pnpm ui approve-baseline all --report REPORT_ID --inspection .artifacts/ui/inspection.json --authorization "Explicit scoped user direction"
 ```
 
-The inspection receipt identifies `reportId`, `reviewer` and actually inspected relative image paths. `--provisional` is reserved for the authorized agent-reviewed migration bootstrap and does not claim human approval. Publication verifies the uploaded archive before changing the pointer. Commit the descriptor separately; no automatic merge. Review never calls promotion.
+The inspection receipt identifies `reportId`, `reviewer` and actually inspected relative image paths. Optional `methods` maps each path to `individual` or `sheet` inspection. Human promotion additionally requires `approval: {source: "user", scope: "TARGET", authorization: "actual explicit direction", geometry: "accepted", palette: "pending"}`; geometry and palette are separate decisions. Retained entries preserve their own provenance and acceptance; a partial promotion cannot label the whole archive approved. `--provisional` is reserved for the authorized initial migration bootstrap. Publication verifies the uploaded archive before changing the pointer. Commit the descriptor separately; no automatic merge. Review never calls promotion.
 
 ## Optional native agent integration
 
-Set `UI_MCP=1` before `pnpm ui dev` to enable the official MCP addon and experimental curated review. The local endpoint is <http://127.0.0.1:4190/mcp>. Configure a client deliberately; no global agent settings are written. CLI/CI work without MCP. Current capability probes are recorded in ignored setup evidence.
+Set `UI_MCP=1` before `pnpm ui dev` to enable the official MCP addon and experimental curated review. The local endpoint is <http://127.0.0.1:4191/mcp>. Configure a client deliberately; no global agent settings are written. CLI/CI work without MCP. Current capability probes are recorded in ignored setup evidence.
 
 Screenshots, builds, logs, comparison boards and traces are disposable current artifacts. Source Git contains fixtures and current decisions only. This workbench makes no backend calls and uses fictional records.

@@ -9,7 +9,7 @@
   },
   "scripts": {
     "ui": "tsx scripts/ui/index.ts",
-    "dev": "storybook dev --host 127.0.0.1 --port 4190 --exact-port --no-open --disable-telemetry",
+    "dev": "storybook dev --host 127.0.0.1 --port 4191 --exact-port --no-open --disable-telemetry",
     "build": "storybook build --disable-telemetry",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . && stylelint \"src/**/*.css\"",

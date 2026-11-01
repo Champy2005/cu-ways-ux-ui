@@ -112,6 +112,8 @@ export function transitionDemo(state, event) {
   const type = event?.type;
   const scenario = SCENARIO_BY_ID[state.scenarioId];
   const fixture = FIXTURES[state.fixtureName] ?? FIXTURES.standard;
+  if (type === "LIST_READ_FAILED" && state.route === "list")
+    return result(createState("L06", state.fixtureName, carry(state)));
 
   if (type === "SELECT_SCENARIO") {
     return result(

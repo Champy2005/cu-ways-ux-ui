@@ -5,6 +5,7 @@ import {
   Feedback,
   Icon,
   Loading,
+  LongTextDisclosure,
   Pagination,
   SelectControl,
 } from "../../design-system/components/primitives";
@@ -49,11 +50,20 @@ export function Reviews({
     (id) => model.seed(id) as ReviewState,
   );
   useOperation(
-    !!state.pending,
+    state.pending,
     timing,
     () => send({ type: "resolve", read: "success" }),
     () => send({ type: "timeout" }),
   );
+  return <ReviewsView state={state} send={send} />;
+}
+export function ReviewsView({
+  state,
+  send,
+}: {
+  state: ReviewState;
+  send: (event: { type: string; [key: string]: unknown }) => void;
+}) {
   const stats = model.summary(state.rows);
   const rows = model
     .qualifying(state.rows)
@@ -85,18 +95,20 @@ export function Reviews({
         <Columns variant="sidebar">
           <Stack>
             <Card>
-              <div className={s.profile}>
-                <span className={s.avatar}>MS</span>
-                <div>
-                  <h2>Mali S.</h2>
-                  <p className={s.muted}>Survey Marketer</p>
+              <div className={s.profileCopy}>
+                <div className={s.profile}>
+                  <span className={s.avatar}>MS</span>
+                  <div>
+                    <h2>Mali S.</h2>
+                    <p className={s.muted}>Survey Marketer</p>
+                  </div>
                 </div>
+                <p className={s.muted}>Campus research · Survey distribution</p>
+                <p>
+                  I help research teams reach students with thoughtful survey
+                  campaigns and clear delivery reports.
+                </p>
               </div>
-              <p className={s.muted}>Campus research · Survey distribution</p>
-              <p>
-                I help research teams reach students with thoughtful survey
-                campaigns and clear delivery reports.
-              </p>
             </Card>
             <Card title="Ratings">
               {stats.average === null ? (
@@ -128,6 +140,7 @@ export function Reviews({
             </Card>
           </Stack>
           <Card
+            boundary="ReviewHistory"
             title="Verified reviews"
             action={
               <SelectControl
@@ -150,7 +163,7 @@ export function Reviews({
                   <header className={s.reviewHeading}>
                     <div>
                       <h3>{row.creator}</h3>
-                      <time dateTime={row.createdAt}>
+                      <time className={s.reviewTime} dateTime={row.createdAt}>
                         {date(row.createdAt)}
                       </time>
                     </div>
@@ -167,30 +180,22 @@ export function Reviews({
                     {"☆".repeat(5 - row.rating)}
                   </p>
                   {row.comment ? (
-                    <>
-                      <p className={s.reviewText}>
-                        {row.comment.length > model.LONG_REVIEW_LENGTH &&
-                        !state.expanded.includes(row.id)
+                    <LongTextDisclosure
+                      text={row.comment}
+                      preview={
+                        row.comment.length > model.LONG_REVIEW_LENGTH
                           ? model.reviewPreview(row.comment)
-                          : row.comment}
-                      </p>
-                      {row.comment.length > model.LONG_REVIEW_LENGTH && (
-                        <Action
-                          role="quiet"
-                          onClick={() =>
-                            send({
-                              type: "review-expansion",
-                              id: row.id,
-                              open: !state.expanded.includes(row.id),
-                            })
-                          }
-                        >
-                          {state.expanded.includes(row.id)
-                            ? "Show less"
-                            : "Read more"}
-                        </Action>
-                      )}
-                    </>
+                          : row.comment
+                      }
+                      expanded={state.expanded.includes(row.id)}
+                      onToggle={() =>
+                        send({
+                          type: "review-expansion",
+                          id: row.id,
+                          open: !state.expanded.includes(row.id),
+                        })
+                      }
+                    />
                   ) : (
                     <p className={s.muted}>No written feedback provided.</p>
                   )}

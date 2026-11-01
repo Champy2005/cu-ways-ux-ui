@@ -10,15 +10,16 @@ import {
   files,
   git,
   acquire,
+  ownedArtifact,
+  stageRun,
   changedFiles,
   sourceScope,
+  sourceHygiene,
   packageCommand,
   run,
 } from "./runtime.mjs";
-import { retrieve } from "./baseline.mjs";
-
-export const canonicalEnvironment =
-  "playwright-1.64.1-linux-amd64-47b510dd-inter-v1";
+import { retrieve, canonicalEnvironment } from "./baseline.mjs";
+import { nativeCall } from "./native.mjs";
 export function verifyRegistry(preferences, index) {
   const ids = new Set();
   for (const rule of [
@@ -66,17 +67,12 @@ export function verifyRegistry(preferences, index) {
 }
 export async function check(options) {
   const release = acquire();
-  if (current !== path.join(root, ".artifacts/ui/current"))
-    throw Error("Unexpected artifact target");
-  if (fs.existsSync(current)) {
-    if (fs.lstatSync(current).isSymbolicLink())
-      throw Error("Artifact directory must not be a symlink");
-    fs.rmSync(current, { recursive: true, force: true });
-  }
-  fs.mkdirSync(current, { recursive: true });
+  let transaction;
   const source = fingerprint();
   const failures = [];
   const gates = [];
+  let footprint;
+  let expectedStories = [];
   const started = Date.now();
   const gate = (name, pkg, args) => {
     const at = Date.now();
@@ -96,7 +92,7 @@ export async function check(options) {
   try {
     const changes = changedFiles();
     const declaration = options.scope
-      ? readJSON(path.resolve(options.scope))
+      ? readJSON(ownedArtifact(path.resolve(options.scope)))
       : { intent: options.intent ?? "shared", target: options.target ?? "all" };
     if (!["local", "shared", "global"].includes(declaration.intent))
       throw Error("Intent must be local, shared or global");
@@ -116,12 +112,36 @@ export async function check(options) {
       (declaration.target === "proof-delivery" ? "026" : undefined);
     if (declaration.target !== "all" && !known && !feature)
       throw Error("Unknown target. Use ui context first.");
+    if (declaration.intent === "local" && !feature)
+      throw Error("Local intent requires a named feature owner");
+    if (
+      (declaration.allowedProperties ?? []).some(
+        (p) => !["external-spacing"].includes(p),
+      )
+    )
+      throw Error(
+        "Unsupported allowed property; component internals remain protected",
+      );
     if (
       declaration.region &&
       !prefs.components.some((c) => c.id === declaration.region)
     )
       throw Error("Unknown region; use a canonical data-ui component ID.");
     const scope = sourceScope(changes.files, declaration);
+    transaction = stageRun();
+    try {
+      footprint = sourceHygiene();
+      gates.push({ name: "source-hygiene", passed: true });
+    } catch (error) {
+      failures.push({ gate: "source-hygiene", message: error.message });
+    }
+    let nativeTracking;
+    try {
+      nativeTracking = await nativeCall("stories-changed");
+      writeJSON(path.join(current, "native-tracking.json"), nativeTracking);
+    } catch {
+      nativeTracking = null;
+    }
     if (scope.violations.length)
       failures.push({
         gate: "scope",
@@ -137,7 +157,9 @@ export async function check(options) {
     gate("styles", "stylelint", ["src/**/*.css"]);
     gate("unit", "vitest", ["run", "--project", "unit"]);
     gate("stories", "vitest", ["run", "--project", "stories"]);
-    const built = gate("build", "storybook", ["build", "--disable-telemetry"]);
+    const built =
+      !failures.length &&
+      gate("build", "storybook", ["build", "--disable-telemetry"]);
     let reference = { status: "not-checked", descriptor: {} };
     let environment = canonicalEnvironment;
     let rendered = null;
@@ -172,8 +194,12 @@ export async function check(options) {
       const input = {
         stories: selected,
         target: known?.id,
+        owner: known?.id,
         feature,
         intent: declaration.intent,
+        region: declaration.region,
+        allowedProperties: declaration.allowedProperties ?? [],
+        stress: !!options.full && !options.smoke,
         viewports: [
           { width: 390, height: 844 },
           { width: 1440, height: 900 },
@@ -193,6 +219,7 @@ export async function check(options) {
             "us034--a-04",
           ].includes(e.id),
         );
+      expectedStories = input.stories.map((s) => s.id);
       writeJSON(path.join(current, "capture-input.json"), input);
       let capture;
       if (options.native)
@@ -231,6 +258,9 @@ export async function check(options) {
                     "--rm",
                     "--init",
                     "--ipc=host",
+                    "--platform=linux/amd64",
+                    "-e",
+                    "UI_RUN_DIR=/runner/.artifacts/ui/staging",
                     "-v",
                     `${path.join(root, "storybook-static")}:/runner/storybook-static:ro`,
                     "-v",
@@ -272,19 +302,66 @@ export async function check(options) {
       schemaVersion: 1,
       id: digest(source + String(started)).slice(0, 16),
       sourceFingerprint: source,
+      coverage: {
+        fullRequested: !!options.full,
+        diagnosticSubset: !!options.smoke,
+        canonical: !options.native,
+        expectedLegacy: 94,
+      },
       revision: git(["rev-parse", "HEAD"]),
+      footprint,
       dirty: !!git(["status", "--porcelain"]),
       environment,
+      browser: rendered?.browser,
       referenceId: reference.descriptor?.id,
       reference: reference.status,
       referenceClass: reference.descriptor?.classification ?? "missing",
+      renderedDigest: fs.existsSync(path.join(current, "rendered.json"))
+        ? digest(fs.readFileSync(path.join(current, "rendered.json")))
+        : null,
       declaration,
       scope: {
         ...scope,
         changedFiles: changes.files,
         checkedStories: rendered?.checkedStories ?? [],
+        canonicalOwner:
+          known?.source ??
+          (feature ? `src/features/us${feature}` : "global owners"),
+        expectedStories,
+        observedConsumers: rendered
+          ? Object.fromEntries(
+              [
+                ...new Set(
+                  rendered.records.flatMap((r) =>
+                    (r.observations ?? []).map((n) => n.ui),
+                  ),
+                ),
+              ].map((ui) => [
+                ui,
+                {
+                  stories: [
+                    ...new Set(
+                      rendered.records
+                        .filter((r) =>
+                          (r.observations ?? []).some((n) => n.ui === ui),
+                        )
+                        .map((r) => r.story),
+                    ),
+                  ],
+                  instances: rendered.records.reduce(
+                    (n, r) =>
+                      n +
+                      (r.observations ?? []).filter((o) => o.ui === ui).length,
+                    0,
+                  ),
+                },
+              ]),
+            )
+          : {},
         unknowns: [
-          "Native graph is optional; conservative full scope when unavailable.",
+          nativeTracking
+            ? "Native development tracking available; current orchestration retains conservative ownership scope."
+            : "Native graph unavailable; conservative ownership scope used.",
         ],
       },
       gates,
@@ -310,6 +387,7 @@ export async function check(options) {
           : "success",
     };
     writeJSON(path.join(current, "report.json"), report);
+    transaction.commit();
     console.log(
       JSON.stringify(
         {
@@ -326,6 +404,7 @@ export async function check(options) {
     );
     return failures.length ? 1 : visualPending ? 2 : 0;
   } finally {
+    transaction?.finish();
     release();
   }
 }

@@ -13,6 +13,9 @@
   line-height: 1.35;
   text-decoration: none;
   cursor: pointer;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 .action[data-role="primary"] {
   background: var(--action-primary-fill);
@@ -146,10 +149,13 @@
 .dialogHeading h2 {
   padding-top: 0.45rem;
   font-size: 1.3rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .select {
   min-height: 44px;
-  min-width: 10rem;
+  min-width: min(10rem, 100%);
+  max-width: 100%;
   display: inline-flex;
   justify-content: space-between;
   align-items: center;
@@ -266,7 +272,7 @@
   display: flex;
   gap: 0.8rem;
   align-items: flex-start;
-  padding: 1.25rem 0;
+  padding: 0.5rem 0;
 }
 .emptyIcon {
   display: inline-flex;
@@ -281,7 +287,15 @@
 }
 .empty h2 {
   font-size: 0.9375rem;
-  padding-top: 0.15rem;
+  padding-top: 0;
+}
+.empty[data-description="false"] {
+  align-items: center;
+}
+.empty[data-description="true"] h2 {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
 }
 .empty p {
   color: var(--text-muted);
@@ -331,6 +345,9 @@
   border: 1px solid var(--border);
   border-radius: 0.75rem;
   background: var(--surface-card);
+}
+.disclosureText {
+  overflow-wrap: anywhere;
 }
 .skeleton {
   height: 3rem;

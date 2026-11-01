@@ -22,7 +22,21 @@ test("canonical scenario matrix, cross-instance contracts and protected boundari
   const contexts = [];
   try {
     for (const theme of ["light", "dark"])
-      for (const viewport of input.viewports) {
+      for (const configuration of [
+        ...input.viewports,
+        ...(input.stress
+          ? [
+              { width: 320, height: 568, stress: "narrow" },
+              { width: 2560, height: 1347, stress: "large" },
+              { width: 390, height: 568, stress: "text", textScale: 200 },
+              { width: 390, height: 844, stress: "opaque", opaque: true },
+            ]
+          : []),
+      ]) {
+        const viewport = {
+          width: configuration.width,
+          height: configuration.height,
+        };
         const context = await browser.newContext({
           viewport,
           locale: "en-GB",
@@ -35,13 +49,35 @@ test("canonical scenario matrix, cross-instance contracts and protected boundari
           window.__UI_CAPTURE__ = true;
         });
         const page = await context.newPage();
-        for (const story of input.stories) {
-          const key = `${story.id}__${theme}__${viewport.width}x${viewport.height}`;
+        if (configuration.opaque) {
+          const cdp = await context.newCDPSession(page);
+          await cdp.send("Emulation.setEmulatedMedia", {
+            features: [
+              { name: "prefers-reduced-transparency", value: "reduce" },
+              { name: "prefers-reduced-motion", value: "reduce" },
+            ],
+          });
+        }
+        for (const story of input.stories.filter(
+          (s) =>
+            !configuration.stress ||
+            [
+              "system--contracts",
+              "us025--l-02",
+              "us025--d-02",
+              "us026--a-02",
+              "us027--a-04",
+              "us028--a-04",
+              "us034--a-04",
+            ].includes(s.id),
+        )) {
+          const key = `${story.id}__${theme}__${viewport.width}x${viewport.height}${configuration.stress ? "__" + configuration.stress : ""}`;
           const record = {
             key,
             story: story.id,
             theme,
             viewport,
+            stress: configuration.stress,
             images: [],
             invariants: [],
             status: "unchanged",
@@ -49,21 +85,35 @@ test("canonical scenario matrix, cross-instance contracts and protected boundari
           };
           try {
             await page.goto(
-              `${server.url}/iframe.html?id=${story.id}&viewMode=story&globals=theme:${theme}`,
+              `${server.url}/iframe.html?id=${story.id}&viewMode=story&globals=theme:${theme}${configuration.stress && story.id.startsWith("us025--") ? "&args=fixture:long" : ""}`,
               { waitUntil: "networkidle" },
             );
-            await page
-              .locator(
-                '[data-ui="ApplicationFrame"], [data-ui="LifecycleBadge"]',
-              )
-              .first()
-              .waitFor();
+            await page.locator('[data-ui="preview"] > *').first().waitFor();
             await page.evaluate(async () => {
               await document.fonts.ready;
               await new Promise((r) =>
                 requestAnimationFrame(() => requestAnimationFrame(r)),
               );
             });
+            if (configuration.textScale)
+              await page.evaluate((scale) => {
+                document.documentElement.style.fontSize = `${scale}%`;
+                document.documentElement.dataset.textScale = String(scale);
+              }, configuration.textScale);
+            if (configuration.stress && story.id === "us025--l-02")
+              expect(
+                await page
+                  .locator('[data-ui="StatusHeading"] h2')
+                  .first()
+                  .evaluate((e) => getComputedStyle(e).webkitLineClamp),
+              ).toBe("2");
+            if (configuration.stress && story.id === "us025--d-02")
+              expect(
+                await page
+                  .locator('[data-ui="StatusHeading"] h2')
+                  .first()
+                  .evaluate((e) => getComputedStyle(e).webkitLineClamp),
+              ).toBe("none");
             const runtimeErrors = await page
               .locator(".sb-errordisplay")
               .filter({ visible: true })
@@ -71,28 +121,56 @@ test("canonical scenario matrix, cross-instance contracts and protected boundari
             if (runtimeErrors.some(Boolean))
               throw Error(runtimeErrors.join(" ").slice(0, 200));
             const nodes = await page
-              .locator(
-                '[data-ui="LifecycleBadge"],[data-ui="Action"],[data-ui="CloseControl"],[data-ui="BackLink"]',
-              )
-              .evaluateAll(
-                (elements, properties) =>
-                  elements
-                    .filter((e) => e.getBoundingClientRect().width > 0)
-                    .map((e) => {
-                      const style = getComputedStyle(e);
-                      return {
-                        ui: e.dataset.ui,
-                        variant:
-                          e.dataset.status ?? e.dataset.role ?? "default",
-                        values: Object.fromEntries(
-                          properties.map((p) => [p, style[p]]),
-                        ),
-                      };
-                    }),
-                visualProperties,
-              );
+              .locator("[data-ui]")
+              .evaluateAll((elements, properties) => {
+                const counts = new Map();
+                return elements
+                  .filter((e) => e.getBoundingClientRect().width > 0)
+                  .map((e) => {
+                    const style = getComputedStyle(e);
+                    const variant =
+                      (e.dataset.status ??
+                        e.dataset.role ??
+                        e.dataset.variant ??
+                        "default") + (e.disabled ? "/disabled" : "");
+                    const instance = e.dataset.ui + "/" + variant;
+                    const index = counts.get(instance) ?? 0;
+                    counts.set(instance, index + 1);
+                    const ancestors = [];
+                    let parent = e.parentElement;
+                    while (parent) {
+                      if (parent.dataset.ui) ancestors.push(parent.dataset.ui);
+                      parent = parent.parentElement;
+                    }
+                    return {
+                      key: `${instance}/${index}`,
+                      ui: e.dataset.ui,
+                      variant,
+                      ancestors,
+                      values: Object.fromEntries(
+                        properties.map((p) => [p, style[p]]),
+                      ),
+                      bounds: {
+                        x: e.getBoundingClientRect().x + scrollX,
+                        y: e.getBoundingClientRect().y + scrollY,
+                        width: e.getBoundingClientRect().width,
+                        height: e.getBoundingClientRect().height,
+                      },
+                    };
+                  });
+              }, visualProperties);
             for (const node of nodes) {
-              const group = `${theme}/${viewport.width}/${node.ui}/${node.variant}`;
+              if (
+                ![
+                  "LifecycleBadge",
+                  "Action",
+                  "CloseControl",
+                  "BackLink",
+                  "AttachmentTag",
+                ].includes(node.ui)
+              )
+                continue;
+              const group = `${theme}/${viewport.width}/${configuration.textScale ?? 100}/${node.ui}/${node.variant}`;
               const earlier = groups.get(group);
               if (earlier) {
                 const differences = compareEquivalent(
@@ -121,18 +199,40 @@ test("canonical scenario matrix, cross-instance contracts and protected boundari
               (r) => r.key === key,
             );
             if (
-              input.intent === "local" &&
+              input.intent !== "global" &&
               input.referenceUsable &&
               referenceRecord?.observations
             ) {
               record.protectedDifferences = compareProtected(
                 referenceRecord.observations,
                 nodes,
+                {
+                  owner: input.intent === "shared" ? input.owner : undefined,
+                  geometry:
+                    input.intent === "local" &&
+                    !story.id.startsWith(`us${input.feature}--`),
+                  allowExternalSpacing: false,
+                },
               );
               if (record.protectedDifferences.length)
                 record.errors.push(
-                  "Protected component styling changed during local task",
+                  "Protected styling or out-of-scope geometry changed",
                 );
+              if (
+                input.intent === "local" &&
+                story.id.startsWith(`us${input.feature}--`)
+              ) {
+                record.contextMovement = compareProtected(
+                  referenceRecord.observations,
+                  nodes,
+                  { geometry: true, owner: input.region },
+                ).filter((d) =>
+                  d.properties?.some((p) => p.startsWith("bounds.")),
+                );
+                if (record.contextMovement.length)
+                  record.scopeInspection =
+                    "Surrounding geometry moved; agent must inspect the contextual difference. No approval implied.";
+              }
             }
             const geometry = await page.evaluate(() => {
               const errors = [];
@@ -163,42 +263,85 @@ test("canonical scenario matrix, cross-instance contracts and protected boundari
             });
             record.errors.push(...geometry);
             const dialog = page.getByRole("dialog");
-            const target = dialog.count().then((n) =>
-              n
-                ? dialog
-                : page
-                    .locator(`[data-ui="${input.target ?? "LifecycleBadge"}"]`)
-                    .filter({ visible: true })
-                    .first(),
-            );
-            const component = await target;
-            const fallback = page
-              .locator(
-                '[data-ui="Card"],[data-ui="RecoveryPanel"],[data-ui="Loading"]',
-              )
-              .first();
-            const close = (await component.count()) ? component : fallback;
+            const choices = input.target ? [input.target] : [];
+            const featureChoices = story.id.startsWith("us034--")
+              ? ["ReviewCard", "ReviewHistory", "Card"]
+              : story.id.startsWith("us025--")
+                ? ["JobSummary", "Card"]
+                : story.id.startsWith("us026--")
+                  ? ["ProofRecord", "ProofWorkspace", "Card"]
+                  : ["CompletionRequirements", "CancellationEffects", "Card"];
+            let close;
+            for (const id of choices) {
+              const candidate = page
+                .locator(`[data-ui="${id}"]`)
+                .filter({ visible: true })
+                .first();
+              if (await candidate.count()) {
+                close = candidate;
+                break;
+              }
+            }
+            if (!close && (await dialog.count())) close = dialog;
+            for (const id of [
+              "RecoveryPanel",
+              "Loading",
+              ...featureChoices,
+              "LifecycleBadge",
+              "Action",
+              "Select",
+              "BackLink",
+            ]) {
+              if (close) break;
+              const candidate = page
+                .locator(`[data-ui="${id}"]`)
+                .filter({ visible: true })
+                .first();
+              if (await candidate.count()) close = candidate;
+            }
+            close ??= page.locator('[data-ui="preview"] > *').first();
+            record.captureSubject =
+              (await close.getAttribute("data-ui")) ?? "preview example";
+            let contextTarget = (await dialog.count())
+              ? page
+              : close.locator("..");
+            let contextOptions = {};
+            if (!(await dialog.count())) {
+              const parentBounds = await contextTarget.boundingBox();
+              if (parentBounds && parentBounds.height > viewport.height * 1.3) {
+                const bounds = await close.boundingBox();
+                const scroll = await page.evaluate(() => ({
+                  y: scrollY,
+                  height: document.documentElement.scrollHeight,
+                }));
+                const y = Math.max(0, bounds.y + scroll.y - 24);
+                contextTarget = page;
+                contextOptions = {
+                  clip: {
+                    x: 0,
+                    y,
+                    width: viewport.width,
+                    height: Math.min(viewport.height, scroll.height - y),
+                  },
+                };
+              }
+            }
             const captures = [
-              ["page", page],
+              ["page", page, { fullPage: (await dialog.count()) === 0 }],
               ...((await close.count())
                 ? [
-                    ["component", close],
-                    [
-                      "context",
-                      (await dialog.count()) ? page : close.locator(".."),
-                    ],
+                    ["component", close, {}],
+                    ["context", contextTarget, contextOptions],
                   ]
                 : []),
             ];
-            for (const [level, locator] of captures) {
+            for (const [level, locator, captureOptions] of captures) {
               const name = `${key}__${level}.png`;
               const file = path.join(output, name);
               await locator.screenshot({
                 path: file,
                 animations: "disabled",
-                ...(level === "page"
-                  ? { fullPage: (await dialog.count()) === 0 }
-                  : {}),
+                ...captureOptions,
               });
               const reference = path.join(
                 root,
@@ -212,9 +355,7 @@ test("canonical scenario matrix, cross-instance contracts and protected boundari
                     animations: "disabled",
                     maxDiffPixelRatio: 0.0001,
                     timeout: 3000,
-                    ...(level === "page"
-                      ? { fullPage: (await dialog.count()) === 0 }
-                      : {}),
+                    ...captureOptions,
                   });
                   comparison = "unchanged";
                 } catch {
@@ -259,13 +400,14 @@ test("canonical scenario matrix, cross-instance contracts and protected boundari
             });
           if (records.length % 20 === 0)
             console.log(
-              `Captured ${records.length}/${input.stories.length * input.viewports.length * 2}`,
+              `Captured ${records.length} (core ${input.stories.length * input.viewports.length * 2}, plus targeted stress)`,
             );
         }
       }
     writeJSON(path.join(current, "rendered.json"), {
       records,
       failures,
+      browser: browser.version(),
       groups: groups.size,
       checkedStories: [...new Set(records.map((r) => r.story))],
       inspection: "captured-only",
@@ -296,9 +438,101 @@ test("canonical scenario matrix, cross-instance contracts and protected boundari
     await expect(
       p.getByRole("button", { name: "Previous", exact: true }),
     ).toBeVisible();
+    await p.goto(`${server.url}/iframe.html?id=us025--l-02`);
+    await p.getByRole("button", { name: "Menu", exact: true }).click();
+    const mobileMenu = p.getByRole("navigation", { name: "Mobile menu" });
+    await expect(mobileMenu).toBeVisible();
+    await mobileMenu.getByRole("link").first().focus();
+    await p.keyboard.press("Escape");
+    await expect(mobileMenu).toHaveCount(0);
+    await expect(
+      p.getByRole("button", { name: "Menu", exact: true }),
+    ).toBeFocused();
+    await p.evaluate(() => window.scrollTo(0, 400));
+    expect(
+      (await p.locator('[data-ui="ApplicationHeader"]').boundingBox()).y,
+    ).toBe(0);
+    await p.clock.install();
+    await p.goto(
+      `${server.url}/iframe.html?id=us026--a-03&args=timing:stalled`,
+    );
+    await expect(p.getByRole("dialog")).toBeVisible();
+    await p.keyboard.press("Escape");
+    await expect(p.getByRole("dialog")).toHaveCount(0);
+    await expect(
+      p.getByRole("button", { name: "View progress" }),
+    ).toBeVisible();
+    await p.clock.fastForward(12001);
+    await expect(
+      p.getByRole("heading", { name: "Save not confirmed" }),
+    ).toBeVisible();
+    await expect(
+      p.getByRole("button", { name: "Check saved proof" }),
+    ).toBeVisible();
+    await expect(p.getByRole("button", { name: "Save proof" })).toHaveCount(0);
+    await p.goto(
+      `${server.url}/iframe.html?id=us025--l-01&args=timing:stalled`,
+    );
+    await expect(p.getByText("Loading your jobs")).toBeVisible();
+    await p.clock.fastForward(12001);
+    await expect(p.getByText("Loading your jobs")).toHaveCount(0);
+    await expect(p.getByRole("button", { name: "Try again" })).toBeEnabled();
+    await p.getByRole("button", { name: "Try again" }).click();
+    await expect(
+      p.getByRole("button", { name: "View job" }).first(),
+    ).toBeVisible();
+    // Objective fault injection: a canonical token reaches direct and transitive consumers.
+    for (const id of ["us025--l-02", "us027--b-03", "us028--a-02"]) {
+      await p.goto(`${server.url}/iframe.html?id=${id}`);
+      const badges = p.locator(
+        '[data-ui="LifecycleBadge"][data-status="Accepted"]',
+      );
+      await badges.first().waitFor();
+      await p.addStyleTag({
+        content:
+          "[data-cu-theme] { --status-info-fill: rgb(18, 52, 86) !important; }",
+      });
+      for (const badge of await badges.all())
+        expect(
+          await badge.evaluate((e) => getComputedStyle(e).backgroundColor),
+        ).toBe("rgb(18, 52, 86)");
+    }
+    const badge = p.locator('[data-ui="LifecycleBadge"]').first();
+    const beforeDrift = await badge.evaluate(
+      (e, properties) =>
+        Object.fromEntries(properties.map((k) => [k, getComputedStyle(e)[k]])),
+      visualProperties,
+    );
+    await badge.evaluate((e) => (e.style.fontWeight = "400"));
+    const afterDrift = await badge.evaluate(
+      (e, properties) =>
+        Object.fromEntries(properties.map((k) => [k, getComputedStyle(e)[k]])),
+      visualProperties,
+    );
+    expect(compareEquivalent(beforeDrift, afterDrift)).toContain("fontWeight");
+    // A local feature gap leaves sibling paint and another feature's geometry untouched.
+    await p.goto(`${server.url}/iframe.html?id=us026--a-01`);
+    const original = await p
+      .locator('[data-ui="LifecycleBadge"]')
+      .evaluate((e) => getComputedStyle(e).padding);
+    await p
+      .locator('[data-ui="PageHeading"]')
+      .evaluate((e) => (e.style.marginBottom = "40px"));
+    expect(
+      await p
+        .locator('[data-ui="LifecycleBadge"]')
+        .evaluate((e) => getComputedStyle(e).padding),
+    ).toBe(original);
+    await p.goto(`${server.url}/iframe.html?id=us028--a-02`);
+    const heading = p.locator('[data-ui="PageHeading"]');
+    await heading.waitFor();
+    expect(
+      await heading.evaluate((e) => getComputedStyle(e).marginBottom),
+    ).not.toBe("40px");
     writeJSON(path.join(current, "rendered.json"), {
       records,
       failures,
+      browser: browser.version(),
       groups: groups.size,
       checkedStories: [...new Set(records.map((r) => r.story))],
       inspection: "captured-only",
@@ -306,6 +540,13 @@ test("canonical scenario matrix, cross-instance contracts and protected boundari
         "pagination navigation",
         "stable hover geometry",
         "keyboard focus",
+        "mobile menu escape and focus return",
+        "sticky header geometry",
+        "pending dialog escape preserves progress",
+        "12-second deadline exposes uncertainty without duplicate write",
+        "canonical token propagates through three direct/transitive feature consumers",
+        "rendered invariant detects injected pre-existing drift independently of baseline",
+        "local spacing leaves protected sibling paint and other feature geometry unchanged",
       ],
     });
     expect(

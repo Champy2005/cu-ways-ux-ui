@@ -1,4 +1,4 @@
-import { useReducer } from "react";
+import { useReducer, useEffect } from "react";
 import {
   Action,
   ActionLink,
@@ -16,6 +16,7 @@ import {
   Columns,
   ConfirmationActions,
   Metadata,
+  JobSummary,
   OperationProgress,
   Stack,
   StatusHeading,
@@ -46,6 +47,26 @@ export function MyJobs({
     (id) => createDemoState({ scenarioId: id, fixtureName: fixture }),
   );
   const model = SCENARIO_BY_ID[state.scenarioId];
+  useEffect(() => {
+    if (state.confirmationOpen) return;
+    const id =
+      state.focusTarget === "return-job"
+        ? `view-job-${state.jobId}`
+        : state.focusTarget === "progress"
+          ? "view-progress"
+          : ["page-heading", "detail-heading", "start"].includes(
+                state.focusTarget ?? "",
+              )
+            ? "page-heading"
+            : null;
+    if (id) document.getElementById(id)?.focus();
+  }, [
+    state.focusTarget,
+    state.route,
+    state.scenarioId,
+    state.confirmationOpen,
+    state.jobId,
+  ]);
   const data = FIXTURES[state.fixtureName as keyof typeof FIXTURES];
   const records = mockJobRecords(data);
   const selected =
@@ -67,7 +88,9 @@ export function MyJobs({
       send(
         state.pending
           ? { type: "RESOLVE_START", outcome: "unknown" }
-          : { type: "DETAIL_READ_RESULT", status: "failed" },
+          : state.route === "list"
+            ? { type: "LIST_READ_FAILED" }
+            : { type: "DETAIL_READ_RESULT", status: "failed" },
       ),
   );
   const openJob = (jobId: number) => {
@@ -109,21 +132,16 @@ export function MyJobs({
       : state.scenarioId === "C06"
         ? "Start request may still be processing"
         : null);
-  const canStart = ["D02", "D09", "C02", "R03", "R11"].includes(
+  const canStart = ["D02", "D09", "C01", "C02", "R03", "R11"].includes(
     state.scenarioId,
   );
   return (
     <AppFrame
       title={state.route === "list" ? "My Jobs" : "Job details"}
       feature="025"
-      backLabel={state.route === "list" ? "Story library" : "Back to My Jobs"}
-      onBack={() =>
-        send({ type: state.pending ? "NAVIGATE_AWAY" : "BACK_TO_LIST" })
-      }
-    >
-      {state.route === "list" && (
-        <div className={s.listHeading}>
-          <p className={s.muted}>Your hired work</p>
+      busy={loading}
+      headingAction={
+        state.route === "list" ? (
           <label className={s.filter}>
             Status
             <SelectControl
@@ -133,8 +151,20 @@ export function MyJobs({
               onChange={(filter) => send({ type: "CHANGE_FILTER", filter })}
             />
           </label>
-        </div>
-      )}
+        ) : undefined
+      }
+      action={
+        canStart ? (
+          <Action role="primary" onClick={() => send({ type: "OPEN_CONFIRM" })}>
+            Start job
+          </Action>
+        ) : undefined
+      }
+      backLabel={state.route === "list" ? "Story library" : "Back to My Jobs"}
+      onBack={() =>
+        send({ type: state.pending ? "NAVIGATE_AWAY" : "BACK_TO_LIST" })
+      }
+    >
       {!state.privateDataVisible || state.scenarioId === "L09" ? (
         <Feedback
           title={privateTitle}
@@ -189,6 +219,7 @@ export function MyJobs({
           )}
           {loading ? (
             <Loading
+              rows={state.route === "list" ? 3 : 2}
               title={
                 state.route === "list"
                   ? "Loading your jobs"
@@ -245,31 +276,31 @@ export function MyJobs({
                             offeredPrice: string;
                             deadline: string | null;
                           }) => (
-                            <Card key={job.id}>
-                              <StatusHeading
-                                title={job.surveys.join(" · ")}
-                                context={`Job #${job.id}`}
-                                status={job.status}
-                              />
-                              <Metadata
-                                items={[
-                                  { label: "Creator", value: job.creator },
-                                  {
-                                    label: "Agreed price",
-                                    value: money(job.offeredPrice),
-                                  },
-                                  {
-                                    label: "Deadline",
-                                    value: job.deadline ?? "Not specified",
-                                  },
-                                ]}
-                              />
-                              <div className={s.jobFooter}>
-                                <Action onClick={() => openJob(job.id)}>
+                            <JobSummary
+                              key={job.id}
+                              title={job.surveys.join(" · ")}
+                              context={`Job #${job.id}`}
+                              status={job.status}
+                              items={[
+                                { label: "Creator", value: job.creator },
+                                {
+                                  label: "Agreed price",
+                                  value: money(job.offeredPrice),
+                                },
+                                {
+                                  label: "Deadline",
+                                  value: job.deadline ?? "Not specified",
+                                },
+                              ]}
+                              action={
+                                <Action
+                                  id={`view-job-${job.id}`}
+                                  onClick={() => openJob(job.id)}
+                                >
                                   View job
                                 </Action>
-                              </div>
-                            </Card>
+                              }
+                            />
                           ),
                         )}
                     </div>
@@ -283,13 +314,17 @@ export function MyJobs({
               )}
             </>
           ) : (
-            !["D03"].includes(state.scenarioId) && (
+            !["D03", "D08"].includes(state.scenarioId) && (
               <>
                 <Card>
                   <StatusHeading
                     title={selected.surveys.join(" · ")}
-                    context={`Job #${state.jobId}`}
-                    status={state.statusKnown ? state.jobStatus : undefined}
+                    context={`Job #${state.jobId}${!state.statusKnown && state.lastConfirmedStatus ? " · Last confirmed" : ""}`}
+                    status={
+                      state.statusKnown
+                        ? state.jobStatus
+                        : (state.lastConfirmedStatus ?? undefined)
+                    }
                   />
                 </Card>
                 <Columns>
@@ -341,12 +376,14 @@ export function MyJobs({
                         </p>
                       </div>
                       {canStart && (
-                        <Action
-                          role="primary"
-                          onClick={() => send({ type: "OPEN_CONFIRM" })}
-                        >
-                          Start job
-                        </Action>
+                        <div className={s.desktopAction}>
+                          <Action
+                            role="primary"
+                            onClick={() => send({ type: "OPEN_CONFIRM" })}
+                          >
+                            Start job
+                          </Action>
+                        </div>
                       )}
                       {state.jobStatus === "In Progress" && (
                         <ActionLink
@@ -385,6 +422,7 @@ export function MyJobs({
             </Feedback>
           )}
           <ContentDialog
+            initialFocusId={!state.pending ? "keep-accepted" : undefined}
             open={state.confirmationOpen}
             title={state.pending ? "Starting job" : "Start job"}
             onClose={() => send({ type: "CANCEL_CONFIRM" })}
@@ -401,6 +439,7 @@ export function MyJobs({
               safe={
                 state.pending ? null : (
                   <Action
+                    id="keep-accepted"
                     role="safe"
                     onClick={() => send({ type: "CANCEL_CONFIRM" })}
                   >

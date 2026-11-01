@@ -2,13 +2,11 @@ import { useReducer } from "react";
 import {
   Action,
   ActionLink,
-  AttachmentTag,
   ContentDialog,
   EmptyState,
   Feedback,
   Icon,
   Loading,
-  ProofLink,
   type JobStatus,
 } from "../../design-system/components/primitives";
 import {
@@ -18,6 +16,7 @@ import {
   ConfirmationActions,
   Metadata,
   OperationProgress,
+  ProofRecord,
   StatusHeading,
 } from "../../design-system/compositions/layout";
 import * as completion from "../us027/model.mjs";
@@ -71,9 +70,29 @@ export function TaskPage({
     (id) => model.seed(id) as TaskState,
   );
   const resolve = () => send({ type: "resolve", outcome, read: "success" });
-  useOperation(!!state.pending, timing, resolve, () =>
-    send({ type: "timeout" }),
+  useOperation(state.pending, timing, resolve, () => send({ type: "timeout" }));
+  return (
+    <TaskPageView
+      feature={feature}
+      state={state}
+      send={send}
+      resolve={resolve}
+    />
   );
+}
+/** Data and handlers can come from an application adapter; no scenario ID is required. */
+export function TaskPageView({
+  feature,
+  state,
+  send,
+  resolve,
+}: {
+  feature: "027" | "028";
+  state: TaskState;
+  send: (event: TaskEvent) => void;
+  resolve: () => void;
+}) {
+  const cancel = feature === "028";
   const requirements = cancel
     ? []
     : [
@@ -120,6 +139,36 @@ export function TaskPage({
             />
           ) : (
             <>
+              {cancel &&
+                !eligible &&
+                !state.pending &&
+                !state.message &&
+                state.status !== "Cancelled" && (
+                  <Feedback
+                    title={
+                      state.status === "Unverified"
+                        ? "Job status unverified"
+                        : "Cancellation unavailable"
+                    }
+                    tone="warning"
+                    action={
+                      state.status === "Unverified" ? (
+                        <Action
+                          role="utility"
+                          onClick={() => send({ type: "check" })}
+                        >
+                          Check job status
+                        </Action>
+                      ) : undefined
+                    }
+                  >
+                    {state.status === "Unverified"
+                      ? "Read the current status before cancelling."
+                      : state.paid
+                        ? "Paid jobs cannot be cancelled."
+                        : "Completed jobs cannot be cancelled."}
+                  </Feedback>
+                )}
               {state.message && (
                 <Feedback
                   title={messages[state.message] ?? "Job status changed"}
@@ -168,6 +217,11 @@ export function TaskPage({
                   </Card>
                   <Columns>
                     <Card
+                      boundary={
+                        cancel
+                          ? "CancellationEffects"
+                          : "CompletionRequirements"
+                      }
                       title={
                         cancel
                           ? "Cancellation effects"
@@ -176,9 +230,13 @@ export function TaskPage({
                     >
                       {cancel ? (
                         <ul className={s.blockers}>
-                          <li>Close active job requests.</li>
-                          <li>Reject remaining Pending offers.</li>
-                          <li>
+                          <li className={s.blocker}>
+                            Close active job requests.
+                          </li>
+                          <li className={s.blocker}>
+                            Reject remaining Pending offers.
+                          </li>
+                          <li className={s.blocker}>
                             Retain the accepted offer and previous records.
                           </li>
                         </ul>
@@ -190,8 +248,14 @@ export function TaskPage({
                           </p>
                           <ul className={s.criteria}>
                             {requirements.map((r) => (
-                              <li key={r.label} data-missing={!r.ok}>
-                                <Icon name={r.ok ? "check" : "warning"} />
+                              <li
+                                className={s.criterion}
+                                key={r.label}
+                                data-missing={!r.ok}
+                              >
+                                <span className={s.criterionIcon}>
+                                  <Icon name={r.ok ? "check" : "warning"} />
+                                </span>
                                 <strong>{r.label}</strong>
                               </li>
                             ))}
@@ -199,7 +263,7 @@ export function TaskPage({
                         </>
                       )}
                       <div className={s.actions}>
-                        {(!cancel || eligible) &&
+                        {(cancel ? eligible : state.status === "In Progress") &&
                           !uncertain &&
                           state.status !== "Completed" &&
                           state.status !== "Cancelled" && (
@@ -226,6 +290,7 @@ export function TaskPage({
                       </div>
                     </Card>
                     <Card
+                      boundary={cancel ? "ContractSummary" : "DeliveryEvidence"}
                       title={cancel ? "Contract summary" : "Delivery evidence"}
                     >
                       {cancel ? (
@@ -240,13 +305,10 @@ export function TaskPage({
                           ]}
                         />
                       ) : state.proof ? (
-                        <div className={s.proofRecord} data-ui="ProofRecord">
-                          <AttachmentTag />
-                          <ProofLink url="https://example.com/proof/campus-dining" />
-                          <p className={s.muted}>
-                            Saved 28 Oct 2026, 14:20 ICT
-                          </p>
-                        </div>
+                        <ProofRecord
+                          url="https://example.com/proof/campus-dining"
+                          timestamp="Saved 28 Oct 2026, 14:20 ICT"
+                        />
                       ) : (
                         <EmptyState title="No proof added yet">
                           Briefs and other attachments cannot replace delivery
@@ -285,7 +347,9 @@ export function TaskPage({
               {state.modal === "blocked" ? (
                 <ul className={s.blockers}>
                   {completion.blockers(state).map((text) => (
-                    <li key={String(text)}>{text}</li>
+                    <li className={s.blocker} key={String(text)}>
+                      {text}
+                    </li>
                   ))}
                 </ul>
               ) : !state.pending ? (
@@ -300,6 +364,7 @@ export function TaskPage({
             </div>
             {state.modal === "blocked" ? (
               <ConfirmationActions
+                variant="recovery"
                 safe={
                   <Action
                     role="quiet"

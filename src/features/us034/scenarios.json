@@ -15,7 +15,7 @@
     "id": "A03",
     "title": "Rating-only reviews",
     "trigger": "Reviews have no written comments.",
-    "expected": "Show rating, date and linked job without inventing a comment."
+    "expected": "Show rating, date and a plain job reference without inventing a comment or linking to inaccessible private details."
   },
   {
     "id": "A04",

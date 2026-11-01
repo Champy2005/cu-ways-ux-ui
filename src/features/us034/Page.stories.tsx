@@ -6,7 +6,9 @@ const meta = {
   title: "Pages/US034",
   component: Reviews,
   args: { timing: "hold" },
-  argTypes: { timing: { control: "select", options: ["hold", "auto"] } },
+  argTypes: {
+    timing: { control: "select", options: ["hold", "auto", "stalled"] },
+  },
   parameters: { ui: { feature: "034" } },
 } satisfies Meta<typeof Reviews>;
 export default meta;
@@ -42,7 +44,8 @@ export const A03: Story = {
   parameters: {
     ui: {
       legacyId: "A03",
-      expected: "Show rating, date and linked job without inventing a comment.",
+      expected:
+        "Show rating, date and a plain job reference without inventing a comment or linking to inaccessible private details.",
     },
   },
   play: async ({ canvasElement }) =>

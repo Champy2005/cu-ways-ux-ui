@@ -1,25 +1,23 @@
 import { useReducer, useState } from "react";
 import {
   Action,
-  AttachmentTag,
   ContentDialog,
   EmptyState,
   Feedback,
   Field,
   Loading,
-  ProofLink,
 } from "../../design-system/components/primitives";
 import {
   AppFrame,
   Card,
   ConfirmationActions,
   OperationProgress,
+  ProofRecord,
   Stack,
   StatusHeading,
 } from "../../design-system/compositions/layout";
 import { createDemoState, reduceDemoState } from "./model.mjs";
 import { date, useOperation, type Timing } from "../shared/operations";
-import s from "../shared/features.module.css";
 
 export type ProofOutcome =
   | "confirmed"
@@ -52,7 +50,7 @@ export function ProofDelivery({
     else if (state.pending === "refresh") send({ type: "resolve-status" });
     else send({ type: "resolve-list", outcome: "loaded" });
   };
-  useOperation(!!state.pending, timing, resolve, () => {
+  useOperation(state.pending, timing, resolve, () => {
     send({ type: "timeout" });
     setOpen(false);
   });
@@ -118,7 +116,9 @@ export function ProofDelivery({
       feature="026"
       backLabel="Back to My Jobs"
       onBack={() =>
-        send({ type: state.view === "jobs" ? "open-job" : "go-to-jobs" })
+        !state.job
+          ? (window.location.href = "?id=us025--l-02&viewMode=story")
+          : send({ type: state.view === "jobs" ? "open-job" : "go-to-jobs" })
       }
     >
       {!state.job ? (
@@ -189,6 +189,7 @@ export function ProofDelivery({
             />
           ) : (
             <Card
+              boundary="ProofWorkspace"
               title={`Saved proof (${state.rows.length})`}
               action={
                 state.job.status === "In Progress" &&
@@ -203,23 +204,18 @@ export function ProofDelivery({
               {state.rows.length ? (
                 state.rows.map(
                   (row: { id: string; url: string; upload_at: string }) => (
-                    <article
+                    <ProofRecord
                       key={row.id}
-                      className={s.proofRecord}
-                      data-ui="ProofRecord"
-                    >
-                      <AttachmentTag />
-                      <ProofLink url={row.url} />
-                      <p className={s.muted}>
-                        Saved {date(row.upload_at)},{" "}
-                        {new Intl.DateTimeFormat("en-GB", {
+                      url={row.url}
+                      timestamp={`Saved ${date(row.upload_at)}, ${new Intl.DateTimeFormat(
+                        "en-GB",
+                        {
                           hour: "2-digit",
                           minute: "2-digit",
                           timeZone: "Asia/Bangkok",
-                        }).format(new Date(row.upload_at))}{" "}
-                        ICT
-                      </p>
-                    </article>
+                        },
+                      ).format(new Date(row.upload_at))} ICT`}
+                    />
                   ),
                 )
               ) : (

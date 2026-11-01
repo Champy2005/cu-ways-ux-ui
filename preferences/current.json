@@ -2,6 +2,7 @@
   "schemaVersion": 1,
   "humanAcceptance": {
     "palette": "pending",
+    "reactScenarios": "All 94 React scenarios await human review; earlier manual feedback informs current rules but does not approve the migrated renders.",
     "direction": "Rose × Slate; purple/violet rejected"
   },
   "global": [
@@ -32,6 +33,14 @@
         "tests/architecture/contracts.test.ts",
         "scripts/ui/rendered.spec.mjs"
       ]
+    },
+    {
+      "id": "priorities",
+      "statement": "Consistency first; composition/alignment/layout/sizing next; ease of use next; aesthetics next. Meaningful visual judgment remains necessary; palette acceptance belongs to the human."
+    },
+    {
+      "id": "motion",
+      "statement": "Do not introduce fade-in/out animation. Preserve useful established interactions with reduced-motion fallbacks."
     }
   ],
   "components": [
@@ -162,24 +171,28 @@
     },
     {
       "id": "ApplicationFrame",
-      "aliases": ["header", "bottom nav", "navigation", "shell"],
+      "aliases": [
+        "header",
+        "bottom nav",
+        "navigation",
+        "shell",
+        "dock",
+        "action tray",
+        "theme toggle",
+        "role artwork"
+      ],
       "source": "src/design-system/compositions/layout.tsx",
       "style": "src/design-system/compositions/layout.module.css",
       "rules": [
-        "Sticky header, stable page bounds, bottom clearance and short-height fallback. Global shell changes require full checks."
+        "Sticky header with 10px lower corners, original logo/role artwork and theme control. Desktop bounded selection; mobile icon-based selection without filled tile. Connected Start/navigation dock, 12px upper corners, measured bottom clearance and short-height fallback. No content-modal blur on navigation menus. Global shell changes require full checks."
       ],
       "checks": ["scripts/ui/rendered.spec.mjs"]
     },
     {
       "id": "ProofRecord",
-      "aliases": [
-        "proof link",
-        "timestamp",
-        "Saved proof",
-        "Delivery evidence"
-      ],
-      "source": "src/features/us026/ProofDelivery.tsx",
-      "style": "src/features/shared/features.module.css",
+      "aliases": ["proof link", "timestamp"],
+      "source": "src/design-system/compositions/layout.tsx",
+      "style": "src/design-system/compositions/layout.module.css",
       "rules": [
         "Separate neutral attachment tag, readable blue destination and timestamp. No Newest first or saving-does-not-complete reminder."
       ],
@@ -187,13 +200,153 @@
     },
     {
       "id": "ReviewCard",
-      "aliases": ["review", "Read more", "comment", "verified reviews"],
+      "aliases": ["review", "comment"],
       "source": "src/features/us034/Reviews.tsx",
       "style": "src/features/shared/features.module.css",
       "rules": [
         "Long multilingual comments disclose. Public cards show job reference text without inaccessible private navigation. No verification explainer."
       ],
       "checks": ["src/testing/scenario.ts"]
+    },
+    {
+      "id": "Field",
+      "aliases": ["Delivery link", "input", "validation", "field error"],
+      "source": "src/design-system/components/primitives.tsx",
+      "style": "src/design-system/components/system.module.css",
+      "rules": [
+        "Keep labels, input, error and focus together. Invalid submission focuses the field; no repeated helper paragraphs."
+      ],
+      "checks": ["scripts/ui/rendered.spec.mjs"]
+    },
+    {
+      "id": "AttachmentTag",
+      "aliases": ["Proof tag", "attachment badge"],
+      "source": "src/design-system/components/primitives.tsx",
+      "style": "src/design-system/components/system.module.css",
+      "rules": [
+        "Neutral attachment identity, distinct from lifecycle and link emphasis."
+      ],
+      "checks": ["scripts/ui/rendered.spec.mjs"]
+    },
+    {
+      "id": "InlineLink",
+      "aliases": ["URL", "external link"],
+      "source": "src/design-system/components/primitives.tsx",
+      "style": "src/design-system/components/system.module.css",
+      "rules": [
+        "Show a readable destination including protocol, path, query and fragment. Do not decode malformed percent escapes. Keep external icon with the link."
+      ],
+      "checks": ["scripts/ui/rendered.spec.mjs"]
+    },
+    {
+      "id": "EmptyState",
+      "aliases": ["empty state", "No proof added yet", "No active jobs"],
+      "source": "src/design-system/components/primitives.tsx",
+      "style": "src/design-system/components/system.module.css",
+      "rules": [
+        "Align the icon with the heading; compact content without filler or hollow minimum height."
+      ],
+      "checks": ["scripts/ui/rendered.spec.mjs"]
+    },
+    {
+      "id": "Loading",
+      "aliases": ["loading", "spinner", "skeleton"],
+      "source": "src/design-system/components/primitives.tsx",
+      "style": "src/design-system/components/system.module.css",
+      "rules": [
+        "Keep page heading and navigation; expose Stop waiting. Hold is an authoring fixture; stalled operations reach explicit recovery after 12 seconds."
+      ],
+      "checks": ["scripts/ui/rendered.spec.mjs"]
+    },
+    {
+      "id": "JobSummary",
+      "aliases": ["job card", "job row", "job title"],
+      "source": "src/design-system/compositions/layout.tsx",
+      "style": "src/design-system/compositions/layout.module.css",
+      "rules": [
+        "Two-line title in compact lists; full title in detail. Upper-right lifecycle. Compact metadata/action arrangement; two columns only when content width supports it."
+      ],
+      "checks": ["scripts/ui/rendered.spec.mjs"]
+    },
+    {
+      "id": "Card",
+      "aliases": ["panel", "card"],
+      "source": "src/design-system/compositions/layout.tsx",
+      "style": "src/design-system/compositions/layout.module.css",
+      "rules": [
+        "One canonical surface and boundary; features own surrounding placement."
+      ],
+      "checks": ["scripts/ui/rendered.spec.mjs"]
+    },
+    {
+      "id": "LongTextDisclosure",
+      "aliases": ["Read more", "Show less", "long comment", "long description"],
+      "source": "src/design-system/components/primitives.tsx",
+      "style": "src/design-system/components/system.module.css",
+      "rules": [
+        "Keep long text minimal until explicitly expanded. Expose aria-expanded and the controlled text region; quiet hover remains transparent."
+      ],
+      "checks": ["src/testing/scenario.ts", "scripts/ui/rendered.spec.mjs"]
+    },
+    {
+      "id": "ProofWorkspace",
+      "aliases": ["Saved proof", "Add proof"],
+      "source": "src/features/us026/ProofDelivery.tsx",
+      "style": "src/features/shared/features.module.css",
+      "rules": [
+        "Compact saved-record workspace. Add proof opens a content dialog without moving the list."
+      ],
+      "checks": ["src/testing/scenario.ts", "scripts/ui/rendered.spec.mjs"]
+    },
+    {
+      "id": "CompletionRequirements",
+      "aliases": ["Completion requirements", "prerequisites"],
+      "source": "src/features/shared/TaskPage.tsx",
+      "style": "src/features/shared/features.module.css",
+      "rules": [
+        "Verify lifecycle, Proof, accepted offer and payment independently. Read failures do not present trusted prerequisites."
+      ],
+      "checks": ["src/testing/scenario.ts", "scripts/ui/rendered.spec.mjs"]
+    },
+    {
+      "id": "CancellationEffects",
+      "aliases": ["Cancellation effects", "cancel consequences"],
+      "source": "src/features/shared/TaskPage.tsx",
+      "style": "src/features/shared/features.module.css",
+      "rules": [
+        "Use a short consequence list. Paid/Completed guards preserve related records on races."
+      ],
+      "checks": ["src/testing/scenario.ts", "scripts/ui/rendered.spec.mjs"]
+    },
+    {
+      "id": "ContractSummary",
+      "aliases": ["Contract summary", "payment status"],
+      "source": "src/features/shared/TaskPage.tsx",
+      "style": "src/features/shared/features.module.css",
+      "rules": [
+        "Keep payment and related-record facts legible. Unverified status exposes a read action."
+      ],
+      "checks": ["src/testing/scenario.ts", "scripts/ui/rendered.spec.mjs"]
+    },
+    {
+      "id": "DeliveryEvidence",
+      "aliases": ["Delivery evidence"],
+      "source": "src/features/shared/TaskPage.tsx",
+      "style": "src/features/shared/features.module.css",
+      "rules": [
+        "Canonical Proof records separate tag, destination and timestamp. Other attachment kinds do not replace Proof."
+      ],
+      "checks": ["src/testing/scenario.ts", "scripts/ui/rendered.spec.mjs"]
+    },
+    {
+      "id": "ReviewHistory",
+      "aliases": ["Verified reviews", "rating filter"],
+      "source": "src/features/us034/Reviews.tsx",
+      "style": "src/features/shared/features.module.css",
+      "rules": [
+        "Balanced title and filter; disclose long comments; omit redundant pagination and inaccessible private-job actions."
+      ],
+      "checks": ["src/testing/scenario.ts", "scripts/ui/rendered.spec.mjs"]
     }
   ],
   "exceptions": [

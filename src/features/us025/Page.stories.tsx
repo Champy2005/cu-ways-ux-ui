@@ -6,7 +6,9 @@ const meta = {
   title: "Pages/US025",
   component: MyJobs,
   args: { timing: "hold" },
-  argTypes: { timing: { control: "select", options: ["hold", "auto"] } },
+  argTypes: {
+    timing: { control: "select", options: ["hold", "auto", "stalled"] },
+  },
   parameters: { ui: { feature: "025" } },
 } satisfies Meta<typeof MyJobs>;
 export default meta;

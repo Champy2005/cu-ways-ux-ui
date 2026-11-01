@@ -1,9 +1,16 @@
 import fs from "node:fs";
 import path from "node:path";
 import { context } from "./context.mjs";
+import { nativeCall, nativeConsumers } from "./native.mjs";
 import { check } from "./check.mjs";
 import { promote } from "./baseline.mjs";
-import { current, readJSON, fingerprint, packageCommand } from "./runtime.mjs";
+import {
+  current,
+  readJSON,
+  fingerprint,
+  packageCommand,
+  targetMatcher,
+} from "./runtime.mjs";
 
 const [command, ...args] = process.argv.slice(2);
 const flag = (name: string) => {
@@ -21,7 +28,7 @@ try {
           "--host",
           "127.0.0.1",
           "--port",
-          flag("port") ?? "4190",
+          flag("port") ?? "4191",
           "--exact-port",
           "--no-open",
           "--disable-telemetry",
@@ -30,6 +37,22 @@ try {
       ).status ?? 1;
   } else if (command === "context") {
     const result = context(args.find((a) => !a.startsWith("--")) ?? "");
+    if (args.includes("--live")) {
+      for (const component of result.components) {
+        try {
+          Object.assign(component, {
+            nativeConsumers: await nativeConsumers(
+              component.source,
+              args.includes("--expanded"),
+            ),
+          });
+        } catch (error) {
+          Object.assign(component, {
+            nativeConsumers: { status: "unavailable", reason: String(error) },
+          });
+        }
+      }
+    }
     console.log(JSON.stringify(result, null, args.includes("--json") ? 0 : 2));
   } else if (command === "check") {
     process.exitCode = await check({
@@ -49,15 +72,13 @@ try {
         story: string;
         key: string;
         images: { level: string; comparison: string; file: string }[];
+        observations?: { ui: string }[];
       }[];
     } = readJSON(path.join(current, "rendered.json"));
     const target = args[0] ?? "all";
-    const records = rendered.records.filter(
-      (r) =>
-        target === "all" ||
-        r.story === target ||
-        r.story.startsWith(target + "--"),
-    );
+    const records = rendered.records.filter(targetMatcher(target));
+    if (!records.length)
+      throw Error("No captured target found; run context and check first");
     const escape = (v: string) =>
       v.replace(
         /[&<>"']/g,
@@ -84,6 +105,30 @@ try {
         .join("") +
       "</main></html>";
     fs.writeFileSync(path.join(current, "review.html"), board);
+    let nativeReview;
+    if (args.includes("--native")) {
+      try {
+        nativeReview = await nativeCall("review-create", {
+          title: "Current UX UI review",
+          description: `Report ${report.id}. Provisional design evidence; palette acceptance remains pending.`,
+          collections: [
+            {
+              title: "Selected scenarios",
+              rationale:
+                "Inspect the component and its page context in both themes.",
+              storyIds: [...new Set(records.map((r) => r.story))],
+            },
+          ],
+          changedFiles: report.scope.changedFiles,
+        });
+      } catch (error) {
+        nativeReview = {
+          status: "unavailable",
+          reason: String(error),
+          fallback: "Local evidence board",
+        };
+      }
+    }
     console.log(
       JSON.stringify({
         reportId: report.id,
@@ -91,8 +136,9 @@ try {
         referenceClass: report.referenceClass,
         previews: records
           .slice(0, 8)
-          .map((r) => `http://127.0.0.1:4190/?path=/story/${r.story}`),
+          .map((r) => `http://127.0.0.1:4191/?path=/story/${r.story}`),
         approval: "unchanged",
+        nativeReview,
       }),
     );
   } else if (command === "approve-baseline")

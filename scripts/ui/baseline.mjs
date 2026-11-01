@@ -10,7 +10,117 @@ import {
   digest,
   fingerprint,
   run,
+  acquire,
+  ownedArtifact,
+  targetMatcher,
 } from "./runtime.mjs";
+export const renderConfiguration = {
+  playwright: "1.64.1",
+  image:
+    "sha256:47b510dd9230bf0b9bfc9b20102241e577ea7a99334ab4c3ca19f19770e9b8ea",
+  platform: "linux/amd64",
+  locale: "en-GB",
+  timezone: "Asia/Bangkok",
+  deviceScaleFactor: 1,
+  animations: "disabled",
+  caret: "hide",
+  maxDiffPixelRatio: 0.0001,
+  fonts: fs
+    .readdirSync(path.join(root, "public/assets"))
+    .filter((n) => n.endsWith(".woff2"))
+    .sort()
+    .map((name) => ({
+      name,
+      sha256: digest(fs.readFileSync(path.join(root, "public/assets", name))),
+    })),
+};
+export const canonicalEnvironment =
+  "pw-linux-" + digest(JSON.stringify(renderConfiguration)).slice(0, 20);
+export function approvalFor(inspection, target, provisional) {
+  if (provisional)
+    return {
+      geometry: "pending",
+      palette: "pending",
+      source: "agent-reviewed provisional",
+    };
+  const approval = inspection.approval;
+  if (
+    approval?.source !== "user" ||
+    approval.scope !== target ||
+    !["accepted", "pending"].includes(approval.geometry) ||
+    !["accepted", "pending"].includes(approval.palette) ||
+    !approval.authorization
+  )
+    throw Error(
+      "Human approval receipt must name scope, authorization, geometry and palette separately",
+    );
+  return approval;
+}
+export function validatePromotion(
+  report,
+  rendered,
+  parent,
+  { provisional = false } = {},
+) {
+  if (
+    report.environment !== canonicalEnvironment ||
+    !report.coverage?.canonical
+  )
+    throw Error("Only the pinned canonical environment may publish references");
+  if (report.coverage?.diagnosticSubset)
+    throw Error("Diagnostic subsets cannot publish references");
+  for (const name of [
+    "format",
+    "types",
+    "eslint",
+    "styles",
+    "unit",
+    "stories",
+    "build",
+  ])
+    if (!report.gates.some((g) => g.name === name && g.passed))
+      throw Error(`Required gate ${name} is incomplete`);
+  if (report.failures.length || rendered.failures.length)
+    throw Error("Failed checks cannot publish references");
+  if (
+    rendered.records.some(
+      (r) => r.errors?.length || r.invariants?.length || r.images.length !== 3,
+    )
+  )
+    throw Error("Incomplete or failed capture records");
+  if (parent.classification === "missing") {
+    if (!provisional)
+      throw Error("Initial reference must be explicitly provisional");
+    const legacy = new Set(
+      rendered.records.map((r) => r.story).filter((s) => s.startsWith("us")),
+    );
+    if (!report.coverage.fullRequested || legacy.size !== 94)
+      throw Error("Bootstrap requires full 94-scenario coverage");
+    for (const id of legacy)
+      for (const theme of ["light", "dark"])
+        for (const width of [390, 1440])
+          if (
+            !rendered.records.some(
+              (r) =>
+                r.story === id &&
+                r.theme === theme &&
+                r.viewport.width === width,
+            )
+          )
+            throw Error("Bootstrap core matrix is incomplete");
+  } else {
+    if (provisional)
+      throw Error("Provisional publication is reserved for initial bootstrap");
+    if (
+      report.reference !== "valid" ||
+      parent.environment !== report.environment
+    )
+      throw Error("Active reference is unavailable or incompatible");
+    if (provisional && parent.classification !== "provisional")
+      throw Error("Provisional promotion cannot downgrade approved references");
+  }
+  return true;
+}
 
 export function unpack(bytes, directory) {
   const names = new Set();
@@ -109,7 +219,7 @@ export function retrieve(environment) {
     manifest,
   };
 }
-export function promote({
+function promoteOwned({
   target,
   reportId,
   authorization,
@@ -131,7 +241,7 @@ export function promote({
     throw Error(
       "Provide a scoped inspection receipt; capturing is not inspection.",
     );
-  const inspection = readJSON(path.resolve(inspectionFile));
+  const inspection = readJSON(ownedArtifact(path.resolve(inspectionFile)));
   if (
     inspection.reportId !== report.id ||
     !inspection.reviewer ||
@@ -139,12 +249,12 @@ export function promote({
   )
     throw Error("Inspection receipt does not match report.");
   const rendered = readJSON(path.join(current, "rendered.json"));
-  const entries = rendered.records.filter(
-    (r) =>
-      target === "all" ||
-      r.story === target ||
-      r.story.startsWith(target + "--"),
-  );
+  if (
+    report.renderedDigest !==
+    digest(fs.readFileSync(path.join(current, "rendered.json")))
+  )
+    throw Error("Rendered evidence changed since checking");
+  const entries = rendered.records.filter(targetMatcher(target));
   if (!entries.length || entries.some((r) => r.status === "failed"))
     throw Error("Target is missing or failed.");
   const required = entries.flatMap((r) => r.images.map((i) => i.file));
@@ -152,31 +262,50 @@ export function promote({
     throw Error(
       "Target images have not all been inspected in the scoped receipt.",
     );
+  const acceptance = approvalFor(inspection, target, provisional);
+  const entryClassification = provisional
+    ? "provisional"
+    : acceptance.geometry === "accepted" && acceptance.palette === "accepted"
+      ? "human-approved"
+      : "human-reviewed";
   const pointer = path.join(root, "baseline/reference.json");
   const parent = readJSON(pointer);
+  validatePromotion(report, rendered, parent, { provisional });
   if (
     report.referenceId !== parent.id &&
     !(parent.classification === "missing" && !report.referenceId)
   )
     throw Error("Reference parent changed; rerun checking.");
-  const retained = fs.existsSync(
-    path.join(artifacts, "reference/manifest.json"),
+  const retained =
+    parent.classification !== "missing" &&
+    fs.existsSync(path.join(artifacts, "reference/manifest.json"))
+      ? readJSON(path.join(artifacts, "reference/manifest.json"))
+      : { images: [], records: [] };
+  if (
+    parent.classification !== "missing" &&
+    verifyReference(parent, retained, report.environment) !== "valid"
   )
-    ? readJSON(path.join(artifacts, "reference/manifest.json"))
-    : { images: [] };
+    throw Error("Retained reference identity is invalid");
   const images = new Map(retained.images.map((i) => [i.file, i]));
   const files = {};
-  for (const image of retained.images)
+  for (const image of retained.images) {
     files[image.file] = fs.readFileSync(
       path.join(artifacts, "reference", image.file),
     );
+    if (digest(files[image.file]) !== image.sha256)
+      throw Error("Retained reference checksum mismatch");
+  }
   for (const record of entries)
     for (const image of record.images) {
       files[image.file] = fs.readFileSync(path.join(current, image.file));
+      if (digest(files[image.file]) !== image.sha256)
+        throw Error("Candidate image changed after checking");
       images.set(image.file, {
         ...image,
         sourceFingerprint: report.sourceFingerprint,
-        classification: provisional ? "provisional" : "human-approved",
+        classification: entryClassification,
+        acceptance,
+        inspectionMethod: inspection.methods?.[image.file] ?? "individual",
       });
     }
   const id = digest(
@@ -191,9 +320,22 @@ export function promote({
     schemaVersion: 1,
     id,
     environment: report.environment,
-    classification: provisional ? "provisional" : "human-approved",
+    renderConfiguration,
+    browser: report.browser,
+    classification:
+      new Set([...images.values()].map((i) => i.classification)).size === 1
+        ? [...images.values()][0].classification
+        : "mixed",
     images: [...images.values()],
-    records: rendered.records,
+    records: [
+      ...new Map([
+        ...(retained.records ?? []).map((r) => [r.key, r]),
+        ...entries.map((r) => [
+          r.key,
+          { ...r, sourceFingerprint: report.sourceFingerprint },
+        ]),
+      ]).values(),
+    ],
     inspection: { reviewer: inspection.reviewer, authorization, provisional },
   };
   files["manifest.json"] = strToU8(JSON.stringify(manifest));
@@ -251,6 +393,8 @@ export function promote({
     );
   if (JSON.stringify(readJSON(pointer)) !== JSON.stringify(parent))
     throw Error("Concurrent reference promotion; previous pointer retained.");
+  if (report.sourceFingerprint !== fingerprint())
+    throw Error("Source changed during publication; previous pointer retained");
   const publish = run("gh", [
     "release",
     "edit",
@@ -271,7 +415,16 @@ export function promote({
     classification: manifest.classification,
     previous: parent.id ? { tag: parent.tag, id: parent.id } : null,
     humanAcceptance: {
-      palette: provisional ? "pending" : "explicit scoped authorization",
+      palette: manifest.images.every(
+        (i) => i.acceptance?.palette === "accepted",
+      )
+        ? "accepted"
+        : "pending",
+      geometry: manifest.images.every(
+        (i) => i.acceptance?.geometry === "accepted",
+      )
+        ? "accepted"
+        : "pending",
     },
   });
   return {
@@ -280,4 +433,12 @@ export function promote({
     sha256: digest(bytes),
     next: "Review and commit the descriptor separately. Previous release remains available; no automatic merge or deletion.",
   };
+}
+export function promote(options) {
+  const release = acquire();
+  try {
+    return promoteOwned(options);
+  } finally {
+    release();
+  }
 }

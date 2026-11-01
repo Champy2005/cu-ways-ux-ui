@@ -20,6 +20,8 @@ export async function verifyScenario(
 ) {
   const canvas = within(element);
   const doc = within(element.ownerDocument.body);
+  const interactionTest =
+    import.meta.env.MODE === "test" && !window.__UI_CAPTURE__;
   await expect(canvas.getByRole("main", { hidden: true })).toBeVisible();
   await expect(
     canvas.getByRole("heading", { level: 1, hidden: true }),
@@ -43,12 +45,19 @@ export async function verifyScenario(
         }),
       ).toBeVisible();
       await expect(canvas.getAllByText("In Progress")).toHaveLength(1);
+      await expect(
+        element.querySelector('[data-ui="LifecycleBadge"]'),
+      ).toHaveAttribute("data-status", state.job.status);
     }
     if (["A02", "A03", "A05", "B01", "B04"].includes(id))
       await expect(doc.getByRole("dialog")).toBeVisible();
-    if (id === "B01")
+    if (id === "B01") {
       await expect(doc.getByRole("alert")).toHaveTextContent("HTTP");
-    if (!window.__UI_CAPTURE__ && id === "A01") {
+      await expect(
+        doc.getByRole("textbox", { name: "Delivery link" }),
+      ).toHaveFocus();
+    }
+    if (interactionTest && id === "A01") {
       await userEvent.click(canvas.getByRole("button", { name: "Add proof" }));
       await userEvent.type(
         doc.getByRole("textbox", { name: "Delivery link" }),
@@ -86,9 +95,62 @@ export async function verifyScenario(
       await expect(
         canvas.getByText(state.status, { exact: true }),
       ).toBeVisible();
+      await expect(
+        element.querySelector('[data-ui="LifecycleBadge"]'),
+      ).toHaveAttribute("data-status", state.status);
+    }
+    if (
+      feature === "027" &&
+      ["B03", "B04", "A06", "R02", "R03", "R04"].includes(id)
+    )
+      await expect(
+        canvas.queryByRole("button", {
+          name: "Run completion check",
+          hidden: true,
+        }),
+      ).not.toBeInTheDocument();
+    if (feature === "028" && ["B01", "B02", "B03", "B04", "A06"].includes(id))
+      await expect(
+        canvas.queryByRole("button", {
+          name: "Cancel job",
+          hidden: true,
+        }),
+      ).not.toBeInTheDocument();
+    if (feature === "028" && id === "B04")
+      await expect(
+        canvas.getByRole("button", { name: "Check job status" }),
+      ).toBeEnabled();
+    if (
+      interactionTest &&
+      feature === "027" &&
+      ["A01", "A03", "B01", "B02"].includes(id)
+    ) {
+      await userEvent.click(
+        canvas.getByRole("button", { name: "Run completion check" }),
+      );
+      await expect(doc.getByRole("dialog")).toHaveTextContent(
+        id === "A03" ? "Complete job" : "Requirements incomplete",
+      );
+    }
+    if (
+      interactionTest &&
+      feature === "028" &&
+      ["A01", "A02", "A03"].includes(id)
+    ) {
+      await userEvent.click(canvas.getByRole("button", { name: "Cancel job" }));
+      await expect(doc.getByRole("dialog")).toHaveTextContent(
+        "Confirm cancellation",
+      );
+      await userEvent.click(doc.getByRole("button", { name: "Keep job" }));
+      await waitFor(() =>
+        expect(doc.queryByRole("dialog")).not.toBeInTheDocument(),
+      );
+      await expect(
+        canvas.getByText(state.status, { exact: true }),
+      ).toBeVisible();
     }
     if (state.modal) await expect(doc.getByRole("dialog")).toBeVisible();
-    if (!window.__UI_CAPTURE__ && id === "A04") {
+    if (interactionTest && id === "A04") {
       await userEvent.click(
         doc.getByRole("button", {
           name:
@@ -133,7 +195,7 @@ export async function verifyScenario(
           canvas.getByText("No reviews match this rating"),
         ).toBeVisible();
     }
-    if (!window.__UI_CAPTURE__ && id === "A04") {
+    if (interactionTest && id === "A04") {
       await userEvent.click(canvas.getByRole("button", { name: "Read more" }));
       await expect(
         canvas.getByRole("button", { name: "Show less" }),
@@ -141,6 +203,18 @@ export async function verifyScenario(
     }
   } else {
     const state = createDemoState({ scenarioId: id });
+    const summaries = element.querySelectorAll('[data-ui="JobSummary"]');
+    if (
+      state.route === "list" &&
+      state.privateDataVisible &&
+      !["L01", "L03", "L04", "L05", "L06", "L08", "L09"].includes(id)
+    ) {
+      await expect(summaries.length).toBeGreaterThan(0);
+      for (const summary of summaries)
+        await expect(
+          summary.querySelectorAll('[data-ui="LifecycleBadge"]'),
+        ).toHaveLength(1);
+    }
     if (!state.privateDataVisible || id === "L09")
       await expect(canvas.getByRole("status")).toBeVisible();
     else if (["L01", "L08", "D01", "R01", "R13"].includes(id))
@@ -151,13 +225,17 @@ export async function verifyScenario(
       await expect(
         canvas.getByRole("button", { name: "View all my jobs" }),
       ).toBeEnabled();
-    else if (state.route === "detail" && id !== "D03")
+    else if (state.route === "detail" && !["D03", "D08"].includes(id))
       await expect(
         canvas.getByRole("heading", { name: "Job overview", hidden: true }),
       ).toBeVisible();
+    if (id === "D08")
+      await expect(
+        canvas.queryByText("THB", { exact: false }),
+      ).not.toBeInTheDocument();
     if (state.confirmationOpen)
       await expect(doc.getByRole("dialog")).toBeVisible();
-    if (!window.__UI_CAPTURE__ && id === "C01") {
+    if (interactionTest && id === "C01") {
       await userEvent.click(doc.getByRole("button", { name: "Start job" }));
       await expect(doc.getByRole("dialog")).toHaveTextContent("Submitting");
       await userEvent.click(doc.getByRole("button", { name: "Close" }));

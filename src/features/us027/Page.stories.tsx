@@ -6,7 +6,9 @@ const meta = {
   title: "Pages/US027",
   component: TaskPage,
   args: { feature: "027", timing: "hold" },
-  argTypes: { timing: { control: "select", options: ["hold", "auto"] } },
+  argTypes: {
+    timing: { control: "select", options: ["hold", "auto", "stalled"] },
+  },
   parameters: { ui: { feature: "027" } },
 } satisfies Meta<typeof TaskPage>;
 export default meta;

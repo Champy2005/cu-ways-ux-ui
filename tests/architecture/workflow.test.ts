@@ -2,8 +2,18 @@ import { test, expect } from "vitest";
 import { zipSync, strToU8 } from "fflate";
 import fs from "node:fs";
 import path from "node:path";
-import { sourceScope, digest } from "../../scripts/ui/runtime.mjs";
-import { unpack, verifyReference } from "../../scripts/ui/baseline.mjs";
+import {
+  sourceScope,
+  digest,
+  ownedArtifact,
+} from "../../scripts/ui/runtime.mjs";
+import {
+  unpack,
+  verifyReference,
+  validatePromotion,
+  canonicalEnvironment,
+  approvalFor,
+} from "../../scripts/ui/baseline.mjs";
 import {
   compareEquivalent,
   compareProtected,
@@ -21,6 +31,78 @@ test("local changes cannot repaint shared compositions", () =>
       intent: "local",
     }).violations,
   ).toHaveLength(1));
+test("local target rejects another feature even when its own change is valid", () => {
+  expect(
+    sourceScope(
+      [
+        "src/features/us026/ProofDelivery.tsx",
+        "src/features/us034/Reviews.tsx",
+      ],
+      { intent: "local", target: "us026" },
+    ).violations,
+  ).toEqual(["src/features/us034/Reviews.tsx"]);
+});
+test("scope inputs cannot read arbitrary files", () => {
+  expect(() => ownedArtifact("package.json")).toThrow("escapes");
+  expect(ownedArtifact(".artifacts/ui/scope.json")).toContain("scope.json");
+});
+test("protected geometry movement and added controls are detected", () => {
+  const item = {
+    key: "LifecycleBadge/Accepted/0",
+    values: { color: "blue" },
+    bounds: { x: 10, y: 10, width: 100, height: 25 },
+  };
+  expect(
+    compareProtected([item], [{ ...item, bounds: { ...item.bounds, x: 30 } }], {
+      geometry: true,
+    }),
+  ).toHaveLength(1);
+  expect(compareProtected([], [item])).toHaveLength(1);
+});
+test("review does not grant promotion to exploratory or incomplete evidence", () => {
+  const report = {
+    environment: canonicalEnvironment,
+    coverage: { canonical: true, fullRequested: false },
+    gates: [
+      "format",
+      "types",
+      "eslint",
+      "styles",
+      "unit",
+      "stories",
+      "build",
+    ].map((name) => ({ name, passed: true })),
+    failures: [],
+  };
+  const rendered = { failures: [], records: [] };
+  expect(() =>
+    validatePromotion(
+      { ...report, environment: "native-win32-x64" },
+      rendered,
+      { classification: "missing" },
+      { provisional: true },
+    ),
+  ).toThrow("canonical");
+  expect(() =>
+    validatePromotion(
+      { ...report, coverage: { ...report.coverage, diagnosticSubset: true } },
+      rendered,
+      { classification: "missing" },
+      { provisional: true },
+    ),
+  ).toThrow("Diagnostic");
+  expect(() =>
+    validatePromotion(
+      report,
+      rendered,
+      { classification: "missing" },
+      { provisional: true },
+    ),
+  ).toThrow("94");
+  expect(() =>
+    validatePromotion(report, rendered, { classification: "missing" }),
+  ).toThrow("provisional");
+});
 test("local feature edits select their complete scenarios", () => {
   const s = sourceScope(["src/features/us026/ProofDelivery.tsx"], {
     intent: "local",
@@ -30,6 +112,26 @@ test("local feature edits select their complete scenarios", () => {
 });
 test("unknown or clean source scope expands rather than silently passing", () =>
   expect(sourceScope([]).full).toBe(true));
+test("scoped geometry approval preserves pending palette", () => {
+  const approval = approvalFor(
+    {
+      approval: {
+        source: "user",
+        scope: "us026",
+        authorization: "Explicit geometry review",
+        geometry: "accepted",
+        palette: "pending",
+      },
+    },
+    "us026",
+    false,
+  );
+  expect(approval.palette).toBe("pending");
+  expect(() => approvalFor({}, "all", false)).toThrow("receipt");
+  expect(() =>
+    approvalFor({ approval: { ...approval, scope: "us034" } }, "us026", false),
+  ).toThrow("receipt");
+});
 test("cross-instance style invariants detect pre-existing drift without a baseline", () => {
   expect(compareEquivalent({ color: "blue" }, { color: "pink" })).toEqual([
     "color",

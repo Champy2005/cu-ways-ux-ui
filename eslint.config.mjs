@@ -27,7 +27,7 @@ export default ts.config(
     rules: { "@typescript-eslint/no-unused-vars": "off" },
   },
   {
-    files: ["src/**/*.{ts,tsx}"],
+    files: ["src/**/*.{ts,tsx,mjs}"],
     plugins: { cuways: { rules: { ownership: ownershipRule } } },
     rules: { "cuways/ownership": "error" },
   },

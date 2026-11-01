@@ -6,7 +6,9 @@ const meta = {
   title: "Pages/US026",
   component: ProofDelivery,
   args: { timing: "hold" },
-  argTypes: { timing: { control: "select", options: ["hold", "auto"] } },
+  argTypes: {
+    timing: { control: "select", options: ["hold", "auto", "stalled"] },
+  },
   parameters: { ui: { feature: "026" } },
 } satisfies Meta<typeof ProofDelivery>;
 export default meta;
@@ -70,7 +72,7 @@ export const A05: Story = {
     ui: {
       legacyId: "A05",
       expected:
-        "Keep existing evidence visible below the inline form in the same saved-proof workspace.",
+        "Keep existing evidence in the saved-proof workspace while editing in a separate content dialog, without shifting the list.",
     },
   },
   play: async ({ canvasElement }) =>

@@ -1,15 +1,13 @@
 import { defineConfig } from "@playwright/test";
+const output = process.env.UI_RUN_DIR ?? ".artifacts/ui/current";
 export default defineConfig({
   testDir: "./scripts/ui",
   testMatch: "rendered.spec.mjs",
   workers: 1,
   retries: 0,
   timeout: 900000,
-  outputDir: ".artifacts/ui/current/playwright",
-  reporter: [
-    ["list"],
-    ["json", { outputFile: ".artifacts/ui/current/playwright.json" }],
-  ],
+  outputDir: `${output}/playwright`,
+  reporter: [["list"], ["json", { outputFile: `${output}/playwright.json` }]],
   snapshotPathTemplate:
     "{testDir}/../../.artifacts/ui/reference/images/{arg}{ext}",
   use: {

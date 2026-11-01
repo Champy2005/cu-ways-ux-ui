@@ -4,8 +4,77 @@ import crypto from "node:crypto";
 import { spawnSync } from "node:child_process";
 export const root = process.cwd();
 export const artifacts = path.join(root, ".artifacts/ui");
-export const current = path.join(artifacts, "current");
+export let current = process.env.UI_RUN_DIR ?? path.join(artifacts, "current");
+export function ownedArtifact(file) {
+  const resolved = path.resolve(file);
+  const base = path.resolve(artifacts) + path.sep;
+  if (!resolved.startsWith(base))
+    throw Error("Artifact path escapes the owned directory");
+  if (fs.existsSync(resolved) && !fs.realpathSync(resolved).startsWith(base))
+    throw Error("Artifact symlink escapes ownership");
+  return resolved;
+}
+export function stageRun() {
+  const destination = ownedArtifact(path.join(artifacts, "current"));
+  const staging = ownedArtifact(path.join(artifacts, "staging"));
+  const previous = ownedArtifact(path.join(artifacts, "previous"));
+  if (!fs.existsSync(destination) && fs.existsSync(previous))
+    fs.renameSync(previous, destination);
+  if (fs.existsSync(staging)) {
+    const failed = ownedArtifact(path.join(artifacts, "failed"));
+    if (fs.existsSync(failed))
+      fs.rmSync(failed, { recursive: true, force: true });
+    fs.renameSync(staging, failed);
+  }
+  fs.mkdirSync(staging, { recursive: true });
+  current = staging;
+  process.env.UI_RUN_DIR = staging;
+  let committed = false;
+  return {
+    commit() {
+      if (!fs.existsSync(path.join(staging, "report.json")))
+        throw Error("Incomplete staged report");
+      if (fs.existsSync(previous))
+        fs.rmSync(previous, { recursive: true, force: true });
+      if (fs.existsSync(destination)) fs.renameSync(destination, previous);
+      try {
+        fs.renameSync(staging, destination);
+      } catch (error) {
+        if (fs.existsSync(previous)) fs.renameSync(previous, destination);
+        throw error;
+      }
+      if (fs.existsSync(previous))
+        fs.rmSync(previous, { recursive: true, force: true });
+      committed = true;
+      current = destination;
+      delete process.env.UI_RUN_DIR;
+    },
+    finish() {
+      if (!committed && fs.existsSync(staging)) {
+        const failed = ownedArtifact(path.join(artifacts, "failed"));
+        if (fs.existsSync(failed))
+          fs.rmSync(failed, { recursive: true, force: true });
+        fs.renameSync(staging, failed);
+      }
+      current = destination;
+      delete process.env.UI_RUN_DIR;
+    },
+  };
+}
 export const readJSON = (p) => JSON.parse(fs.readFileSync(p, "utf8"));
+export function targetMatcher(target) {
+  const prefs = readJSON(path.join(root, "preferences/current.json"));
+  const component = prefs.components.find(
+    (c) =>
+      c.id.toLowerCase() === target.toLowerCase() ||
+      c.aliases.some((a) => a.toLowerCase() === target.toLowerCase()),
+  );
+  return (record) =>
+    target === "all" ||
+    record.story === target ||
+    record.story.startsWith(target + "--") ||
+    (!!component && record.observations?.some((n) => n.ui === component.id));
+}
 export function writeJSON(p, value) {
   fs.mkdirSync(path.dirname(p), { recursive: true });
   fs.writeFileSync(p, JSON.stringify(value, null, 2) + "\n");
@@ -118,14 +187,41 @@ export function changedFiles() {
     reason: "git merge base with main",
   };
 }
+export function sourceHygiene() {
+  const tracked = (git(["ls-files", "-z"]) ?? "").split("\0").filter(Boolean);
+  const generated = tracked.filter((p) =>
+    /(^|\/)(node_modules|storybook-static|\.artifacts|playwright-report|test-results|coverage|evidence)(\/|$)|\.zip$/.test(
+      p,
+    ),
+  );
+  if (generated.length)
+    throw Error(
+      "Generated evidence/build output is tracked: " + generated.join(", "),
+    );
+  return {
+    files: tracked.length,
+    bytes: tracked.reduce(
+      (sum, p) => sum + (fs.existsSync(p) ? fs.statSync(p).size : 0),
+      0,
+    ),
+  };
+}
 export function sourceScope(changes, declaration = {}) {
+  const targetFeature =
+    declaration.target?.match(/(?:us)?(025|026|027|028|034)/)?.[1] ??
+    (declaration.target === "proof-delivery" ? "026" : null);
   const forbidden =
     declaration.intent === "local"
       ? changes.filter(
           (p) =>
             p.startsWith("src/design-system/") ||
             p.startsWith("src/features/shared/") ||
-            p.startsWith(".storybook/"),
+            p.startsWith(".storybook/") ||
+            Boolean(
+              targetFeature &&
+              p.match(/^src\/features\/us(\d{3})\//)?.[1] &&
+              !p.startsWith(`src/features/us${targetFeature}/`),
+            ),
         )
       : [];
   const global = changes.some((p) =>
