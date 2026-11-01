@@ -1,3 +1,4 @@
+import { WorkbenchFrame as AppFrame } from "../shared/WorkbenchFrame";
 import { useReducer, useEffect } from "react";
 import {
   Action,
@@ -11,7 +12,6 @@ import {
   type JobStatus,
 } from "../../design-system/components/primitives";
 import {
-  AppFrame,
   Card,
   Columns,
   ConfirmationActions,
@@ -24,7 +24,7 @@ import {
 import { createDemoState, transitionDemo } from "./model.mjs";
 import { FIXTURES, SCENARIO_BY_ID } from "./scenarios.mjs";
 import { mockJobRecords } from "./records.mjs";
-import { money, useOperation, type Timing } from "../shared/operations";
+import { money, date, useOperation, type Timing } from "../shared/operations";
 import s from "../shared/features.module.css";
 type JobEvent = { type: string; [key: string]: unknown };
 export function MyJobs({
@@ -289,7 +289,9 @@ export function MyJobs({
                                 },
                                 {
                                   label: "Deadline",
-                                  value: job.deadline ?? "Not specified",
+                                  value: job.deadline
+                                    ? date(job.deadline)
+                                    : "Not specified",
                                 },
                               ]}
                               action={
@@ -334,11 +336,15 @@ export function MyJobs({
                         { label: "Creator", value: selected.creator },
                         {
                           label: "Agreed delivery",
-                          value: selected.deliveryDate,
+                          value: selected.deliveryDate
+                            ? date(selected.deliveryDate)
+                            : "Not specified",
                         },
                         {
                           label: "Deadline",
-                          value: selected.deadline ?? "Not specified",
+                          value: selected.deadline
+                            ? date(selected.deadline)
+                            : "Not specified",
                         },
                         {
                           label: "Target responses",

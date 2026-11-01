@@ -62,6 +62,7 @@ try {
       full: args.includes("--full"),
       native: args.includes("--native"),
       smoke: args.includes("--smoke"),
+      stress: args.includes("--stress"),
     });
   } else if (command === "review") {
     const report = readJSON(path.join(current, "report.json"));

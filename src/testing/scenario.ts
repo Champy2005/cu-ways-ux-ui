@@ -64,9 +64,7 @@ export async function verifyScenario(
         "https://example.com/proof/new",
       );
       await userEvent.click(doc.getByRole("button", { name: "Save proof" }));
-      await expect(
-        doc.getByRole("button", { name: "Save proof" }),
-      ).toBeDisabled();
+      await expect(doc.getByRole("button", { name: "Saving…" })).toBeDisabled();
       await userEvent.click(doc.getByRole("button", { name: "Close" }));
       await waitFor(() =>
         expect(doc.queryByRole("dialog")).not.toBeInTheDocument(),

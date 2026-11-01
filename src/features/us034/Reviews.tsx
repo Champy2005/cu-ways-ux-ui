@@ -1,3 +1,4 @@
+import { WorkbenchFrame as AppFrame } from "../shared/WorkbenchFrame";
 import { useReducer } from "react";
 import {
   Action,
@@ -9,12 +10,7 @@ import {
   Pagination,
   SelectControl,
 } from "../../design-system/components/primitives";
-import {
-  AppFrame,
-  Card,
-  Columns,
-  Stack,
-} from "../../design-system/compositions/layout";
+import { Card, Columns, Stack } from "../../design-system/compositions/layout";
 import * as model from "./model.mjs";
 import { date, useOperation, type Timing } from "../shared/operations";
 import s from "../shared/features.module.css";

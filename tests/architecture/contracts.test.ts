@@ -115,6 +115,21 @@ describe("operation guards", () => {
 });
 describe("ownership negative fixtures", () => {
   const lint = new ESLint();
+  test("preview routes cannot leak back into reusable runtime components", async () => {
+    const code = 'export const bad="?id=us025--l-02";';
+    const [bad] = await lint.lintText(code, {
+      filePath: "src/design-system/components/fixture.tsx",
+    });
+    const [adapter] = await lint.lintText(code, {
+      filePath: "src/features/shared/fixture.tsx",
+    });
+    expect(bad.messages.some((m) => m.ruleId === "cuways/ownership")).toBe(
+      true,
+    );
+    expect(adapter.messages.some((m) => m.ruleId === "cuways/ownership")).toBe(
+      false,
+    );
+  });
   test("feature paint overrides and duplicate protected markup fail", async () => {
     const results = await lint.lintText(
       'export function Bad(){return <><LifecycleBadge status="Accepted" style={{color:"red"}}/><span data-ui="LifecycleBadge">Accepted</span></>}',

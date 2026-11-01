@@ -42,6 +42,7 @@ export const ownershipRule = {
     type: "problem",
     schema: [],
     messages: {
+      boundary: "{{reason}}",
       override:
         "{{name}} owns its internal styling. Edit its canonical owner or use a documented semantic variant.",
       duplicate:
@@ -49,7 +50,27 @@ export const ownershipRule = {
     },
   },
   create(context) {
+    const previewRoute = (node) => {
+      const value =
+        node.type === "TemplateElement" ? node.value.raw : node.value;
+      if (
+        context.filename.replaceAll("\\", "/").includes("/design-system/") &&
+        !context.filename.includes(".stories.") &&
+        typeof value === "string" &&
+        /(?:[?&](?:id=us(?:\d{3}--|$)|path=\/story\/)|^us\d{3}--)/.test(value)
+      )
+        context.report({
+          node,
+          messageId: "boundary",
+          data: {
+            reason:
+              "Preview routes belong in features/shared/WorkbenchFrame; reusable UI takes navigation props.",
+          },
+        });
+    };
     return {
+      Literal: previewRoute,
+      TemplateElement: previewRoute,
       JSXElement(node) {
         if (
           !context.filename.replaceAll("\\", "/").includes("/features/") ||

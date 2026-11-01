@@ -1,3 +1,4 @@
+import { WorkbenchFrame as AppFrame } from "./WorkbenchFrame";
 import { useReducer } from "react";
 import {
   Action,
@@ -10,7 +11,6 @@ import {
   type JobStatus,
 } from "../../design-system/components/primitives";
 import {
-  AppFrame,
   Card,
   Columns,
   ConfirmationActions,

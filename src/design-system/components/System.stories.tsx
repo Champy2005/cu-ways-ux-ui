@@ -20,7 +20,7 @@ const meta = {
   component: LifecycleBadge,
   parameters: { ui: { owner: "design-system" } },
   render: () => (
-    <div style={{ padding: "2rem", maxWidth: "60rem" }}>
+    <div style={{ padding: "clamp(12px, 3vw, 32px)", maxWidth: "60rem" }}>
       <Stack>
         <Card title="Lifecycle">
           <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem" }}>

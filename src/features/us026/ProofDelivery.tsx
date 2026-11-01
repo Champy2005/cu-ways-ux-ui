@@ -1,3 +1,4 @@
+import { WorkbenchFrame as AppFrame } from "../shared/WorkbenchFrame";
 import { useReducer, useState } from "react";
 import {
   Action,
@@ -8,7 +9,6 @@ import {
   Loading,
 } from "../../design-system/components/primitives";
 import {
-  AppFrame,
   Card,
   ConfirmationActions,
   OperationProgress,
@@ -265,7 +265,7 @@ export function ProofDelivery({
                     type="submit"
                     busy={state.pending === "save"}
                   >
-                    Save proof
+                    {state.pending === "save" ? "Saving…" : "Save proof"}
                   </Action>
                 }
               />

@@ -73,6 +73,7 @@ export async function check(options) {
   const gates = [];
   let footprint;
   let expectedStories = [];
+  let requiredStories = [];
   const started = Date.now();
   const gate = (name, pkg, args) => {
     const at = Date.now();
@@ -199,7 +200,7 @@ export async function check(options) {
         intent: declaration.intent,
         region: declaration.region,
         allowedProperties: declaration.allowedProperties ?? [],
-        stress: !!options.full && !options.smoke,
+        stress: !!options.stress || (!!options.full && !options.smoke),
         viewports: [
           { width: 390, height: 844 },
           { width: 1440, height: 900 },
@@ -211,14 +212,17 @@ export async function check(options) {
           [
             "system--contracts",
             "us025--l-02",
+            "us025--d-02",
             "us026--a-01",
             "us026--a-03",
             "us027--a-02",
+            "us027--a-05",
             "us028--a-04",
             "us034--a-01",
             "us034--a-04",
           ].includes(e.id),
         );
+      requiredStories = selected.map((s) => s.id);
       expectedStories = input.stories.map((s) => s.id);
       writeJSON(path.join(current, "capture-input.json"), input);
       let capture;
@@ -295,6 +299,7 @@ export async function check(options) {
       });
     const statuses = rendered?.records.map((r) => r.status) ?? [];
     const visualPending =
+      !!options.smoke ||
       reference.status !== "valid" ||
       statuses.some((s) => ["inconclusive", "intended-pending"].includes(s)) ||
       !rendered;
@@ -328,6 +333,10 @@ export async function check(options) {
           known?.source ??
           (feature ? `src/features/us${feature}` : "global owners"),
         expectedStories,
+        requiredStories,
+        unvisitedStories: requiredStories.filter(
+          (s) => !rendered?.checkedStories.includes(s),
+        ),
         observedConsumers: rendered
           ? Object.fromEntries(
               [

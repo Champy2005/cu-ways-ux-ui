@@ -23,7 +23,7 @@ pnpm ui check --full
 pnpm ui review all
 ```
 
-`--scope .artifacts/ui/scope.json` supplies current local/shared/global intent, target and optional canonical region. Intent never suppresses checks required by actual source changes. Unknown native tracking reach expands to full verification. `--native` is exploratory, never equivalent to Linux goldens. `--smoke` is a diagnostic subset, never full acceptance.
+`--scope .artifacts/ui/scope.json` supplies current local/shared/global intent, target and optional canonical region. Intent never suppresses checks required by actual source changes. Unknown native tracking reach expands to full verification. `--native` is exploratory, never equivalent to Linux goldens. `--smoke` is a diagnostic subset and always remains inconclusive; add `--stress` to diagnose representative narrow, large, enlarged-text and reduced-transparency cases. Diagnostics cannot approve baselines or replace required full coverage.
 
 Exit codes: **0** completed automated comparison; **1** defect/regression; **2** missing evidence or intended visual difference awaiting inspection; **3** usage/setup error. Agent inspection and human palette acceptance are separate from test results. Start with `.artifacts/ui/current/report.json`; full diagnostics stay local.
 
@@ -37,6 +37,8 @@ Exit codes: **0** completed automated comparison; **1** defect/regression; **2**
 Quiet content hover stays transparent; pagination icons have their named tonal circle. Purple/violet is rejected. Current replacement palette still awaits human acceptance.
 
 ## References and review
+
+Close detail captures exclude only fixed chrome outside the subject, so navigation cannot cover its controls. Context and page captures retain the real chrome; tall contexts anchor to the parent heading. Each image records this treatment, and browser checks independently enforce viewport pinning and content clearance. This does not hide controls inside the reviewed component.
 
 Private Release archives hold the active reference and one rollback set. The small `baseline/reference.json` pins checksum/environment. Missing or incompatible references return **inconclusive**; checks never create approved images automatically.
 

@@ -4,7 +4,7 @@
   justify-content: center;
   gap: 0.5rem;
   min-height: 3rem;
-  padding: 0.65rem 1.125rem;
+  padding: 0.65rem clamp(12px, 3vw, 1.125rem);
   border: 1px solid var(--action-utility-border);
   border-radius: 0.625rem;
   background: var(--action-utility-fill);
@@ -60,7 +60,8 @@
   font-size: 0.8125rem;
   font-weight: 600;
   line-height: 1.4;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .status svg,
 .tag svg {

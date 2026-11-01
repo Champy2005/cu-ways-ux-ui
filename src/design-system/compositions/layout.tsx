@@ -156,12 +156,22 @@ export function JobSummary({
     </article>
   );
 }
+export type NavigationItem = {
+  id: string;
+  label: string;
+  href: string;
+  icon: Parameters<typeof Icon>[0]["name"];
+};
 export function AppFrame({
   title,
   children,
   onBack,
-  backLabel = "Story library",
-  feature,
+  backLabel = "Back",
+  activeKey,
+  navigation,
+  mobileNavigation = navigation,
+  brandHref = navigation[0]?.href ?? "#",
+  workspaceLinks = [],
   busy = false,
   headingAction,
   action,
@@ -170,7 +180,11 @@ export function AppFrame({
   children: ReactNode;
   onBack?: () => void;
   backLabel?: string;
-  feature: string;
+  activeKey?: string;
+  navigation: NavigationItem[];
+  mobileNavigation?: NavigationItem[];
+  brandHref?: string;
+  workspaceLinks?: { label: string; href: string }[];
   busy?: boolean;
   headingAction?: ReactNode;
   action?: ReactNode;
@@ -182,22 +196,8 @@ export function AppFrame({
     frame = useRef<HTMLDivElement>(null),
     dock = useRef<HTMLDivElement>(null);
   const { theme, material, toggle } = useTheme();
-  const destination = (id: string) =>
-    "?id=us" + id + "--" + (id === "025" ? "l-02" : "a-01") + "&viewMode=story";
-  const nav = [
-    { id: "025", label: "My Jobs", icon: "jobs" },
-    { id: "026", label: "Proof", icon: "services" },
-    { id: "027", label: "Completion", icon: "invites" },
-    { id: "028", label: "Cancellation", icon: "close" },
-    { id: "034", label: "Reviews", icon: "profile" },
-  ] as const;
-  const mobile = [
-    { id: "025", label: "Home", icon: "home" },
-    { id: "026", label: "Services", icon: "services" },
-    { id: "025", label: "Jobs", icon: "jobs" },
-    { id: "027", label: "Invites", icon: "invites" },
-    { id: "034", label: "Profile", icon: "profile" },
-  ] as const;
+  const nav = navigation,
+    mobile = mobileNavigation;
   useLayoutEffect(() => {
     const measure = () => {
       if (frame.current && dock.current)
@@ -226,11 +226,7 @@ export function AppFrame({
         data-material={material}
         data-menu-open={menu || roleMenu}
       >
-        <a
-          className={s.brand}
-          href={destination("025")}
-          aria-label="CU Ways home"
-        >
+        <a className={s.brand} href={brandHref} aria-label="CU Ways home">
           <img
             src={"/assets/logo-" + theme + ".svg"}
             alt="CU Ways"
@@ -239,13 +235,13 @@ export function AppFrame({
           />
         </a>
         <nav aria-label="Main navigation" className={s.desktop}>
-          {nav.map(({ id, label, icon }) => (
+          {nav.map(({ id, label, icon, href }) => (
             <a
               key={id}
-              aria-current={feature === id ? "page" : undefined}
-              href={destination(id)}
+              aria-current={activeKey === id ? "page" : undefined}
+              href={href}
             >
-              <Icon name={icon} filled={feature === id} />
+              <Icon name={icon} filled={activeKey === id} />
               <span>{label}</span>
             </a>
           ))}
@@ -261,24 +257,26 @@ export function AppFrame({
           >
             <Icon name={theme === "light" ? "sun" : "moon"} />
           </button>
-          <button
-            type="button"
-            className={s.headerControl}
-            aria-label="Workspace role"
-            ref={roleButton}
-            aria-expanded={roleMenu}
-            onClick={() => {
-              setRoleMenu(!roleMenu);
-              setMenu(false);
-            }}
-          >
-            <img
-              src={"/assets/birds-" + theme + ".svg"}
-              alt=""
-              width="51"
-              height="39"
-            />
-          </button>
+          {workspaceLinks.length > 0 && (
+            <button
+              type="button"
+              className={s.headerControl}
+              aria-label="Workspace role"
+              ref={roleButton}
+              aria-expanded={roleMenu}
+              onClick={() => {
+                setRoleMenu(!roleMenu);
+                setMenu(false);
+              }}
+            >
+              <img
+                src={"/assets/birds-" + theme + ".svg"}
+                alt=""
+                width="51"
+                height="39"
+              />
+            </button>
+          )}
           <button
             type="button"
             ref={menuButton}
@@ -299,8 +297,8 @@ export function AppFrame({
             aria-label="Mobile menu"
             onKeyDown={dismissMenu}
           >
-            {nav.map(({ id, label }) => (
-              <a key={id} href={destination(id)}>
+            {nav.map(({ id, label, href }) => (
+              <a key={id} href={href}>
                 {label}
               </a>
             ))}
@@ -312,8 +310,11 @@ export function AppFrame({
             aria-label="Workspace role"
             onKeyDown={dismissMenu}
           >
-            <a href={destination("025")}>Marketer workspace</a>
-            <a href={destination("027")}>Creator workspace</a>
+            {workspaceLinks.map((item) => (
+              <a key={item.href} href={item.href}>
+                {item.label}
+              </a>
+            ))}
           </nav>
         )}
       </header>
@@ -322,7 +323,7 @@ export function AppFrame({
           onClick={
             onBack ??
             (() => {
-              window.location.href = destination("025");
+              window.location.href = brandHref;
             })
           }
         >
@@ -357,13 +358,13 @@ export function AppFrame({
           aria-label="Bottom navigation"
           data-ui="BottomNavigation"
         >
-          {mobile.map(({ id, label, icon }) => {
-            const active = feature === id && label !== "Home";
+          {mobile.map(({ id, label, icon, href }) => {
+            const active = activeKey === id;
             return (
               <a
                 key={label}
                 aria-current={active ? "page" : undefined}
-                href={destination(id)}
+                href={href}
               >
                 <Icon name={icon} filled={active} />
                 <span>{label}</span>

@@ -132,7 +132,12 @@ test("canonical scenario matrix, cross-instance contracts and protected boundari
                       (e.dataset.status ??
                         e.dataset.role ??
                         e.dataset.variant ??
-                        "default") + (e.disabled ? "/disabled" : "");
+                        "default") +
+                      (e.getAttribute("aria-busy") === "true"
+                        ? "/busy"
+                        : e.disabled
+                          ? "/disabled"
+                          : "");
                     const instance = e.dataset.ui + "/" + variant;
                     const index = counts.get(instance) ?? 0;
                     counts.set(instance, index + 1);
@@ -302,40 +307,60 @@ test("canonical scenario matrix, cross-instance contracts and protected boundari
             close ??= page.locator('[data-ui="preview"] > *').first();
             record.captureSubject =
               (await close.getAttribute("data-ui")) ?? "preview example";
+            const detailStyle = await close.evaluate((subject) =>
+              ['[data-ui="ApplicationHeader"]', '[data-ui="ApplicationDock"]']
+                .filter((selector) => {
+                  const chrome = document.querySelector(selector);
+                  return (
+                    chrome &&
+                    ["sticky", "fixed"].includes(
+                      getComputedStyle(chrome).position,
+                    ) &&
+                    !subject.closest(selector) &&
+                    !subject.querySelector(selector)
+                  );
+                })
+                .map((selector) => selector + "{visibility:hidden!important}")
+                .join("\n"),
+            );
             let contextTarget = (await dialog.count())
               ? page
               : close.locator("..");
-            let contextOptions = {};
+            const contextOptions = {};
+            let contextAnchor;
             if (!(await dialog.count())) {
               const parentBounds = await contextTarget.boundingBox();
               if (parentBounds && parentBounds.height > viewport.height * 1.3) {
-                const bounds = await close.boundingBox();
-                const scroll = await page.evaluate(() => ({
-                  y: scrollY,
-                  height: document.documentElement.scrollHeight,
-                }));
-                const y = Math.max(0, bounds.y + scroll.y - 24);
+                contextAnchor = await contextTarget.evaluate(
+                  (e) => e.getBoundingClientRect().top + scrollY,
+                );
                 contextTarget = page;
-                contextOptions = {
-                  clip: {
-                    x: 0,
-                    y,
-                    width: viewport.width,
-                    height: Math.min(viewport.height, scroll.height - y),
-                  },
-                };
               }
             }
             const captures = [
               ["page", page, { fullPage: (await dialog.count()) === 0 }],
               ...((await close.count())
                 ? [
-                    ["component", close, {}],
+                    ["component", close, { style: detailStyle }],
                     ["context", contextTarget, contextOptions],
                   ]
                 : []),
             ];
             for (const [level, locator, captureOptions] of captures) {
+              if (level === "context" && contextAnchor !== undefined)
+                await page.evaluate((top) => {
+                  const header = document.querySelector(
+                    '[data-ui="ApplicationHeader"]',
+                  );
+                  const clearance =
+                    header &&
+                    ["sticky", "fixed"].includes(
+                      getComputedStyle(header).position,
+                    )
+                      ? header.getBoundingClientRect().height
+                      : 0;
+                  window.scrollTo(0, Math.max(0, top - clearance - 16));
+                }, contextAnchor);
               const name = `${key}__${level}.png`;
               const file = path.join(output, name);
               await locator.screenshot({
@@ -370,10 +395,47 @@ test("canonical scenario matrix, cross-instance contracts and protected boundari
               record.observations = nodes;
               record.images.push({
                 level,
+                treatment:
+                  level === "component" && detailStyle
+                    ? "External fixed chrome excluded from subject detail; retained in context/page."
+                    : level === "context" && contextAnchor !== undefined
+                      ? "Parent-anchored viewport"
+                      : "Native bounds",
                 file: `images/${name}`,
                 sha256: digest(fs.readFileSync(file)),
                 comparison,
               });
+            }
+            if (!(await dialog.count())) {
+              const dockErrors = await page.evaluate(() => {
+                const dock = document.querySelector(
+                  '[data-ui="ApplicationDock"]',
+                );
+                if (
+                  !dock ||
+                  getComputedStyle(dock).position !== "fixed" ||
+                  !dock.getBoundingClientRect().height
+                )
+                  return [];
+                window.scrollTo(0, document.documentElement.scrollHeight);
+                const bounds = dock.getBoundingClientRect();
+                const stack = document.querySelector(
+                  '[data-ui="Page"] > div:last-child',
+                );
+                const last = Array.from(stack?.children ?? [])
+                  .filter((e) => e.getBoundingClientRect().height > 0)
+                  .at(-1);
+                return [
+                  ...(Math.abs(bounds.bottom - innerHeight) > 1
+                    ? ["navigation is not pinned to viewport bottom"]
+                    : []),
+                  ...(last &&
+                  last.getBoundingClientRect().bottom > bounds.top - 12
+                    ? ["content lacks bottom-dock clearance"]
+                    : []),
+                ];
+              });
+              record.errors.push(...dockErrors);
             }
             const statuses = record.images.map((i) => i.comparison);
             record.status =
