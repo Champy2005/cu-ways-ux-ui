@@ -32,9 +32,7 @@ export function ThemeProvider({
   useLayoutEffect(() => {
     document.documentElement.dataset.cuTheme = theme;
     document.documentElement.dataset.textScale = String(textScale);
-    if (textScale === 100)
-      document.documentElement.style.removeProperty("font-size");
-    else document.documentElement.style.fontSize = textScale + "%";
+    document.documentElement.style.removeProperty("font-size");
   }, [theme, textScale]);
   return (
     <ThemeContext.Provider

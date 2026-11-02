@@ -4,9 +4,9 @@ import {
   useEffect,
   type ReactNode,
   type ButtonHTMLAttributes,
+  Fragment,
 } from "react";
 import { Dialog } from "@base-ui/react/dialog";
-import { Select } from "@base-ui/react/select";
 import s from "./system.module.css";
 
 export type JobStatus =
@@ -17,7 +17,13 @@ export type JobStatus =
   | "Cancelled"
   | "Unverified";
 export type ActionRole =
-  "primary" | "supporting" | "safe" | "utility" | "quiet" | "destructive";
+  | "primary"
+  | "supporting"
+  | "entry"
+  | "safe"
+  | "utility"
+  | "quiet"
+  | "destructive";
 export function Icon({
   name,
   filled = false,
@@ -28,6 +34,8 @@ export function Icon({
     | "next"
     | "check"
     | "clock"
+    | "info"
+    | "spinner"
     | "link"
     | "menu"
     | "refresh"
@@ -46,13 +54,15 @@ export function Icon({
 }) {
   const paths = {
     back: "m14 6-6 6 6 6",
-    close: "m6 6 12 12M6 18 18 6",
+    close: "m5 5 14 14M5 19 19 5",
     next: "m10 6 6 6-6 6",
     check: "m5 12 4 4L19 6",
     clock: "M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0",
+    info: "M12 8h.01M12 11v6M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0",
+    spinner: "M12 3a9 9 0 1 1-9 9",
     link: "M10 13a5 5 0 0 0 7 .5l3-3a5 5 0 0 0-7-7l-2 2M14 11a5 5 0 0 0-7-.5l-3 3a5 5 0 0 0 7 7l2-2",
     menu: "M3 6h18M3 12h18M3 18h18",
-    refresh: "M21 10a9 9 0 1 0-2 8M21 4v6h-6",
+    refresh: "M21 10a9 9 0 1 0-2.3 8M21 4v6h-6",
     warning: "m12 3 10 18H2zM12 9v5M12 17h.01",
     external: "M14 3h7v7M21 3 10 14M10 3H3v18h18v-7",
     jobs: "M8 4H4v18h16V4h-4M8 2h8v5H8zM8 12h8M8 17h8",
@@ -68,8 +78,8 @@ export function Icon({
   };
   return (
     <svg
-      width="19"
-      height="19"
+      width="1.125em"
+      height="1.125em"
       viewBox="0 0 24 24"
       fill={filled ? "currentColor" : "none"}
       stroke="currentColor"
@@ -77,17 +87,28 @@ export function Icon({
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
+      data-spinner={name === "spinner" || undefined}
     >
-      <path d={paths[name]} />
-      {filled && ["jobs", "services", "invites"].includes(name) && (
+      {filled && name === "jobs" ? (
+        <g strokeLinecap="butt" strokeLinejoin="miter">
+          <path d="M4 5h16v18H4z" stroke="none" />
+          <path
+            d="M8 2h8v6H8z"
+            stroke="var(--nav-cutout, var(--surface-card))"
+            strokeWidth="1.4"
+          />
+          <path
+            d="M8 12h8M8 17h8"
+            stroke="var(--nav-cutout, var(--surface-card))"
+            strokeWidth="1.8"
+          />
+        </g>
+      ) : (
+        <path d={paths[name]} />
+      )}
+      {filled && ["services", "invites"].includes(name) && (
         <path
-          d={
-            name === "jobs"
-              ? "M8 12h8M8 17h8"
-              : name === "services"
-                ? "M3 12h18M10 12v3h4v-3"
-                : "M6 8h12M6 13h8"
-          }
+          d={name === "services" ? "M3 12h18M10 12v3h4v-3" : "M6 8h12M6 13h8"}
           fill="none"
           stroke="var(--nav-cutout, var(--surface-card))"
         />
@@ -104,7 +125,12 @@ type ActionProps = Pick<
   | "aria-label"
   | "aria-expanded"
   | "aria-controls"
-> & { children: ReactNode; role?: ActionRole; busy?: boolean };
+> & {
+  children: ReactNode;
+  role?: ActionRole;
+  busy?: boolean;
+  size?: "default" | "list-entry" | "proof-entry";
+};
 /** Semantic action. Consumers own placement; this component owns paint and targets. */
 export function Action({
   children,
@@ -112,6 +138,7 @@ export function Action({
   busy = false,
   disabled,
   type = "button",
+  size = "default",
   ...props
 }: ActionProps) {
   return (
@@ -120,6 +147,7 @@ export function Action({
       type={type}
       data-ui="Action"
       data-role={role}
+      data-size={size}
       aria-busy={busy || undefined}
       disabled={disabled || busy}
       className={s.action}
@@ -216,12 +244,14 @@ export function ContentDialog({
   onClose,
   children,
   initialFocusId,
+  variant = "content",
 }: {
   open: boolean;
   title: string;
   onClose: () => void;
   children: ReactNode;
   initialFocusId?: string;
+  variant?: "content" | "job-start" | "proof-entry";
 }) {
   const heading = useRef<HTMLHeadingElement>(null);
   return (
@@ -236,11 +266,17 @@ export function ContentDialog({
         <Dialog.Popup
           className={s.dialog}
           data-ui="ContentDialog"
+          data-variant={variant}
           initialFocus={() =>
             (initialFocusId ? document.getElementById(initialFocusId) : null) ??
             heading.current
               ?.closest('[role="dialog"]')
               ?.querySelector<HTMLElement>('[aria-invalid="true"]') ??
+            (variant === "proof-entry"
+              ? heading.current
+                  ?.closest('[role="dialog"]')
+                  ?.querySelector<HTMLElement>("input")
+              : null) ??
             heading.current
           }
         >
@@ -268,34 +304,19 @@ export function SelectControl({
   onChange: (value: string) => void;
 }) {
   return (
-    <Select.Root
+    <select
+      className={s.select}
+      aria-label={label}
+      data-ui="Select"
       value={value}
-      items={options}
-      onValueChange={(v) => {
-        if (v !== null) onChange(v);
-      }}
+      onChange={(event) => onChange(event.target.value)}
     >
-      <Select.Trigger className={s.select} aria-label={label} data-ui="Select">
-        <Select.Value />
-        <Select.Icon>▾</Select.Icon>
-      </Select.Trigger>
-      <Select.Portal>
-        <Select.Positioner
-          sideOffset={6}
-          alignItemWithTrigger={false}
-          className={s.positioner}
-        >
-          <Select.Popup className={s.options}>
-            {options.map((o) => (
-              <Select.Item key={o.value} value={o.value} className={s.option}>
-                <Select.ItemText>{o.label}</Select.ItemText>
-                <Select.ItemIndicator>✓</Select.ItemIndicator>
-              </Select.Item>
-            ))}
-          </Select.Popup>
-        </Select.Positioner>
-      </Select.Portal>
-    </Select.Root>
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
   );
 }
 export function Field({
@@ -344,22 +365,30 @@ export function Feedback({
   children,
   tone = "info",
   action,
+  pending = false,
 }: {
   title: string;
   children?: ReactNode;
   tone?: "info" | "success" | "warning" | "error";
   action?: ReactNode;
+  pending?: boolean;
 }) {
   return (
     <section data-ui="RecoveryPanel" className={s.recovery}>
       <div role="status" className={s.feedback} data-tone={tone}>
         <Icon
           name={
-            tone === "success" ? "check" : tone === "info" ? "clock" : "warning"
+            pending
+              ? "spinner"
+              : tone === "success"
+                ? "check"
+                : tone === "info"
+                  ? "info"
+                  : "warning"
           }
         />
         <div>
-          <h2>{title}</h2>
+          {title && <h2>{title}</h2>}
           {children && <div className={s.feedbackCopy}>{children}</div>}
         </div>
       </div>
@@ -370,14 +399,21 @@ export function Feedback({
 export function EmptyState({
   title,
   children,
+  variant = "default",
 }: {
   title: string;
   children?: ReactNode;
+  variant?: "default" | "proof";
 }) {
   return (
-    <div className={s.empty} data-ui="EmptyState" data-description={!!children}>
+    <div
+      className={s.empty}
+      data-ui="EmptyState"
+      data-description={!!children}
+      data-variant={variant}
+    >
       <span className={s.emptyIcon}>
-        <Icon name="link" />
+        <Icon name={variant === "proof" ? "jobs" : "link"} />
       </span>
       <div>
         <h2>{title}</h2>
@@ -427,10 +463,12 @@ export function InlineLink({
   href,
   children,
   external = false,
+  externalIcon = true,
 }: {
   href: string;
   children: ReactNode;
   external?: boolean;
+  externalIcon?: boolean;
 }) {
   return (
     <a
@@ -443,35 +481,50 @@ export function InlineLink({
       {children}
       {external && (
         <>
-          <Icon name="external" />
+          {externalIcon && <Icon name="external" />}
           <span className={s.srOnly}> (opens in a new tab)</span>
         </>
       )}
     </a>
   );
 }
-export function ProofLink({ url }: { url: string }) {
+export function ProofLink({
+  url,
+  variant = "task",
+}: {
+  url: string;
+  variant?: "task" | "proof";
+}) {
   const parsed = new URL(url);
+  const tail = (parsed.pathname + parsed.search + parsed.hash).replace(
+    /^\/$/,
+    "",
+  );
   return (
     <a
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className={`${s.inlineLink} ${s.proofLink}`}
+      className={s.proofLink}
       data-ui="ProofLink"
+      data-variant={variant}
+      title={parsed.href}
+      aria-label={`${parsed.href} (opens in a new tab)`}
     >
-      <span>
-        <strong>
-          {parsed.protocol}//{parsed.host}
-        </strong>
-        <span>
-          {parsed.pathname}
-          {parsed.search}
-          {parsed.hash}
-        </span>
+      <span className={s.proofHost}>
+        {parsed.protocol}//{parsed.host}
       </span>
       <Icon name="external" />
-      <span className={s.srOnly}> (opens in a new tab)</span>
+      {tail && (
+        <span className={s.proofPath}>
+          {tail.split(/([/\-?&])/).map((text, index) => (
+            <Fragment key={index}>
+              {text}
+              {["/", "-", "?", "&"].includes(text) && <wbr />}
+            </Fragment>
+          ))}
+        </span>
+      )}
     </a>
   );
 }

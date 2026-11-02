@@ -29,6 +29,17 @@ pnpm ui review all
 
 Exit codes: **0** completed automated comparison; **1** defect/regression; **2** missing evidence or intended visual difference awaiting inspection; **3** usage/setup error. Agent inspection and human palette acceptance are separate from test results. Start with `.artifacts/ui/current/report.json`; full diagnostics stay local.
 
+During fidelity recovery, use the original comparison path:
+
+```sh
+pnpm ui check --prepare-reference "../UX UI"
+pnpm ui check --fidelity --target us025--c-02
+pnpm ui check --fidelity --target us025--c-02 --full
+pnpm ui review --fidelity
+```
+
+Preparation copies only the runtime dependency closure and selected assets into ignored artifacts. `reference/original.json` pins its hashes and all 94 source/story correspondences. The comparison runs both implementations in the same Linux browser, clears local drafts, configures each original scene through its supported host protocol, freezes simulated time, and produces component/page pairs, measurements and pixel differences. `--full` currently expands the focused target to seven viewport widths. A focused run is diagnostic, not proof of global scope. Transition correspondence, stress dimensions, original-capture caching and complete migration acceptance remain in progress. Even a matching capture exits **2** until inspection; promotion is blocked while the migration remains rejected. No command rewrites a golden as a side effect.
+
 ## Source of truth
 
 - `src/design-system/tokens/theme.css`: current paint and depth values.

@@ -3,6 +3,7 @@ import path from "node:path";
 import { context } from "./context.mjs";
 import { nativeCall, nativeConsumers } from "./native.mjs";
 import { check } from "./check.mjs";
+import { fidelity } from "./fidelity.mjs";
 import { promote } from "./baseline.mjs";
 import {
   current,
@@ -55,15 +56,77 @@ try {
     }
     console.log(JSON.stringify(result, null, args.includes("--json") ? 0 : 2));
   } else if (command === "check") {
-    process.exitCode = await check({
-      target: flag("target"),
-      intent: flag("intent"),
-      scope: flag("scope"),
-      full: args.includes("--full"),
-      native: args.includes("--native"),
-      smoke: args.includes("--smoke"),
-      stress: args.includes("--stress"),
-    });
+    if (args.includes("--fidelity") || flag("prepare-reference")) {
+      const result = fidelity({
+        prepare: flag("prepare-reference"),
+        target: flag("target"),
+        full: args.includes("--full"),
+        native: args.includes("--native"),
+      });
+      console.log(
+        JSON.stringify(
+          flag("prepare-reference")
+            ? result
+            : {
+                reference: result.reference,
+                environment: result.environment,
+                records: result.records.length,
+                different: result.records.filter(
+                  (r: { status: string }) => r.status === "different",
+                ).length,
+                inconclusive: result.records.filter(
+                  (r: { status: string }) => r.status === "inconclusive",
+                ).length,
+                report: ".artifacts/ui/fidelity/report.json",
+                acceptance: result.acceptance,
+              },
+          null,
+          2,
+        ),
+      );
+      process.exitCode = flag("prepare-reference")
+        ? 0
+        : result.records.some(
+              (r: { status: string }) => r.status === "different",
+            )
+          ? 1
+          : 2;
+    } else {
+      process.exitCode = await check({
+        target: flag("target"),
+        intent: flag("intent"),
+        scope: flag("scope"),
+        full: args.includes("--full"),
+        native: args.includes("--native"),
+        smoke: args.includes("--smoke"),
+        stress: args.includes("--stress"),
+      });
+    }
+  } else if (command === "review" && args.includes("--fidelity")) {
+    const report = readJSON(
+      path.join(process.cwd(), ".artifacts/ui/fidelity/report.json"),
+    );
+    if (report.sourceFingerprint !== fingerprint())
+      throw Error(
+        "Fidelity review is stale; rerun the matched original comparison.",
+      );
+    console.log(
+      JSON.stringify(
+        {
+          reference: report.reference,
+          environment: report.environment,
+          records: report.records.length,
+          board: path.join(process.cwd(), ".artifacts/ui/fidelity/review.html"),
+          report: path.join(
+            process.cwd(),
+            ".artifacts/ui/fidelity/report.json",
+          ),
+          acceptance: "unchanged; review cannot promote a reference",
+        },
+        null,
+        2,
+      ),
+    );
   } else if (command === "review") {
     const report = readJSON(path.join(current, "report.json"));
     if (report.sourceFingerprint !== fingerprint())

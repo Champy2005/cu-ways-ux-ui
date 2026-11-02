@@ -224,6 +224,12 @@ export function retrieve(environment) {
     manifest,
   };
 }
+export function requireMigrationAcceptance(preferences) {
+  if (preferences.migration?.baselinePromotion === "blocked")
+    throw Error(
+      "Baseline promotion is blocked during original-to-React fidelity recovery. Technical checks and provisional mode cannot override the current human rejection.",
+    );
+}
 function promoteOwned({
   target,
   reportId,
@@ -231,6 +237,9 @@ function promoteOwned({
   provisional = false,
   inspectionFile,
 }) {
+  requireMigrationAcceptance(
+    readJSON(path.join(root, "preferences/current.json")),
+  );
   const report = readJSON(path.join(current, "report.json"));
   if (!reportId || report.id !== reportId)
     throw Error("Select the exact current report with --report <id>.");

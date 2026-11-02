@@ -10,17 +10,24 @@ import {
 } from "../components/primitives";
 import s from "./layout.module.css";
 import { useTheme } from "../ThemeProvider";
+import { Artwork } from "../components/Artwork";
 export function ProofRecord({
   url,
   timestamp,
+  variant = "task",
 }: {
   url: string;
   timestamp: string;
+  variant?: "task" | "proof";
 }) {
   return (
-    <article className={s.proofRecord} data-ui="ProofRecord">
+    <article
+      className={s.proofRecord}
+      data-ui="ProofRecord"
+      data-variant={variant}
+    >
       <AttachmentTag />
-      <ProofLink url={url} />
+      <ProofLink url={url} variant={variant} />
       <p className={s.timestamp}>{timestamp}</p>
     </article>
   );
@@ -31,7 +38,7 @@ export function Card({
   action,
   boundary = "Card",
 }: {
-  title?: string;
+  title?: ReactNode;
   children: ReactNode;
   action?: ReactNode;
   boundary?:
@@ -41,7 +48,8 @@ export function Card({
     | "CancellationEffects"
     | "ContractSummary"
     | "DeliveryEvidence"
-    | "ReviewHistory";
+    | "ReviewHistory"
+    | "JobEntry";
 }) {
   return (
     <section className={s.card} data-ui={boundary}>
@@ -88,7 +96,7 @@ export function ConfirmationActions({
 }: {
   safe: ReactNode;
   commit: ReactNode;
-  variant?: "confirmation" | "recovery";
+  variant?: "confirmation" | "recovery" | "job-start";
 }) {
   return (
     <div
@@ -103,6 +111,34 @@ export function ConfirmationActions({
 }
 export function Stack({ children }: { children: ReactNode }) {
   return <div className={s.stack}>{children}</div>;
+}
+export function UnavailableState({
+  title,
+  children,
+  action,
+  variant = "detail",
+}: {
+  title: string;
+  children: ReactNode;
+  action?: ReactNode;
+  variant?: "detail" | "proof";
+}) {
+  return (
+    <section
+      className={s.unavailableCard}
+      data-ui="UnavailableState"
+      data-variant={variant}
+    >
+      {variant === "proof" && (
+        <div className={s.unavailableMark}>
+          <Icon name="jobs" />
+        </div>
+      )}
+      {variant === "proof" ? <h1>{title}</h1> : <h2>{title}</h2>}
+      <p>{children}</p>
+      {action && <div className={s.unavailableActions}>{action}</div>}
+    </section>
+  );
 }
 export function Columns({
   children,
@@ -147,12 +183,26 @@ export function JobSummary({
   action: ReactNode;
 }) {
   return (
-    <article className={s.card} data-ui="JobSummary">
-      <StatusHeading title={title} context={context} status={status} compact />
-      <div className={s.jobSummaryBody}>
-        <Metadata items={items} />
-        {action}
+    <article className={s.jobCard} data-ui="JobSummary">
+      <div className={s.jobCardHeading}>
+        <span className={s.jobIdentity}>{context}</span>
+        <LifecycleBadge status={status} />
       </div>
+      <div className={s.jobCardCopy}>
+        <h2 className={s.jobTitle}>
+          <span className={s.screenReader}>{context} · </span>
+          {title}
+        </h2>
+        <dl className={s.jobFacts}>
+          {items.map((item) => (
+            <div key={item.label}>
+              <dt>{item.label}</dt>
+              <dd>{item.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+      <div className={s.jobEntry}>{action}</div>
     </article>
   );
 }
@@ -176,6 +226,12 @@ export function AppFrame({
   busy = false,
   headingAction,
   action,
+  showBack = true,
+  actionHidden = false,
+  kind = "story",
+  headingStatus,
+  headingDescription,
+  showHeading = true,
 }: {
   title: string;
   children: ReactNode;
@@ -190,6 +246,12 @@ export function AppFrame({
   busy?: boolean;
   headingAction?: ReactNode;
   action?: ReactNode;
+  showBack?: boolean;
+  actionHidden?: boolean;
+  kind?: "jobs" | "proof" | "story";
+  headingStatus?: JobStatus;
+  headingDescription?: ReactNode;
+  showHeading?: boolean;
 }) {
   const [menu, setMenu] = useState(false),
     [roleMenu, setRoleMenu] = useState(false);
@@ -202,17 +264,62 @@ export function AppFrame({
     mobile = mobileNavigation;
   useLayoutEffect(() => {
     const measure = () => {
+      const nav = dock.current?.querySelector<HTMLElement>(
+        '[data-ui="BottomNavigation"]',
+      );
+      if (nav && nav.clientWidth) {
+        const items = [...nav.querySelectorAll<HTMLElement>("a")],
+          style = getComputedStyle(nav);
+        const available =
+          nav.clientWidth -
+          parseFloat(style.paddingLeft) -
+          parseFloat(style.paddingRight);
+        const caption = Math.max(
+          ...items.map(
+            (item) =>
+              item.querySelector("span")?.getBoundingClientRect().width ?? 0,
+          ),
+        );
+        const target =
+          parseFloat(getComputedStyle(items[0]).minInlineSize) || 44;
+        const maximum = Math.max(
+          1,
+          Math.min(
+            items.length,
+            Math.floor(available / Math.max(target, caption + 2)),
+          ),
+        );
+        const rows = Math.ceil(items.length / maximum),
+          columns = Math.ceil(items.length / rows);
+        nav.style.setProperty("--nav-columns", String(columns));
+      }
       if (frame.current && dock.current)
         frame.current.style.setProperty(
           "--dock-height",
-          dock.current.getBoundingClientRect().height + "px",
+          dock.current.getBoundingClientRect().height +
+            (frame.current
+              .querySelector('[data-ui="ActionTray"]')
+              ?.getBoundingClientRect().height ?? 0) +
+            (action &&
+            (frame.current
+              .querySelector('[data-ui="ActionTray"]')
+              ?.getBoundingClientRect().height ?? 0) > 0
+              ? 12
+              : 0) +
+            "px",
         );
     };
     const observer = new ResizeObserver(measure);
     if (dock.current) observer.observe(dock.current);
+    for (const label of dock.current?.querySelectorAll(
+      '[data-ui="BottomNavigation"] a > span',
+    ) ?? [])
+      observer.observe(label);
+    const tray = frame.current?.querySelector('[data-ui="ActionTray"]');
+    if (tray) observer.observe(tray);
     measure();
     return () => observer.disconnect();
-  }, []);
+  }, [action]);
   const dismissMenu = (event: React.KeyboardEvent) => {
     if (event.key === "Escape") {
       setMenu(false);
@@ -221,77 +328,74 @@ export function AppFrame({
     }
   };
   return (
-    <div className={s.frame} data-ui="ApplicationFrame" ref={frame}>
+    <div
+      className={s.frame}
+      data-ui="ApplicationFrame"
+      data-kind={kind}
+      ref={frame}
+    >
       <header
         className={s.header}
         data-ui="ApplicationHeader"
         data-material={material}
         data-menu-open={menu || roleMenu}
       >
-        <a className={s.brand} href={brandHref} aria-label="CU Ways home">
-          <img
-            src={"/assets/logo-" + theme + ".svg"}
-            alt="CU Ways"
-            width="140"
-            height="38"
-          />
-        </a>
-        <nav aria-label="Main navigation" className={s.desktop}>
-          {nav.map(({ id, label, icon, href }) => (
-            <a
-              key={id}
-              aria-current={activeKey === id ? "page" : undefined}
-              href={href}
-            >
-              <Icon name={icon} filled={activeKey === id} />
-              <span>{label}</span>
-            </a>
-          ))}
-        </nav>
-        <div className={s.tools}>
-          <button
-            type="button"
-            className={s.headerControl}
-            aria-label={
-              "Switch to " + (theme === "light" ? "dark" : "light") + " theme"
-            }
-            onClick={toggle}
-          >
-            <Icon name={theme === "light" ? "sun" : "moon"} />
-          </button>
-          {workspaceLinks.length > 0 && (
+        <div className={s.headerRow}>
+          <a className={s.brand} href={brandHref} aria-label="CU Ways home">
+            <Artwork kind="logo" theme={theme} />
+          </a>
+          <nav aria-label="Main navigation" className={s.desktop}>
+            {nav.map(({ id, label, icon, href }) => (
+              <a
+                key={id}
+                aria-current={activeKey === id ? "page" : undefined}
+                href={href}
+              >
+                <Icon name={icon} filled={activeKey === id} />
+                <span>{label}</span>
+              </a>
+            ))}
+          </nav>
+          <div className={s.tools}>
             <button
               type="button"
               className={s.headerControl}
-              aria-label="Workspace role"
-              ref={roleButton}
-              aria-expanded={roleMenu}
+              aria-label={
+                "Switch to " + (theme === "light" ? "dark" : "light") + " theme"
+              }
+              onClick={toggle}
+            >
+              <Icon name={theme === "light" ? "sun" : "moon"} />
+            </button>
+            {workspaceLinks.length > 0 && (
+              <button
+                type="button"
+                className={s.headerControl}
+                aria-label="Workspace role"
+                ref={roleButton}
+                aria-expanded={roleMenu}
+                onClick={() => {
+                  setRoleMenu(!roleMenu);
+                  setMenu(false);
+                }}
+              >
+                <Artwork kind="birds" theme={theme} />
+              </button>
+            )}
+            <button
+              type="button"
+              ref={menuButton}
+              className={s.menuToggle}
+              aria-label="Menu"
+              aria-expanded={menu}
               onClick={() => {
-                setRoleMenu(!roleMenu);
-                setMenu(false);
+                setMenu(!menu);
+                setRoleMenu(false);
               }}
             >
-              <img
-                src={"/assets/birds-" + theme + ".svg"}
-                alt=""
-                width="51"
-                height="39"
-              />
+              <Icon name={menu ? "close" : "menu"} />
             </button>
-          )}
-          <button
-            type="button"
-            ref={menuButton}
-            className={s.menuToggle}
-            aria-label="Menu"
-            aria-expanded={menu}
-            onClick={() => {
-              setMenu(!menu);
-              setRoleMenu(false);
-            }}
-          >
-            <Icon name={menu ? "close" : "menu"} />
-          </button>
+          </div>
         </div>
         {menu && (
           <nav
@@ -320,23 +424,43 @@ export function AppFrame({
           </nav>
         )}
       </header>
-      <main className={s.main} data-ui="Page" aria-busy={busy || undefined}>
-        <BackLink
-          onClick={
-            onBack ??
-            (() => {
-              window.location.href = brandHref;
-            })
-          }
-        >
-          {backLabel}
-        </BackLink>
-        <div className={s.pageHeading} data-ui="PageHeading">
-          <h1 id="page-heading" tabIndex={-1}>
-            {title}
-          </h1>
-          {headingAction}
-        </div>
+      <main
+        className={s.main}
+        data-ui="Page"
+        data-kind={kind}
+        aria-busy={busy || undefined}
+      >
+        {showBack && (
+          <BackLink
+            onClick={
+              onBack ??
+              (() => {
+                window.location.href = brandHref;
+              })
+            }
+          >
+            {backLabel}
+          </BackLink>
+        )}
+        {showHeading && (
+          <div
+            className={s.pageHeading}
+            data-ui="PageHeading"
+            data-back={showBack}
+            data-layout={
+              headingStatus ? "identity" : headingAction ? "list" : undefined
+            }
+          >
+            <div className={headingStatus ? s.identityHeading : s.headingCopy}>
+              <h1 id="page-heading" tabIndex={-1}>
+                {title}
+              </h1>
+              {headingStatus && <LifecycleBadge status={headingStatus} />}
+            </div>
+            {headingDescription}
+            {headingAction}
+          </div>
+        )}
         <div className={s.stack}>{children}</div>
       </main>
       <div
@@ -349,6 +473,8 @@ export function AppFrame({
           <div
             className={s.actionTray}
             data-ui="ActionTray"
+            data-obscured={actionHidden}
+            aria-hidden={actionHidden || undefined}
             role="group"
             aria-label="Job start action"
           >

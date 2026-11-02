@@ -7,17 +7,18 @@ import {
   Feedback,
   Field,
   Loading,
+  ProofLink,
+  LifecycleBadge,
 } from "../../design-system/components/primitives";
 import {
   Card,
-  ConfirmationActions,
   OperationProgress,
   ProofRecord,
-  Stack,
-  StatusHeading,
+  UnavailableState,
 } from "../../design-system/compositions/layout";
-import { createDemoState, reduceDemoState } from "./model.mjs";
+import { createDemoState, reduceDemoState, canSubmitProof } from "./model.mjs";
 import { date, useOperation, type Timing } from "../shared/operations";
+import s from "./proof.module.css";
 
 export type ProofOutcome =
   | "confirmed"
@@ -70,34 +71,34 @@ export function ProofDelivery({
   > = {
     "type-rejected": {
       title: "Proof wasn’t saved",
-      body: "Attachment type rejected. Your link is preserved.",
+      body: "The attachment type was rejected.",
       tone: "error",
     },
     "save-confirmed": { title: "Proof saved", tone: "success" },
     "proof-confirmed": { title: "Proof confirmed", tone: "success" },
     "save-unknown": {
-      title: "Save not confirmed",
-      body: "Check the saved list before another attempt.",
+      title: "We couldn’t confirm the save",
+      body: "Check the saved list before trying again.",
       tone: "warning",
     },
     "check-unavailable": {
-      title: "Saved proof could not be checked",
-      body: "Your link is preserved.",
-      tone: "warning",
+      title: "Couldn’t check saved proof",
+      body: "The result is still unknown. Keep this link and check again before trying another save.",
+      tone: "error",
     },
     "confirmed-miss": {
-      title: "This link wasn’t saved",
-      body: "You can now retry.",
+      title: open ? "Link not saved" : "This link wasn’t saved",
+      body: open ? undefined : "You can try saving it again.",
       tone: "info",
     },
     "status-changed": {
       title: "This job may have changed",
-      body: "Refresh before adding proof.",
+      body: "Refresh the job before adding proof.",
       tone: "warning",
     },
     "list-unavailable": {
       title: "Couldn’t load saved proof",
-      body: "The list may not be empty.",
+      body: "Try again to load your saved links.",
       tone: "error",
     },
   };
@@ -105,16 +106,26 @@ export function ProofDelivery({
     ? feedback[state.feedback]
     : state.scenarioId === "B03"
       ? {
-          title: "Save not confirmed",
-          body: "Check the saved list before another attempt.",
+          title: "We couldn’t confirm the save",
+          body: "Check the saved list before trying again.",
           tone: "warning" as const,
         }
       : null;
   return (
     <AppFrame
-      title="Proof of delivery"
+      title={state.view === "jobs" ? "My Jobs" : "Proof of delivery"}
+      showHeading={!!state.job}
+      headingStatus={state.view === "job" ? state.job?.status : undefined}
+      headingDescription={
+        state.view !== "jobs" && state.job ? (
+          <p className={s.identity}>
+            <span className={s.jobId}>Job #{state.job.id}</span>
+            <span className={s.jobName}>{state.job.title}</span>
+          </p>
+        ) : undefined
+      }
       feature="026"
-      backLabel="Back to My Jobs"
+      backLabel={state.view === "jobs" ? "Story library" : "Back to My Jobs"}
       onBack={() =>
         !state.job
           ? (window.location.href = "?id=us025--l-02&viewMode=story")
@@ -122,53 +133,48 @@ export function ProofDelivery({
       }
     >
       {!state.job ? (
-        <Feedback title="This job isn’t available">
+        <UnavailableState title="Job unavailable" variant="proof">
           Your access has changed.
-        </Feedback>
+        </UnavailableState>
       ) : state.view === "jobs" ? (
-        <Card>
-          <Stack>
-            <StatusHeading
-              title={state.job.title}
-              context={`Job #${state.job.id}`}
-              status={state.job.status}
-            />
-            <Action
-              role="supporting"
-              onClick={() => send({ type: "open-job" })}
-            >
+        <Card boundary="JobEntry">
+          <div className={s.jobsHeading}>
+            <span className={s.jobReference}>Job #{state.job.id}</span>
+            <LifecycleBadge status={state.job.status} />
+          </div>
+          <h2 className={s.jobTitle}>{state.job.title}</h2>
+          <div className={s.jobsActions}>
+            <Action role="entry" onClick={() => send({ type: "open-job" })}>
               Open delivery evidence
             </Action>
-          </Stack>
+          </div>
         </Card>
       ) : (
         <>
-          <StatusHeading
-            title={state.job.title}
-            context={`Job #${state.job.id}`}
-            status={state.job.status}
-          />
-          {notice && state.listStatus !== "failed" && (
-            <Feedback
-              title={notice.title}
-              tone={notice.tone}
-              action={
-                state.scenarioId === "B02" ? (
-                  <Action onClick={add}>Reopen proof form</Action>
-                ) : state.scenarioId === "B03" ? (
-                  <Action onClick={() => send({ type: "check-saved" })}>
-                    Check saved proof
-                  </Action>
-                ) : state.scenarioId === "C02" ? (
-                  <Action onClick={() => send({ type: "refresh-status" })}>
-                    Refresh job
-                  </Action>
-                ) : undefined
-              }
-            >
-              {notice.body}
-            </Feedback>
-          )}
+          {notice &&
+            !open &&
+            state.listStatus !== "failed" &&
+            !(state.scenarioId === "B03" && state.pending === "check") && (
+              <Feedback
+                title={notice.title}
+                tone={notice.tone}
+                action={
+                  state.scenarioId === "B02" ? (
+                    <Action onClick={add}>Reopen proof form</Action>
+                  ) : state.scenarioId === "B03" ? (
+                    <Action onClick={() => send({ type: "check-saved" })}>
+                      Check saved proof
+                    </Action>
+                  ) : state.scenarioId === "C02" ? (
+                    <Action onClick={() => send({ type: "refresh-status" })}>
+                      Refresh job
+                    </Action>
+                  ) : undefined
+                }
+              >
+                {notice.body}
+              </Feedback>
+            )}
           {state.pending && state.pending !== "save" && (
             <OperationProgress onCheck={resolve} />
           )}
@@ -192,24 +198,46 @@ export function ProofDelivery({
           ) : (
             <Card
               boundary="ProofWorkspace"
-              title={`Saved proof (${state.rows.length})`}
+              title={
+                <>
+                  Saved proof{" "}
+                  <span className={s.count}>({state.rows.length})</span>
+                </>
+              }
               action={
                 state.job.status === "In Progress" &&
                 state.scenarioId !== "C02" &&
+                state.scenarioId !== "B02" &&
                 state.scenarioId !== "B03" ? (
-                  <Action role="utility" onClick={add}>
+                  <Action
+                    role="entry"
+                    size="proof-entry"
+                    disabled={!!state.pending}
+                    onClick={add}
+                  >
                     Add proof
                   </Action>
                 ) : undefined
               }
             >
+              {["B02", "B03"].includes(state.scenarioId) && (
+                <div className={s.retainedDraft}>
+                  <p className={s.draftLabel}>
+                    {state.scenarioId === "B03"
+                      ? "Unconfirmed link"
+                      : "Draft link"}
+                  </p>
+                  <ProofLink url={state.draft} variant="proof" />
+                </div>
+              )}
               {state.rows.length ? (
                 state.rows.map(
                   (row: { id: string; url: string; upload_at: string }) => (
                     <ProofRecord
+                      variant="proof"
                       key={row.id}
                       url={row.url}
-                      timestamp={`Saved ${date(row.upload_at)}, ${new Intl.DateTimeFormat(
+                      timestamp={`${date(row.upload_at)}, ${new Intl.DateTimeFormat(
                         "en-GB",
                         {
                           hour: "2-digit",
@@ -221,7 +249,11 @@ export function ProofDelivery({
                   ),
                 )
               ) : (
-                <EmptyState title="No proof added yet" />
+                <EmptyState title="No proof added yet" variant="proof">
+                  {state.scenarioId === "A01"
+                    ? "Add your first delivery link."
+                    : undefined}
+                </EmptyState>
               )}
             </Card>
           )}
@@ -232,11 +264,20 @@ export function ProofDelivery({
             />
           )}
           <ContentDialog
+            variant="proof-entry"
             open={open}
             title={state.pending === "save" ? "Saving proof" : "Add proof"}
             onClose={() => setOpen(false)}
           >
+            {state.scenarioId === "B04" && notice && (
+              <div className={s.formFeedback}>
+                <Feedback title={notice.title} tone={notice.tone}>
+                  {notice.body}
+                </Feedback>
+              </div>
+            )}
             <form
+              className={s.form}
               onSubmit={(e) => {
                 e.preventDefault();
                 send({
@@ -253,24 +294,16 @@ export function ProofDelivery({
                 readOnly={!!state.pending}
                 onChange={(value) => send({ type: "draft", value })}
               />
-              <ConfirmationActions
-                safe={
-                  state.pending ? (
-                    <Action role="safe" onClick={resolve}>
-                      Check status
-                    </Action>
-                  ) : null
-                }
-                commit={
-                  <Action
-                    role="primary"
-                    type="submit"
-                    busy={state.pending === "save"}
-                  >
-                    {state.pending === "save" ? "Saving…" : "Save proof"}
-                  </Action>
-                }
-              />
+              <div className={s.formActions}>
+                <Action
+                  role="primary"
+                  type="submit"
+                  disabled={!state.draft.trim() || !canSubmitProof(state)}
+                  busy={state.pending === "save"}
+                >
+                  {state.pending === "save" ? "Saving proof…" : "Save proof"}
+                </Action>
+              </div>
             </form>
           </ContentDialog>
         </>

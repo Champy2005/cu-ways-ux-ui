@@ -12,6 +12,12 @@ The React migration is a functional checkpoint, **not an accepted visual migrati
 
 ## Required correction
 
+Recovery is in progress on `feat/source-fidelity-recovery`. The immutable original packet now contains 47 files (about 1 MB), derived from imports, stylesheet/font references and an explicit artwork allowlist. Its descriptor maps all 94 identities. Matched Linux captures use the original host configuration APIs and a controlled browser clock.
+
+The US025 C02 detail slice matched geometry and the strict pixel tolerance across 14 light/dark captures at 320, 390, 768, 1024, 1440, 1920 and 2560px. That scoped run preceded subsequent proof-delivery repairs; it does not accept the remaining states or palette. An independent reviewer inspected close, contextual and page evidence and identified the navigation residuals repaired before that run.
+
+Current functional checks: 52 unit/architecture tests and 105 story tests passed during recovery. Proof delivery is being restored and retested. Remaining US025 recovery/list differences and US027/028/034 visual parity are not complete. All migrated scenarios still await human acceptance. Baseline publication is mechanically blocked in the current preferences.
+
 Restore original page hierarchy, navigation semantics, contextual action widths, responsive scaling, breakpoints, material treatment and component relationships. Desktop product navigation must read **Overview, Services, My Jobs, Invitations, Profile**. Story selection belongs to the workbench interface.
 
 The detailed implementation specification is `docs/ONE-TO-ONE-FIDELITY-RECOVERY-PLAN.md`. Its measurements are evidence inputs, not permission to hardcode screenshot coordinates. Current human palette acceptance remains pending.

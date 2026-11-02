@@ -35,7 +35,9 @@ export async function verifyScenario(
   if (feature === "026") {
     const state = proof.createDemoState(id);
     if (!state.job) {
-      await expect(canvas.getByText("This job isn’t available")).toBeVisible();
+      await expect(
+        canvas.getByRole("heading", { name: "Job unavailable" }),
+      ).toBeVisible();
       await expect(canvas.queryByText("Campus Dining")).not.toBeInTheDocument();
     } else if (state.listStatus === "loading")
       await expect(canvas.getByText("Loading saved proof")).toBeVisible();
@@ -74,7 +76,9 @@ export async function verifyScenario(
         "https://example.com/proof/new",
       );
       await userEvent.click(doc.getByRole("button", { name: "Save proof" }));
-      await expect(doc.getByRole("button", { name: "Saving…" })).toBeDisabled();
+      await expect(
+        doc.getByRole("button", { name: "Saving proof…" }),
+      ).toBeDisabled();
       await userEvent.click(doc.getByRole("button", { name: "Close" }));
       await waitFor(() =>
         expect(doc.queryByRole("dialog")).not.toBeInTheDocument(),
@@ -83,9 +87,10 @@ export async function verifyScenario(
         canvas.getByRole("button", { name: "View progress" }),
       );
       await expect(doc.getByRole("dialog")).toHaveTextContent("Saving proof");
-      await userEvent.click(doc.getByRole("button", { name: "Check status" }));
+      const { storyOperations } = await import("../fixtures/operationAdapter");
+      storyOperations(`us026--a-01`).resolve();
       await expect(
-        canvas.getByRole("heading", { name: "Saved proof (1)" }),
+        await canvas.findByRole("heading", { name: "Saved proof (1)" }),
       ).toBeVisible();
     }
   } else if (feature === "027" || feature === "028") {
@@ -239,18 +244,24 @@ export async function verifyScenario(
         ).toHaveLength(1);
     }
     if (!state.privateDataVisible || id === "L09")
-      await expect(canvas.getByRole("status")).toBeVisible();
-    else if (["L01", "L08", "D01", "R01", "R13"].includes(id))
+      await expect(
+        canvas.getByRole("heading", {
+          name: /Job unavailable|Session expired|Marketer access required|My Jobs isn’t available yet/,
+        }),
+      ).toBeVisible();
+    else if (["L01", "D01"].includes(id))
       await expect(
         canvas.getByRole("button", { name: "Stop waiting" }),
       ).toBeEnabled();
+    else if (["L08", "R01", "R13"].includes(id))
+      await expect(canvas.getByRole("status")).toBeVisible();
     else if (["L03", "L04", "L05"].includes(id))
       await expect(
         canvas.getByRole("button", { name: "View all my jobs" }),
       ).toBeEnabled();
-    else if (state.route === "detail" && !["D03", "D08"].includes(id))
+    else if (state.route === "detail" && !["D03", "D08", "R10"].includes(id))
       await expect(
-        canvas.getByRole("heading", { name: "Job overview", hidden: true }),
+        canvas.getByRole("heading", { name: /^Surveys?$/, hidden: true }),
       ).toBeVisible();
     if (id === "D08")
       await expect(

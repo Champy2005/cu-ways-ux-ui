@@ -19,6 +19,36 @@
 * {
   box-sizing: border-box;
 }
+html {
+  --viewport-scale: 1;
+  font-size: calc(100% * var(--viewport-scale));
+}
+html[data-text-scale="150"] {
+  font-size: calc(150% * var(--viewport-scale));
+}
+html[data-text-scale="200"] {
+  font-size: calc(200% * var(--viewport-scale));
+}
+@media (min-width: 1440px) {
+  html {
+    --viewport-scale: 1.0625;
+  }
+}
+@media (min-width: 1920px) {
+  html {
+    --viewport-scale: 1.125;
+  }
+}
+@media (min-width: 2560px) {
+  html {
+    --viewport-scale: 1.25;
+  }
+}
+@media (min-width: 3840px) {
+  html {
+    --viewport-scale: 1.375;
+  }
+}
 body {
   margin: 0;
   background: var(--surface-canvas);
@@ -38,7 +68,7 @@ input {
   -webkit-tap-highlight-color: transparent;
 }
 :focus-visible {
-  outline: 3px solid var(--link-inline);
+  outline: 3px solid var(--focus);
   outline-offset: 3px;
 }
 h1,
@@ -49,8 +79,8 @@ p {
   text-wrap: pretty;
 }
 h1 {
-  font-size: clamp(1.65rem, 1.15rem + 1vw, 2.1rem);
-  line-height: 1.2;
+  font-size: clamp(1.5rem, 2.5vw, 1.875rem);
+  line-height: 1.25;
   letter-spacing: -0.025em;
 }
 h2 {
@@ -63,11 +93,6 @@ h3 {
 }
 svg {
   flex-shrink: 0;
-}
-@media (min-width: 2000px) {
-  html {
-    font-size: 18px;
-  }
 }
 @media (prefers-reduced-motion: reduce) {
   *,

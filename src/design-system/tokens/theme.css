@@ -1,5 +1,11 @@
 /* Canonical current palette migrated from Rose × Slate 1.9.1. Palette acceptance pending. */
 [data-cu-theme="light"] {
+  --warning-border: #ddceaf;
+  --focus: #306bba;
+  --overlay: rgb(24 32 49 / 0.46);
+  --border-control: #858f9d;
+  --nav-selected-fill: #d4e0ee;
+  --nav-selected-ink: #214f7b;
   --surface-canvas: #f3f4f7;
   --surface-card: #ffffff;
   --surface-header: #eef2f7;
@@ -20,9 +26,11 @@
   --action-outline-fill: #ffffff;
   --action-outline-ink: #3d495c;
   --action-outline-border: #98a5b7;
-  --action-utility-fill: #f8f9fb;
-  --action-utility-ink: #394454;
-  --action-utility-border: #c5ccd6;
+  --action-utility-fill: #f1f3f6;
+  --action-utility-ink: #465267;
+  --action-utility-border: #abb6c5;
+  --depth-primary:
+    0 1px 2px rgb(23 40 62 / 0.072), 0 3px 8px rgb(23 40 62 / 0.12);
   --status-info-fill: #e8f2fa;
   --status-info-ink: #235d85;
   --status-progress-fill: #e8f3f3;
@@ -39,6 +47,15 @@
   --feedback-success-border: #bbdccc;
 }
 [data-cu-theme="dark"] {
+  --warning-border: #685738;
+  --focus: #8ab4e8;
+  --overlay: rgb(8 11 18 / 0.46);
+  --border-control: #727d8c;
+  --depth-primary:
+    inset 0 1px rgb(235 243 255 / 0.03), 0 1px 2px rgb(234 134 177 / 0.036),
+    0 3px 8px rgb(234 134 177 / 0.06);
+  --nav-selected-fill: #374454;
+  --nav-selected-ink: #e0f0ff;
   --surface-canvas: #141519;
   --surface-card: #202228;
   --surface-header: #1b1e25;
@@ -59,9 +76,9 @@
   --action-outline-fill: #282b33;
   --action-outline-ink: #dde3ec;
   --action-outline-border: #73829a;
-  --action-utility-fill: #2b2f38;
-  --action-utility-ink: #e1e5ec;
-  --action-utility-border: #606a79;
+  --action-utility-fill: #303642;
+  --action-utility-ink: #dfe5ef;
+  --action-utility-border: #6a7a92;
   --status-info-fill: #213b50;
   --status-info-ink: #acd5f6;
   --status-progress-fill: #233a3e;
@@ -79,23 +96,22 @@
 }
 [data-cu-theme="light"] {
   color-scheme: light;
-  --border: #dfe3ea;
-  --warning-fill: #fcf6e9;
-  --warning-ink: #805a19;
-  --error-fill: #fbeff0;
+  --border: #dce1e8;
+  --warning-fill: #fbf5e9;
+  --warning-ink: #946223;
+  --error-fill: #fcf1f0;
   --error-ink: #a72c3d;
 }
 [data-cu-theme="dark"] {
   color-scheme: dark;
-  --border: #3d424d;
-  --warning-fill: #352d20;
-  --warning-ink: #e7c580;
-  --error-fill: #39252c;
+  --border: #383e48;
+  --warning-fill: #302b21;
+  --warning-ink: #e0be80;
+  --error-fill: #34262b;
   --error-ink: #f2a7b2;
 }
 
 :root {
-  --overlay: rgb(15 22 35 / 0.48);
   --overlay-opaque: rgb(15 22 35 / 0.7);
   --shadow-deep: rgb(0 0 0 / 0.2);
   --shadow-menu: rgb(0 0 0 / 0.15);

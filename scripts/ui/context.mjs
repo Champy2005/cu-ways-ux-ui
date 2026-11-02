@@ -36,6 +36,8 @@ function definition(source, name) {
 }
 export function context(query) {
   const prefs = readJSON(path.join(root, "preferences/current.json"));
+  const originalPath = path.join(root, "reference/original.json");
+  const original = fs.existsSync(originalPath) ? readJSON(originalPath) : null;
   const term = query.trim().toLowerCase();
   const indexPath = path.join(root, "storybook-static/index.json");
   const entries = fs.existsSync(indexPath)
@@ -73,10 +75,25 @@ export function context(query) {
     ambiguous,
     global: ambiguous ? [] : prefs.global,
     humanAcceptance: prefs.humanAcceptance,
+    originalReference: original
+      ? {
+          id: original.id,
+          classification: original.classification,
+          designRevision: original.designRevision,
+          packetAvailable: fs.existsSync(
+            path.join(root, ".artifacts/ui/original/source"),
+          ),
+          scope:
+            "Migration comparator; not a React golden or human palette approval",
+        }
+      : { status: "missing" },
     scenarios: scenarioMatches.map((s) => ({
       feature: s.feature,
       legacyId: s.id,
       expected: s.expected,
+      original: original?.scenarios.find(
+        (row) => row.feature === s.feature && row.legacy === s.id,
+      ),
       url: `http://127.0.0.1:4191/?path=/story/us${s.feature}--${s.id[0].toLowerCase()}-${s.id.slice(1)}`,
     })),
     components: candidates.map((c) => {

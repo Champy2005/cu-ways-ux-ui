@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useContext } from "react";
+import { OperationAdapterContext } from "./operationAdapter";
 export type Timing = "hold" | "auto" | "stalled";
 export type OperationState =
   | { phase: "idle" }
@@ -13,8 +14,19 @@ export function useOperation(
   timeout: () => void,
 ) {
   const callbacks = useRef({ resolve, timeout });
+  const adapter = useContext(OperationAdapterContext);
   const generation = useRef(0);
   callbacks.current = { resolve, timeout };
+  useEffect(
+    () =>
+      pending && adapter
+        ? adapter.subscribe({
+            resolve: () => callbacks.current.resolve(),
+            timeout: () => callbacks.current.timeout(),
+          })
+        : undefined,
+    [pending, adapter],
+  );
   useEffect(() => {
     if (!pending || timing === "hold") return;
     const id = ++generation.current;

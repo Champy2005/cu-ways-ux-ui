@@ -7,12 +7,17 @@ import {
 export const previewHref = (id: string) =>
   `?id=us${id}--${id === "025" ? "l-02" : "a-01"}&viewMode=story`;
 const navigation: NavigationItem[] = [
-  { id: "025", label: "My Jobs", icon: "jobs" },
-  { id: "026", label: "Proof", icon: "services" },
-  { id: "027", label: "Completion", icon: "invites" },
-  { id: "028", label: "Cancellation", icon: "close" },
-  { id: "034", label: "Reviews", icon: "profile" },
-].map((item) => ({ ...item, href: previewHref(item.id) })) as NavigationItem[];
+  { id: "home", label: "Overview", icon: "home", href: "#overview" },
+  { id: "services", label: "Services", icon: "services", href: "#services" },
+  { id: "jobs", label: "My Jobs", icon: "jobs", href: previewHref("025") },
+  {
+    id: "invites",
+    label: "Invitations",
+    icon: "invites",
+    href: "#invitations",
+  },
+  { id: "profile", label: "Profile", icon: "profile", href: "#profile" },
+];
 const mobileNavigation: NavigationItem[] = [
   { id: "home", label: "Home", icon: "home" },
   { id: "services", label: "Services", icon: "services" },
@@ -38,8 +43,9 @@ export function WorkbenchFrame({ feature, ...props }: Props) {
   return (
     <AppFrame
       {...props}
+      kind={feature === "025" ? "jobs" : feature === "026" ? "proof" : "story"}
       backLabel={props.backLabel ?? "Story library"}
-      activeKey={feature}
+      activeKey={feature === "034" ? "profile" : "jobs"}
       mobileActiveKey={feature === "034" ? "profile" : "jobs"}
       navigation={navigation}
       mobileNavigation={mobileNavigation}

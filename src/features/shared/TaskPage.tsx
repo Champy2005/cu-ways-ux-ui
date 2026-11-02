@@ -113,7 +113,7 @@ export function TaskPageView({
   const readFailed = ["failed", "read-failed", "unknown-read-failed"].includes(
     state.message ?? "",
   );
-  const title = cancel ? "Job cancellation" : "Job completion";
+  const title = cancel ? "Cancel job" : "Job completion";
   const messages: Record<string, string> = {
     success: cancel ? "Job cancelled" : "Job completed",
     unknown: cancel

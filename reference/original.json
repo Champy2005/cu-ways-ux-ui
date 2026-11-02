@@ -1,0 +1,1100 @@
+{
+  "schemaVersion": 1,
+  "selectedAt": "2026-11-01",
+  "designRevision": "1.9.1",
+  "environment": "Dockerfile.visual pinned Playwright Linux renderer; identical contexts for both implementations",
+  "id": "2579c6a069077929e50c62e4d8eec1ccce8ead417999413a24a706ab869dbf36",
+  "classification": "selected-original; human overrides apply",
+  "files": [
+    {
+      "file": "stories/runtime.mjs",
+      "sha256": "91330d1924658364cacf495970a440b40de7fc95a53cda3b5a9fb54ac7a0e6e4",
+      "bytes": 14309
+    },
+    {
+      "file": "stories/screen.css",
+      "sha256": "08753f8406873f0a68f5e67f27669a5f4373910d866a354c6722b839c1317124",
+      "bytes": 24127
+    },
+    {
+      "file": "theme/artwork.mjs",
+      "sha256": "979b484ade0c90ed1778a080fd223bd80ba9f3f4c0fa6db77d490dccd1d34a20",
+      "bytes": 18566
+    },
+    {
+      "file": "theme/assets/birds-dark.svg",
+      "sha256": "60a02c4715a2badc1b5f79dd36689b33855d73ae06753c722fb1823e33ee477c",
+      "bytes": 4112
+    },
+    {
+      "file": "theme/assets/birds-light.svg",
+      "sha256": "efe47392e5f0c945a1de9fd81bbbb391b7803c42cca3a1218b7ecfd8798f178c",
+      "bytes": 4112
+    },
+    {
+      "file": "theme/assets/Inter-Bold.woff2",
+      "sha256": "cb15a7f8b9e9da986c761df33fc969364cad36945fce9939a71307e669684664",
+      "bytes": 117608
+    },
+    {
+      "file": "theme/assets/Inter-Regular.woff2",
+      "sha256": "3a8701e9d81261e37aa8471c1af4f39166d29e0f2ed5e81c4868b84cd0c5c716",
+      "bytes": 113780
+    },
+    {
+      "file": "theme/assets/Inter-SemiBold.woff2",
+      "sha256": "a5112ded84d4cc128d37c598cc44ca5779d429ef1551a33a7a5de799ed8f5d36",
+      "bytes": 117520
+    },
+    {
+      "file": "theme/assets/logo-dark.svg",
+      "sha256": "c3ad8f933d93976cc1ec6c3720062560215d34e03e4300c9a135196d3244f1c1",
+      "bytes": 5112
+    },
+    {
+      "file": "theme/assets/logo-light.svg",
+      "sha256": "8aa40cd7b9e6299effcbb644c04c42995bf51f4cd185a0367da2448cd176f431",
+      "bytes": 4428
+    },
+    {
+      "file": "theme/components.mjs",
+      "sha256": "9a6af87c6b6c1e8a78bc1518507d226f7acdc95a65c9e0e6f3142c67ab5982c1",
+      "bytes": 17442
+    },
+    {
+      "file": "theme/engine.mjs",
+      "sha256": "d84f8de6cf7e1c41cb65e2c8f39645741b1be87d7e4fe9d91637c8a3fc0ca2a3",
+      "bytes": 8218
+    },
+    {
+      "file": "theme/operations.mjs",
+      "sha256": "5c9b48c62136bbc30e380154445f225190561402ba8d772331acfe0d52024bb9",
+      "bytes": 1704
+    },
+    {
+      "file": "theme/recipes.css",
+      "sha256": "c27d1dfc0397b77b0393e020ecbc349cf8ffab8e22f44c1a470b522e99fd9e4d",
+      "bytes": 35682
+    },
+    {
+      "file": "theme/source.mjs",
+      "sha256": "2fd32ccbe8badaba70c90e97fc68c74ff637241ad8db89626d66decc42de3a5d",
+      "bytes": 103244
+    },
+    {
+      "file": "theme/theme.json",
+      "sha256": "4423d946ef691a33711b9c82cc907dc8f837055f64c8874b0dc9df8d51bc5dbc",
+      "bytes": 105507
+    },
+    {
+      "file": "theme/tokens.css",
+      "sha256": "f5af07394ff2d4f7cf3e153f8f1d4f7f6eb25404c25dcfb247b7efdabd306966",
+      "bytes": 19645
+    },
+    {
+      "file": "theme/tuning.mjs",
+      "sha256": "b3da93b3db23e474ade17ddb819d440f71372e8995062fb293504bd649e60724",
+      "bytes": 3294
+    },
+    {
+      "file": "US-025/demo/mock-jobs.mjs",
+      "sha256": "b4ad675ef197130f4e350ddb8508bf5dd7b7a273114556cbb9de6bf1a1b61f9f",
+      "bytes": 1437
+    },
+    {
+      "file": "US-025/demo/navigation.mjs",
+      "sha256": "3ee2ea8da9ef867df0431a3fda3f33a473985ea9de460e9bc742d8dc7c6e2659",
+      "bytes": 4138
+    },
+    {
+      "file": "US-025/demo/scenarios.mjs",
+      "sha256": "05f8464802cf283e511a2d166c6fb9be724eee0667b1a99ca83e9d07f8c3e1f0",
+      "bytes": 33158
+    },
+    {
+      "file": "US-025/demo/screen.css",
+      "sha256": "3150d16d669ce6e634dbf37c2208f54622daff27195171b2e3f5ca9ffaca45c5",
+      "bytes": 19537
+    },
+    {
+      "file": "US-025/demo/screen.html",
+      "sha256": "69813b55b1165f0c494a18ae232519fc18a1b22f90dcd717a3f859a4753b133b",
+      "bytes": 758
+    },
+    {
+      "file": "US-025/demo/screen.mjs",
+      "sha256": "66538951f67d7724ef5c78aef1f5f7694552dad9227ae592df08aead65e73fc5",
+      "bytes": 58406
+    },
+    {
+      "file": "US-025/demo/state-machine.mjs",
+      "sha256": "34204ca1587f9fef81988e76000960b121c314ab10d32188a9f1217a731608f2",
+      "bytes": 17974
+    },
+    {
+      "file": "US-025/model/scenarios.json",
+      "sha256": "2d1b8c1744baaaa6bee004550d6dac4b41b10fecee2b39793aa965711a5418e1",
+      "bytes": 35448
+    },
+    {
+      "file": "US-026/demo/scenarios.mjs",
+      "sha256": "846c896e26eef7400cc87531d5168747cc6549542f9dd7ac4e94bae53eca73bb",
+      "bytes": 7479
+    },
+    {
+      "file": "US-026/demo/screen.css",
+      "sha256": "403ecc59a044b4119a5e0ad5ba4a016bc540b223bf86762ae99c20e6f8e5c026",
+      "bytes": 16356
+    },
+    {
+      "file": "US-026/demo/screen.html",
+      "sha256": "c80cc74aaa07c9c9aeb29f398f8a412b154cfe841a5c9a26ceb2c6c0739115e6",
+      "bytes": 694
+    },
+    {
+      "file": "US-026/demo/screen.mjs",
+      "sha256": "12e532f3af3177d67a821ebe75bec4c4ca6304ea9c44a62f35f9017d4730708a",
+      "bytes": 25707
+    },
+    {
+      "file": "US-026/demo/state-machine.mjs",
+      "sha256": "ff298c5aa8517ebde4a6f51e09fc2307005b8834fc3940ddb5c8b5b6c0bed5c4",
+      "bytes": 10233
+    },
+    {
+      "file": "US-026/model/scenarios.json",
+      "sha256": "ad0161dd6a9abf09ac05fac81ed24ea3216a6775f6bb4e4a3a5d8ed8dc827f08",
+      "bytes": 8395
+    },
+    {
+      "file": "US-027/demo/scenarios.mjs",
+      "sha256": "71cb2bcf842b71d0afb57d52eee09d934650c0934df8af94a0d53daefc5860e0",
+      "bytes": 5447
+    },
+    {
+      "file": "US-027/demo/screen.html",
+      "sha256": "237816ba6d55dd0cb7e0fb6b3e00727a24db7d87599075b5c04535586124cb56",
+      "bytes": 586
+    },
+    {
+      "file": "US-027/demo/screen.mjs",
+      "sha256": "974c3c79aff401c3c8465d4c2a763e9f99d21b8013062aa43a23f90c33bd97e0",
+      "bytes": 4114
+    },
+    {
+      "file": "US-027/demo/state-machine.mjs",
+      "sha256": "46c4f002f088a4328f062d8bc1b84342bb3287a531963c628828b4769537eba8",
+      "bytes": 2803
+    },
+    {
+      "file": "US-027/model/scenarios.json",
+      "sha256": "c4fc69bd47ebe15b402bd0ce815737eb98ca399a1a24a03fd03527fb9d29e78b",
+      "bytes": 5361
+    },
+    {
+      "file": "US-028/demo/scenarios.mjs",
+      "sha256": "bf75e612d21902daecef9d6dbaf6c8bbc09798cf4c7ee86d4547d68d3b7ac6ef",
+      "bytes": 5351
+    },
+    {
+      "file": "US-028/demo/screen.html",
+      "sha256": "9b90506bb5b1e1b799a203065964cbd83f76d7fe9b2f7fe0f3e2f44b9b78205f",
+      "bytes": 582
+    },
+    {
+      "file": "US-028/demo/screen.mjs",
+      "sha256": "a0b929e1ae5ac88681e381d7b0ed7160fb632b4ed1664be25024adb21dd5e2df",
+      "bytes": 3323
+    },
+    {
+      "file": "US-028/demo/state-machine.mjs",
+      "sha256": "84236a904d1f98fff254a7bcf626c7aed8207f282b38a2db1ecf427748f6dc15",
+      "bytes": 2702
+    },
+    {
+      "file": "US-028/model/scenarios.json",
+      "sha256": "e462222a3be37909a58e04b25f48197db851754f82fe80b46727fc0b67e3c6a5",
+      "bytes": 5265
+    },
+    {
+      "file": "US-034/demo/scenarios.mjs",
+      "sha256": "27a1ddbdcc0352178eca7fc4d88f9cef6b50f2e1ae8cbc5aa5463f9ebd4cce08",
+      "bytes": 4560
+    },
+    {
+      "file": "US-034/demo/screen.html",
+      "sha256": "52be7f429c757574f82ca512ad1b0c39e9c6625cb15abc76d14deec1c2e28faf",
+      "bytes": 588
+    },
+    {
+      "file": "US-034/demo/screen.mjs",
+      "sha256": "dca905dc8ecedd9035c3bf80fba3eaa3d62cf6b2b88e367c92663c8bb36893ac",
+      "bytes": 5996
+    },
+    {
+      "file": "US-034/demo/state-machine.mjs",
+      "sha256": "d75c35e109274e29e1ba99a35388fd664d92b6943887a42f5b6bc6f996823658",
+      "bytes": 3337
+    },
+    {
+      "file": "US-034/model/scenarios.json",
+      "sha256": "d369f1b7a6f976ced3811ebafa99080cd7a50c26d096e13a0dcda8047e4f726f",
+      "bytes": 4474
+    }
+  ],
+  "scenarios": [
+    {
+      "feature": "025",
+      "legacy": "L01",
+      "story": "us025--l-01",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "L02",
+      "story": "us025--l-02",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "L03",
+      "story": "us025--l-03",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "L04",
+      "story": "us025--l-04",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "L05",
+      "story": "us025--l-05",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "L06",
+      "story": "us025--l-06",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "L07",
+      "story": "us025--l-07",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "L08",
+      "story": "us025--l-08",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "L09",
+      "story": "us025--l-09",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "D01",
+      "story": "us025--d-01",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "D02",
+      "story": "us025--d-02",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "D03",
+      "story": "us025--d-03",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "D04",
+      "story": "us025--d-04",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "D05",
+      "story": "us025--d-05",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "D06",
+      "story": "us025--d-06",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "D07",
+      "story": "us025--d-07",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "D08",
+      "story": "us025--d-08",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "D09",
+      "story": "us025--d-09",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "D10",
+      "story": "us025--d-10",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "C01",
+      "story": "us025--c-01",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "C02",
+      "story": "us025--c-02",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "C03",
+      "story": "us025--c-03",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "C04",
+      "story": "us025--c-04",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "C05",
+      "story": "us025--c-05",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "C06",
+      "story": "us025--c-06",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "C07",
+      "story": "us025--c-07",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "C08",
+      "story": "us025--c-08",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "R01",
+      "story": "us025--r-01",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "R02",
+      "story": "us025--r-02",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "R03",
+      "story": "us025--r-03",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "R04",
+      "story": "us025--r-04",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "R05",
+      "story": "us025--r-05",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "R06",
+      "story": "us025--r-06",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "R07",
+      "story": "us025--r-07",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "R08",
+      "story": "us025--r-08",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "R09",
+      "story": "us025--r-09",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "R10",
+      "story": "us025--r-10",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "R11",
+      "story": "us025--r-11",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "R12",
+      "story": "us025--r-12",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "R13",
+      "story": "us025--r-13",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "025",
+      "legacy": "R14",
+      "story": "us025--r-14",
+      "source": "US-025/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cuways-demo-settings",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "026",
+      "legacy": "A01",
+      "story": "us026--a-01",
+      "source": "US-026/demo/screen.html",
+      "fixture": "standard",
+      "setup": "us026-demo:configure/select-scenario",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "026",
+      "legacy": "A02",
+      "story": "us026--a-02",
+      "source": "US-026/demo/screen.html",
+      "fixture": "standard",
+      "setup": "us026-demo:configure/select-scenario",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "026",
+      "legacy": "A03",
+      "story": "us026--a-03",
+      "source": "US-026/demo/screen.html",
+      "fixture": "standard",
+      "setup": "us026-demo:configure/select-scenario",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "026",
+      "legacy": "A04",
+      "story": "us026--a-04",
+      "source": "US-026/demo/screen.html",
+      "fixture": "standard",
+      "setup": "us026-demo:configure/select-scenario",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "026",
+      "legacy": "A05",
+      "story": "us026--a-05",
+      "source": "US-026/demo/screen.html",
+      "fixture": "standard",
+      "setup": "us026-demo:configure/select-scenario",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "026",
+      "legacy": "A06",
+      "story": "us026--a-06",
+      "source": "US-026/demo/screen.html",
+      "fixture": "standard",
+      "setup": "us026-demo:configure/select-scenario",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "026",
+      "legacy": "B01",
+      "story": "us026--b-01",
+      "source": "US-026/demo/screen.html",
+      "fixture": "standard",
+      "setup": "us026-demo:configure/select-scenario",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "026",
+      "legacy": "B02",
+      "story": "us026--b-02",
+      "source": "US-026/demo/screen.html",
+      "fixture": "standard",
+      "setup": "us026-demo:configure/select-scenario",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "026",
+      "legacy": "B03",
+      "story": "us026--b-03",
+      "source": "US-026/demo/screen.html",
+      "fixture": "standard",
+      "setup": "us026-demo:configure/select-scenario",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "026",
+      "legacy": "B04",
+      "story": "us026--b-04",
+      "source": "US-026/demo/screen.html",
+      "fixture": "standard",
+      "setup": "us026-demo:configure/select-scenario",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "026",
+      "legacy": "C01",
+      "story": "us026--c-01",
+      "source": "US-026/demo/screen.html",
+      "fixture": "standard",
+      "setup": "us026-demo:configure/select-scenario",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "026",
+      "legacy": "C02",
+      "story": "us026--c-02",
+      "source": "US-026/demo/screen.html",
+      "fixture": "standard",
+      "setup": "us026-demo:configure/select-scenario",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "026",
+      "legacy": "C03",
+      "story": "us026--c-03",
+      "source": "US-026/demo/screen.html",
+      "fixture": "standard",
+      "setup": "us026-demo:configure/select-scenario",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "026",
+      "legacy": "C04",
+      "story": "us026--c-04",
+      "source": "US-026/demo/screen.html",
+      "fixture": "standard",
+      "setup": "us026-demo:configure/select-scenario",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "027",
+      "legacy": "A01",
+      "story": "us027--a-01",
+      "source": "US-027/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "027",
+      "legacy": "A02",
+      "story": "us027--a-02",
+      "source": "US-027/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "027",
+      "legacy": "A03",
+      "story": "us027--a-03",
+      "source": "US-027/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "027",
+      "legacy": "A04",
+      "story": "us027--a-04",
+      "source": "US-027/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "027",
+      "legacy": "A05",
+      "story": "us027--a-05",
+      "source": "US-027/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "027",
+      "legacy": "A06",
+      "story": "us027--a-06",
+      "source": "US-027/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "027",
+      "legacy": "B01",
+      "story": "us027--b-01",
+      "source": "US-027/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "027",
+      "legacy": "B02",
+      "story": "us027--b-02",
+      "source": "US-027/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "027",
+      "legacy": "B03",
+      "story": "us027--b-03",
+      "source": "US-027/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "027",
+      "legacy": "B04",
+      "story": "us027--b-04",
+      "source": "US-027/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "027",
+      "legacy": "R01",
+      "story": "us027--r-01",
+      "source": "US-027/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "027",
+      "legacy": "R02",
+      "story": "us027--r-02",
+      "source": "US-027/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "027",
+      "legacy": "R03",
+      "story": "us027--r-03",
+      "source": "US-027/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "027",
+      "legacy": "R04",
+      "story": "us027--r-04",
+      "source": "US-027/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "028",
+      "legacy": "A01",
+      "story": "us028--a-01",
+      "source": "US-028/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "028",
+      "legacy": "A02",
+      "story": "us028--a-02",
+      "source": "US-028/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "028",
+      "legacy": "A03",
+      "story": "us028--a-03",
+      "source": "US-028/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "028",
+      "legacy": "A04",
+      "story": "us028--a-04",
+      "source": "US-028/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "028",
+      "legacy": "A05",
+      "story": "us028--a-05",
+      "source": "US-028/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "028",
+      "legacy": "A06",
+      "story": "us028--a-06",
+      "source": "US-028/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "028",
+      "legacy": "B01",
+      "story": "us028--b-01",
+      "source": "US-028/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "028",
+      "legacy": "B02",
+      "story": "us028--b-02",
+      "source": "US-028/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "028",
+      "legacy": "B03",
+      "story": "us028--b-03",
+      "source": "US-028/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "028",
+      "legacy": "B04",
+      "story": "us028--b-04",
+      "source": "US-028/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "028",
+      "legacy": "R01",
+      "story": "us028--r-01",
+      "source": "US-028/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "028",
+      "legacy": "R02",
+      "story": "us028--r-02",
+      "source": "US-028/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "028",
+      "legacy": "R03",
+      "story": "us028--r-03",
+      "source": "US-028/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "028",
+      "legacy": "R04",
+      "story": "us028--r-04",
+      "source": "US-028/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "028",
+      "legacy": "R05",
+      "story": "us028--r-05",
+      "source": "US-028/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "034",
+      "legacy": "A01",
+      "story": "us034--a-01",
+      "source": "US-034/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "034",
+      "legacy": "A02",
+      "story": "us034--a-02",
+      "source": "US-034/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "034",
+      "legacy": "A03",
+      "story": "us034--a-03",
+      "source": "US-034/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "034",
+      "legacy": "A04",
+      "story": "us034--a-04",
+      "source": "US-034/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "034",
+      "legacy": "A05",
+      "story": "us034--a-05",
+      "source": "US-034/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "034",
+      "legacy": "B01",
+      "story": "us034--b-01",
+      "source": "US-034/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "034",
+      "legacy": "B02",
+      "story": "us034--b-02",
+      "source": "US-034/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "034",
+      "legacy": "R01",
+      "story": "us034--r-01",
+      "source": "US-034/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "034",
+      "legacy": "R02",
+      "story": "us034--r-02",
+      "source": "US-034/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    },
+    {
+      "feature": "034",
+      "legacy": "R03",
+      "story": "us034--r-03",
+      "source": "US-034/demo/screen.html",
+      "fixture": "standard",
+      "setup": "cu-story-v1:configure",
+      "timing": "controlled browser clock; hold writes and reads"
+    }
+  ],
+  "overrides": [
+    {
+      "owner": "product-navigation",
+      "labels": ["Overview", "Services", "My Jobs", "Invitations", "Profile"],
+      "reason": "Latest explicit human decision supersedes feature shortcuts in legacy shared story runtime."
+    }
+  ]
+}

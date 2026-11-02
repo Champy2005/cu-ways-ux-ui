@@ -68,7 +68,13 @@
       "checks": [
         "src/design-system/components/System.stories.tsx",
         "tests/architecture/contracts.test.ts"
-      ]
+      ],
+      "original": {
+        "source": "theme/components.mjs",
+        "symbol": "action",
+        "style": "theme/recipes.css",
+        "selector": ".cu-action"
+      }
     },
     {
       "id": "LifecycleBadge",
@@ -89,7 +95,13 @@
       "checks": [
         "scripts/ui/rendered.spec.mjs",
         "tests/architecture/contracts.test.ts"
-      ]
+      ],
+      "original": {
+        "source": "theme/components.mjs",
+        "symbol": "lifecycleBadge",
+        "style": "theme/recipes.css",
+        "selector": ".cu-status"
+      }
     },
     {
       "id": "StatusHeading",
@@ -119,7 +131,18 @@
       "rules": [
         "Content modal dims/blurs backdrop, has bounded responsive width and usable overflow. Escape/X remain available during pending work. Navigation menus do not use this backdrop."
       ],
-      "checks": ["src/testing/scenario.ts"]
+      "checks": ["src/testing/scenario.ts"],
+      "original": {
+        "source": "theme/components.mjs",
+        "symbol": "closeControl",
+        "style": "theme/recipes.css",
+        "selector": ".cu-content-dialog",
+        "related": [
+          "US-025/demo/screen.css",
+          "US-026/demo/screen.css",
+          "stories/screen.css"
+        ]
+      }
     },
     {
       "id": "CloseControl",
@@ -129,7 +152,13 @@
       "rules": [
         "One borderless close control with accessible name and comfortable target. No filled rectangle hover."
       ],
-      "checks": ["src/testing/scenario.ts"]
+      "checks": ["src/testing/scenario.ts"],
+      "original": {
+        "source": "theme/components.mjs",
+        "symbol": "closeControl",
+        "style": "theme/recipes.css",
+        "selector": ".cu-close"
+      }
     },
     {
       "id": "BackLink",
@@ -144,7 +173,13 @@
       "rules": [
         "Shared top-left back pattern: readable responsive size, transparent hover, keyboard focus, no raised action treatment."
       ],
-      "checks": ["src/design-system/components/System.stories.tsx"]
+      "checks": ["src/design-system/components/System.stories.tsx"],
+      "original": {
+        "source": "theme/components.mjs",
+        "symbol": "backLink",
+        "style": "theme/recipes.css",
+        "selector": ".cu-back-link"
+      }
     },
     {
       "id": "Pagination",
@@ -154,7 +189,12 @@
       "rules": [
         "Omit unavailable directions entirely. Borderless at rest; enabled icons show a soft tonal circle/fine inset edge on hover without geometry shift."
       ],
-      "checks": ["scripts/ui/rendered.spec.mjs"]
+      "checks": ["scripts/ui/rendered.spec.mjs"],
+      "original": {
+        "source": "stories/screen.css",
+        "selector": ".pagination",
+        "related": ["US-025/demo/screen.css"]
+      }
     },
     {
       "id": "Select",
@@ -181,7 +221,13 @@
       "rules": [
         "One coherent message/action grouping. Keep actions outside painted live region. Use semantic restrained tones and consistent icon/text alignment."
       ],
-      "checks": ["src/testing/scenario.ts"]
+      "checks": ["src/testing/scenario.ts"],
+      "original": {
+        "source": "theme/components.mjs",
+        "symbol": "feedbackBlock",
+        "style": "theme/recipes.css",
+        "selector": ".cu-feedback"
+      }
     },
     {
       "id": "ApplicationFrame",
@@ -198,9 +244,20 @@
       "source": "src/design-system/compositions/layout.tsx",
       "style": "src/design-system/compositions/layout.module.css",
       "rules": [
-        "Sticky header with 10px lower corners, original logo/role artwork and theme control. Desktop bounded selection; mobile icon-based selection without filled tile. Connected Start/navigation dock, 12px upper corners, measured bottom clearance and short-height fallback. No content-modal blur on navigation menus. Global shell changes require full checks."
+        "Sticky header with 10px lower corners, original logo/role artwork and theme control. Desktop bounded selection; mobile icon-based selection without filled tile. Floating Start tray above a separate navigation dock, 12px upper corners, measured bottom clearance and short-height fallback. No content-modal blur on navigation menus. Global shell changes require full checks."
       ],
-      "checks": ["scripts/ui/rendered.spec.mjs"]
+      "checks": ["scripts/ui/rendered.spec.mjs"],
+      "original": {
+        "source": "US-025/demo/screen.mjs",
+        "symbol": "shellHeader",
+        "style": "theme/recipes.css",
+        "selector": ".cu-header-row",
+        "related": [
+          "US-025/demo/screen.css",
+          "stories/screen.css",
+          "US-026/demo/screen.css"
+        ]
+      }
     },
     {
       "id": "ProofRecord",
@@ -293,7 +350,13 @@
       "rules": [
         "Two-line title in compact lists; full title in detail. Upper-right lifecycle. Compact metadata/action arrangement; two columns only when content width supports it."
       ],
-      "checks": ["scripts/ui/rendered.spec.mjs"]
+      "checks": ["scripts/ui/rendered.spec.mjs"],
+      "original": {
+        "source": "US-025/demo/screen.mjs",
+        "symbol": "renderJobCard",
+        "style": "US-025/demo/screen.css",
+        "selector": ".job-card"
+      }
     },
     {
       "id": "Card",
@@ -374,6 +437,63 @@
         "Balanced title and filter; disclose long comments; omit redundant pagination and inaccessible private-job actions."
       ],
       "checks": ["src/testing/scenario.ts", "scripts/ui/rendered.spec.mjs"]
+    },
+    {
+      "id": "JobDetailLayout",
+      "aliases": [
+        "Contract",
+        "Surveys",
+        "job detail layout",
+        "contract action width"
+      ],
+      "source": "src/features/us025/MyJobs.tsx",
+      "style": "src/features/us025/detail.module.css",
+      "rules": [
+        "Port the original Contract/Surveys hierarchy and intrinsic container56rem transition. Contract uses18–22rem; mobile shows Contract first. Facts use auto-fit9rem. Do not replace this with a generic summary card."
+      ],
+      "checks": ["tests/architecture/fidelity.test.ts"],
+      "original": {
+        "source": "US-025/demo/screen.mjs",
+        "symbol": "renderDetail",
+        "style": "US-025/demo/screen.css",
+        "selector": ".detail-layout"
+      }
+    },
+    {
+      "id": "UnavailableState",
+      "aliases": [
+        "Job unavailable",
+        "Session expired",
+        "Marketer access required"
+      ],
+      "source": "src/design-system/compositions/layout.tsx",
+      "style": "src/design-system/compositions/layout.module.css",
+      "rules": [
+        "Unavailable details use a plain panel, without feedback-tone coloring. Preserve the feature-specific return destination and remove inaccessible private information."
+      ],
+      "checks": ["src/testing/scenario.ts"],
+      "original": {
+        "source": "US-025/demo/screen.mjs",
+        "symbol": "unavailableContent",
+        "style": "US-025/demo/screen.css",
+        "selector": ".unavailable-state"
+      }
+    },
+    {
+      "id": "Artwork",
+      "aliases": ["logo", "role birds", "brand artwork"],
+      "source": "src/design-system/components/Artwork.tsx",
+      "style": "src/design-system/compositions/layout.module.css",
+      "rules": [
+        "Render unchanged bundled SVG artwork inline as in the original. Prefix fragment IDs. The original Figma/SVG sources remain read-only."
+      ],
+      "checks": ["scripts/ui/fidelity-runner.mjs"],
+      "original": {
+        "source": "theme/components.mjs",
+        "symbol": "brand/roleBirds",
+        "style": "theme/recipes.css",
+        "selector": ".cu-brand,.cu-role-birds"
+      }
     }
   ],
   "exceptions": [
@@ -383,5 +503,11 @@
       "reason": "Compact navigation icons need a bounded tonal circle; quiet content text still stays transparent.",
       "story": "system--contracts"
     }
-  ]
+  ],
+  "migration": {
+    "status": "fidelity-recovery-in-progress",
+    "originalReference": "reference/original.json",
+    "baselinePromotion": "blocked",
+    "humanAcceptance": "pending; earlier React fidelity rejected"
+  }
 }

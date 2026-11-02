@@ -2,6 +2,8 @@ import type { Preview } from "@storybook/react-vite";
 import "../src/design-system/tokens/theme.css";
 import "../src/design-system/base.css";
 import { ThemeProvider } from "../src/design-system/ThemeProvider";
+import { OperationAdapterContext } from "../src/features/shared/operationAdapter";
+import { storyOperations } from "../src/fixtures/operationAdapter";
 
 const preview: Preview = {
   globalTypes: {
@@ -76,7 +78,9 @@ const preview: Preview = {
           material={material}
           textScale={textScale}
         >
-          <Story />
+          <OperationAdapterContext.Provider value={storyOperations(context.id)}>
+            <Story />
+          </OperationAdapterContext.Provider>
         </ThemeProvider>
       );
     },

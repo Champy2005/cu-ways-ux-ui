@@ -1,0 +1,154 @@
+/* Original US025 intrinsic rules. The contract stays first in mobile flow;
+   content-container width, rather than the viewport, governs the two-column layout. */
+.layout {
+  display: grid;
+  gap: 1.25rem;
+  align-items: start;
+}
+.dialogReference {
+  line-height: 1.5;
+  margin: 0.5rem 0;
+  font-size: 0.95rem;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+.dialogPrice {
+  margin-block: 1rem;
+}
+.dialogPriceValue {
+  margin: 0.25rem 0 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.filter {
+  display: grid;
+  gap: 0.4rem;
+  width: 100%;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+@container content (min-width: 56rem) {
+  .filter {
+    width: 11.25rem;
+  }
+}
+.context,
+.contract {
+  min-width: 0;
+  padding: clamp(12px, 4vw, 20px);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface-card);
+}
+.contract {
+  order: -1;
+}
+.heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.contractHeading {
+  align-items: start;
+}
+.provenance {
+  margin: 0 0 0.4rem;
+  color: var(--text-muted);
+  font-size: 0.86em;
+}
+.lastConfirmed {
+  margin: 0.75rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.93em;
+}
+.title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.015em;
+}
+.count {
+  font-size: 0.85em;
+  color: var(--text-muted);
+}
+.surveys {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+.surveyItem {
+  overflow-wrap: anywhere;
+}
+.surveyItem + .surveyItem {
+  margin-block-start: 0.625rem;
+}
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+  gap: 1rem 1.5rem;
+  margin: 1rem 0 0;
+  padding-block-start: 1rem;
+  border-block-start: 1px solid var(--border);
+}
+.factLabel {
+  color: var(--text-muted);
+  font-size: 0.85em;
+  margin-block-end: 0.25rem;
+}
+.factValue {
+  margin: 0;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.price {
+  margin: 1rem 0 0;
+}
+.priceLabel {
+  color: var(--text-muted);
+  font-size: 0.86em;
+}
+.priceValue {
+  margin: 0.35rem 0 0;
+  font-size: 1.5rem;
+  line-height: 1.35;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+.actions {
+  display: grid;
+  gap: 0.625rem;
+  margin-block-start: 1rem;
+}
+.desktopAction {
+  display: none;
+}
+@container content (min-width: 56rem) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 22rem);
+    gap: 1.5rem;
+  }
+  .contract {
+    order: initial;
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .context {
+    grid-column: 1;
+    grid-row: 1;
+  }
+}
+@media (min-width: 64rem) {
+  .desktopAction {
+    display: grid;
+  }
+}
+[data-text-scale]:not([data-text-scale="100"]) .desktopAction {
+  display: none;
+}
