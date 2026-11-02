@@ -5,7 +5,7 @@ const meta = {
   id: "us025",
   title: "Pages/US025",
   component: MyJobs,
-  args: { timing: "hold" },
+  args: { timing: "hold", fixture: "standard" },
   argTypes: {
     timing: { control: "select", options: ["hold", "auto", "stalled"] },
   },

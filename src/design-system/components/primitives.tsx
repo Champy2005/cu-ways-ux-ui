@@ -89,7 +89,34 @@ export function Icon({
       aria-hidden="true"
       data-spinner={name === "spinner" || undefined}
     >
-      {filled && name === "jobs" ? (
+      {filled && name === "home" ? (
+        <path d="M3 10.5 12 2.5l9 8V22h-7v-8h-4v8H3z" stroke="none" />
+      ) : filled && name === "profile" ? (
+        <g stroke="none">
+          <circle cx="12" cy="7" r="4.5" />
+          <path d="M3 22c0-11 18-11 18 0z" />
+        </g>
+      ) : filled && name === "services" ? (
+        <g strokeLinecap="butt" strokeLinejoin="miter">
+          <path d="M3 6h18v16H3z" stroke="none" />
+          <path d="M8 6V3h8v3" fill="none" strokeWidth="2" />
+          <path
+            d="M3 12h18M10 12v3h4v-3"
+            fill="none"
+            stroke="var(--nav-cutout, var(--surface-card))"
+            strokeWidth="1.8"
+          />
+        </g>
+      ) : filled && name === "invites" ? (
+        <g strokeLinecap="butt" strokeLinejoin="miter">
+          <path d="M2 3h20v16H9l-7 4z" stroke="none" />
+          <path
+            d="M6 8h12M6 13h8"
+            stroke="var(--nav-cutout, var(--surface-card))"
+            strokeWidth="1.6"
+          />
+        </g>
+      ) : filled && name === "jobs" ? (
         <g strokeLinecap="butt" strokeLinejoin="miter">
           <path d="M4 5h16v18H4z" stroke="none" />
           <path
@@ -105,13 +132,6 @@ export function Icon({
         </g>
       ) : (
         <path d={paths[name]} />
-      )}
-      {filled && ["services", "invites"].includes(name) && (
-        <path
-          d={name === "services" ? "M3 12h18M10 12v3h4v-3" : "M6 8h12M6 13h8"}
-          fill="none"
-          stroke="var(--nav-cutout, var(--surface-card))"
-        />
       )}
     </svg>
   );
@@ -129,7 +149,7 @@ type ActionProps = Pick<
   children: ReactNode;
   role?: ActionRole;
   busy?: boolean;
-  size?: "default" | "list-entry" | "proof-entry";
+  size?: "default" | "list-entry" | "proof-entry" | "operation" | "proof-save";
 };
 /** Semantic action. Consumers own placement; this component owns paint and targets. */
 export function Action({
@@ -152,7 +172,7 @@ export function Action({
       disabled={disabled || busy}
       className={s.action}
     >
-      {busy && <Icon name="clock" />}
+      {busy && <Icon name="spinner" />}
       {children}
     </button>
   );
@@ -194,8 +214,21 @@ export function LifecycleBadge({ status }: { status: JobStatus }) {
 export function AttachmentTag() {
   return (
     <span data-ui="AttachmentTag" className={s.tag}>
-      <Icon name="link" />
+      <Icon name="jobs" />
       Proof
+    </span>
+  );
+}
+export function VerificationBadge() {
+  return (
+    <span
+      className={s.verification}
+      data-ui="VerificationBadge"
+      aria-label="Verified completed job"
+      title="Review from a completed job"
+    >
+      <Icon name="sealed-check" />
+      Verified
     </span>
   );
 }
@@ -209,7 +242,23 @@ export function BackLink({
   onClick?: () => void;
 }) {
   return href ? (
-    <a href={href} className={s.back} data-ui="BackLink">
+    <a
+      href={href}
+      onClick={(event) => {
+        if (
+          onClick &&
+          !event.ctrlKey &&
+          !event.metaKey &&
+          !event.shiftKey &&
+          !event.altKey
+        ) {
+          event.preventDefault();
+          onClick();
+        }
+      }}
+      className={s.back}
+      data-ui="BackLink"
+    >
       <Icon name="back" />
       {children}
     </a>
@@ -225,13 +274,20 @@ export function BackLink({
     </button>
   );
 }
-export function CloseControl({ onClick }: { onClick: () => void }) {
+export function CloseControl({
+  onClick,
+  size = "default",
+}: {
+  onClick: () => void;
+  size?: "default" | "dialog";
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={s.close}
       data-ui="CloseControl"
+      data-size={size}
       aria-label="Close"
     >
       <Icon name="close" />
@@ -262,29 +318,38 @@ export function ContentDialog({
       }}
     >
       <Dialog.Portal>
-        <Dialog.Backdrop className={s.backdrop} />
+        <Dialog.Backdrop className={s.backdrop} data-ui="ContentBackdrop" />
         <Dialog.Popup
           className={s.dialog}
           data-ui="ContentDialog"
           data-variant={variant}
-          initialFocus={() =>
-            (initialFocusId ? document.getElementById(initialFocusId) : null) ??
-            heading.current
-              ?.closest('[role="dialog"]')
-              ?.querySelector<HTMLElement>('[aria-invalid="true"]') ??
-            (variant === "proof-entry"
-              ? heading.current
-                  ?.closest('[role="dialog"]')
-                  ?.querySelector<HTMLElement>("input")
-              : null) ??
-            heading.current
-          }
+          initialFocus={() => {
+            const popup = heading.current?.closest('[role="dialog"]');
+            // Keep the beginning readable when enlarged content overflows.
+            // Focusing a footer action would otherwise scroll the title away.
+            if (popup && popup.scrollHeight > popup.clientHeight + 1)
+              return heading.current;
+            return (
+              (initialFocusId
+                ? document.getElementById(initialFocusId)
+                : null) ??
+              heading.current
+                ?.closest('[role="dialog"]')
+                ?.querySelector<HTMLElement>('[aria-invalid="true"]') ??
+              (variant === "proof-entry"
+                ? heading.current
+                    ?.closest('[role="dialog"]')
+                    ?.querySelector<HTMLElement>("input")
+                : null) ??
+              heading.current
+            );
+          }}
         >
           <div className={s.dialogHeading}>
             <Dialog.Title ref={heading} tabIndex={-1}>
               {title}
             </Dialog.Title>
-            <CloseControl onClick={onClose} />
+            <CloseControl onClick={onClose} size="dialog" />
           </div>
           {children}
         </Dialog.Popup>
@@ -297,11 +362,13 @@ export function SelectControl({
   value,
   options,
   onChange,
+  disabled = false,
 }: {
   label: string;
   value: string;
   options: { label: string; value: string }[];
   onChange: (value: string) => void;
+  disabled?: boolean;
 }) {
   return (
     <select
@@ -309,6 +376,7 @@ export function SelectControl({
       aria-label={label}
       data-ui="Select"
       value={value}
+      disabled={disabled}
       onChange={(event) => onChange(event.target.value)}
     >
       {options.map((option) => (
@@ -366,15 +434,21 @@ export function Feedback({
   tone = "info",
   action,
   pending = false,
+  variant = "default",
 }: {
   title: string;
   children?: ReactNode;
   tone?: "info" | "success" | "warning" | "error";
   action?: ReactNode;
   pending?: boolean;
+  variant?: "default" | "jobs" | "proof";
 }) {
   return (
-    <section data-ui="RecoveryPanel" className={s.recovery}>
+    <section
+      data-ui="RecoveryPanel"
+      data-variant={variant}
+      className={s.recovery}
+    >
       <div role="status" className={s.feedback} data-tone={tone}>
         <Icon
           name={
@@ -400,11 +474,40 @@ export function EmptyState({
   title,
   children,
   variant = "default",
+  action,
 }: {
   title: string;
   children?: ReactNode;
-  variant?: "default" | "proof";
+  variant?: "default" | "proof" | "delivery" | "jobs" | "reviews" | "rating";
+  action?: ReactNode;
 }) {
+  if (variant === "reviews")
+    return (
+      <div
+        data-ui="EmptyState"
+        data-variant={variant}
+        className={s.reviewEmpty}
+      >
+        <div className={s.reviewEmptyHeading}>
+          <Icon name="invites" />
+          <h3>{title}</h3>
+        </div>
+        {children && <p>{children}</p>}
+        {action && <div className={s.emptyActions}>{action}</div>}
+      </div>
+    );
+  if (variant === "rating")
+    return (
+      <div
+        data-ui="EmptyState"
+        data-variant={variant}
+        className={s.ratingEmpty}
+      >
+        <Icon name="profile" />
+        <h3>{title}</h3>
+        {children && <p>{children}</p>}
+      </div>
+    );
   return (
     <div
       className={s.empty}
@@ -413,11 +516,12 @@ export function EmptyState({
       data-variant={variant}
     >
       <span className={s.emptyIcon}>
-        <Icon name={variant === "proof" ? "jobs" : "link"} />
+        <Icon name={variant === "default" ? "link" : "jobs"} />
       </span>
       <div>
         <h2>{title}</h2>
         {children && <p>{children}</p>}
+        {action && <div className={s.emptyActions}>{action}</div>}
       </div>
     </div>
   );
@@ -540,20 +644,28 @@ export function LongTextDisclosure({
   onToggle: () => void;
 }) {
   const id = useId();
+  const long = preview !== text;
   return (
-    <div data-ui="LongTextDisclosure">
-      <p id={id} className={s.disclosureText}>
-        {expanded ? text : preview}
-      </p>
-      {preview !== text && (
-        <Action
-          role="quiet"
-          aria-expanded={expanded}
-          aria-controls={id}
-          onClick={onToggle}
+    <div data-ui="LongTextDisclosure" className={s.disclosure}>
+      {(!long || !expanded) && (
+        <p className={s.disclosureText} data-preview={long}>
+          {long ? preview : text}
+        </p>
+      )}
+      {long && (
+        <details
+          open={expanded}
+          onToggle={(event) => {
+            if (event.currentTarget.open !== expanded) onToggle();
+          }}
         >
-          {expanded ? "Show less" : "Read more"}
-        </Action>
+          <summary aria-controls={id}>
+            {expanded ? "Show less" : "Read full review"}
+          </summary>
+          <p id={id} className={s.disclosureText}>
+            {text}
+          </p>
+        </details>
       )}
     </div>
   );
@@ -561,23 +673,104 @@ export function LongTextDisclosure({
 export function Loading({
   title,
   onStop,
-  rows = 2,
+  kind = "completion",
 }: {
   title: string;
   onStop: () => void;
-  rows?: 2 | 3;
+  kind?: "completion" | "cancellation" | "proof" | "reviews";
+}) {
+  const lines = (
+    <div className={s.loadingLines} aria-hidden="true">
+      <span />
+      <span />
+      <span />
+    </div>
+  );
+  const operation = (
+    <OperationNotice
+      title={title}
+      action={
+        <Action size="operation" onClick={onStop}>
+          Stop waiting
+        </Action>
+      }
+    />
+  );
+  return (
+    <div
+      className={s.loadingLayout}
+      data-ui="Loading"
+      data-kind={kind}
+      aria-busy="true"
+    >
+      {kind === "reviews" ? (
+        <>
+          <div className={s.loadingContext}>
+            <section className={s.loadingCard}>
+              {operation}
+              {lines}
+            </section>
+            <section className={s.loadingCard}>{lines}</section>
+          </div>
+          <section className={s.loadingCard} data-shape="history">
+            {lines}
+            {lines}
+            {lines}
+          </section>
+        </>
+      ) : (
+        (kind === "proof" ? ["proof"] : ["summary", "task", "context"]).map(
+          (shape, index) => (
+            <section key={shape} className={s.loadingCard}>
+              {index === 0 && operation}
+              {lines}
+            </section>
+          ),
+        )
+      )}
+    </div>
+  );
+}
+export function OperationNotice({
+  title,
+  action,
+}: {
+  title: string;
+  action?: ReactNode;
 }) {
   return (
-    <section className={s.loading} data-ui="Loading" aria-busy="true">
-      <div role="status">
-        <Icon name="clock" /> {title}
+    <section className={s.operationNotice} data-ui="OperationNotice">
+      <div className={s.operationMessage} role="status">
+        <Icon name="spinner" />
+        <strong>{title}</strong>
       </div>
-      {Array.from({ length: rows }, (_, i) => (
-        <div key={i} className={s.skeleton} aria-hidden="true" />
-      ))}
-      <Action role="safe" onClick={onStop}>
-        Stop waiting
-      </Action>
+      {action && <div className={s.operationActions}>{action}</div>}
     </section>
+  );
+}
+export function JobsLoading({ detail = false }: { detail?: boolean }) {
+  const cards = (
+    <div className={s.jobsLoadingStack} data-detail={detail} aria-hidden="true">
+      {Array.from({ length: detail ? 2 : 3 }, (_, index) => (
+        <div className={s.jobsLoadingCard} key={index}>
+          {Array.from({ length: detail && index === 1 ? 2 : 3 }, (_, line) => (
+            <div className={s.jobsLoadingLine} key={line} />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+  const label = (
+    <p className={s.jobsLoadingLabel} role="status">
+      <Icon name="spinner" />
+      {detail ? "Checking job details…" : "Loading jobs…"}
+    </p>
+  );
+  return (
+    <div data-ui="JobsLoading">
+      {!detail && label}
+      {cards}
+      {detail && label}
+    </div>
   );
 }

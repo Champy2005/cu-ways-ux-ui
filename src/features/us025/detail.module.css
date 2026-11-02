@@ -5,6 +5,9 @@
   gap: 1.25rem;
   align-items: start;
 }
+.notice {
+  margin-bottom: 1.25rem;
+}
 .dialogReference {
   line-height: 1.5;
   margin: 0.5rem 0;
@@ -51,9 +54,6 @@
   justify-content: space-between;
   gap: 0.75rem;
   flex-wrap: wrap;
-}
-.contractHeading {
-  align-items: start;
 }
 .provenance {
   margin: 0 0 0.4rem;
@@ -151,4 +151,9 @@
 }
 [data-text-scale]:not([data-text-scale="100"]) .desktopAction {
   display: none;
+}
+@media (max-width: 30rem) {
+  [data-text-scale]:not([data-text-scale="100"]) .priceValue {
+    font-size: 1.2em;
+  }
 }

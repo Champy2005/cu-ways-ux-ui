@@ -5,6 +5,7 @@ export default defineConfig({
   testMatch: "rendered.spec.mjs",
   workers: 1,
   retries: 0,
+  maxFailures: 1,
   updateSnapshots: "none",
   timeout: 900000,
   outputDir: `${output}/playwright`,
@@ -12,6 +13,8 @@ export default defineConfig({
   snapshotPathTemplate:
     "{testDir}/../../.artifacts/ui/reference/images/{arg}{ext}",
   use: {
+    actionTimeout: 10000,
+    navigationTimeout: 15000,
     headless: true,
     locale: "en-GB",
     timezoneId: "Asia/Bangkok",

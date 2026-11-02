@@ -6,10 +6,9 @@ import {
   EmptyState,
   Feedback,
   InlineLink,
-  Loading,
+  JobsLoading,
   Pagination,
   SelectControl,
-  LifecycleBadge,
   Icon,
   type JobStatus,
 } from "../../design-system/components/primitives";
@@ -18,8 +17,8 @@ import {
   ConfirmationActions,
   JobSummary,
   OperationProgress,
-  Stack,
   UnavailableState,
+  StatusHeading,
 } from "../../design-system/compositions/layout";
 import { createDemoState, transitionDemo } from "./model.mjs";
 import { FIXTURES, SCENARIO_BY_ID } from "./scenarios.mjs";
@@ -144,7 +143,8 @@ export function MyJobs({
     : model.bannerTone
       ? (model.bannerTitle ?? "")
       : null;
-  const canStart = ["D02", "D09", "C02", "R03", "R11"].includes(viewId);
+  const canStart =
+    ["D02", "D09", "C02", "R03", "R11"].includes(viewId) && !state.pending;
   const panelRefresh =
     !["D05", "R06"].includes(viewId) && !recoveryIds.includes(viewId);
   return (
@@ -166,6 +166,7 @@ export function MyJobs({
           <label className={detail.filter}>
             Status
             <SelectControl
+              disabled={state.scenarioId === "L01"}
               label="Filter jobs by status"
               value={state.listFilter}
               options={filterOptions}
@@ -175,7 +176,7 @@ export function MyJobs({
         ) : undefined
       }
       action={
-        canStart ? (
+        canStart && !state.pending ? (
           <Action
             role="primary"
             disabled={state.pending}
@@ -222,88 +223,101 @@ export function MyJobs({
         </UnavailableState>
       ) : (
         <>
+          {state.pending && !state.confirmationOpen && (
+            <div className={detail.notice}>
+              <OperationProgress
+                title={`Starting Job #${state.jobId}`}
+                onReopen={() => send({ type: "REOPEN_PROGRESS" })}
+              />
+            </div>
+          )}
           {notice !== null && (
-            <Feedback
-              title={notice}
-              pending={["R01", "R13"].includes(state.scenarioId)}
-              tone={
-                (model.bannerTone as ComponentProps<typeof Feedback>["tone"]) ??
-                "info"
-              }
-              action={
-                ["L06", "L07", "D03"].includes(state.scenarioId) ||
-                (recoveryIds.includes(state.scenarioId) &&
-                  !["R01", "R13"].includes(state.scenarioId)) ? (
-                  <Action
-                    disabled={state.pending}
-                    onClick={() => {
-                      if (state.route === "list") send({ type: "RETRY_LIST" });
-                      else {
-                        send({ type: "REFRESH_DETAIL" });
-                        send({
-                          type: "DETAIL_READ_RESULT",
-                          status: "accepted",
-                        });
-                      }
-                    }}
-                  >
-                    <Icon name="refresh" />
-                    {["L06", "L07", "D03"].includes(state.scenarioId)
-                      ? "Try again"
-                      : "Refresh job"}
-                  </Action>
-                ) : undefined
-              }
-            >
-              {model.bannerBody?.replace(
-                "{status}",
-                state.jobStatus ?? "Unavailable",
-              )}
-            </Feedback>
+            <div className={detail.notice}>
+              <Feedback
+                variant="jobs"
+                title={notice}
+                pending={["R01", "R13"].includes(state.scenarioId)}
+                tone={
+                  (model.bannerTone as ComponentProps<
+                    typeof Feedback
+                  >["tone"]) ?? "info"
+                }
+                action={
+                  ["L06", "L07", "D03"].includes(state.scenarioId) ||
+                  (recoveryIds.includes(state.scenarioId) &&
+                    !["R01", "R13"].includes(state.scenarioId)) ? (
+                    <Action
+                      disabled={state.pending}
+                      onClick={() => {
+                        if (state.route === "list")
+                          send({ type: "RETRY_LIST" });
+                        else {
+                          send({ type: "REFRESH_DETAIL" });
+                          send({
+                            type: "DETAIL_READ_RESULT",
+                            status: "accepted",
+                          });
+                        }
+                      }}
+                    >
+                      <Icon name="refresh" />
+                      {["L06", "L07", "D03"].includes(state.scenarioId)
+                        ? "Try again"
+                        : "Refresh job"}
+                    </Action>
+                  ) : undefined
+                }
+              >
+                {model.bannerBody?.replace(
+                  "{status}",
+                  state.jobStatus ?? "Unavailable",
+                )}
+              </Feedback>
+            </div>
           )}
           {state.scenarioId === "L08" && (
             <p role="status">Updating your results…</p>
           )}
           {loading ? (
-            <Loading
-              rows={state.route === "list" ? 3 : 2}
-              title={
-                state.route === "list"
-                  ? "Loading your jobs"
-                  : "Checking job details"
-              }
-              onStop={() =>
-                send(
-                  state.route === "list"
-                    ? { type: "RETRY_LIST" }
-                    : { type: "DETAIL_READ_RESULT", status: "failed" },
-                )
-              }
-            />
+            <JobsLoading detail={state.route !== "list"} />
           ) : state.route === "list" ? (
             <>
               {empty ? (
-                <Card>
-                  <Stack>
-                    <EmptyState
-                      title={
-                        state.scenarioId === "L03"
-                          ? "No active jobs"
-                          : state.scenarioId === "L04"
-                            ? "No hired jobs"
-                            : "No jobs match this status"
-                      }
-                    >
-                      Jobs appear after a creator accepts your offer.
-                    </EmptyState>
-                    <Action
-                      onClick={() =>
-                        send({ type: "CHANGE_FILTER", filter: "all" })
-                      }
-                    >
-                      View all my jobs
-                    </Action>
-                  </Stack>
+                <Card boundary="JobsEmpty">
+                  <EmptyState
+                    variant="jobs"
+                    title={
+                      state.scenarioId === "L03"
+                        ? "No active jobs"
+                        : state.scenarioId === "L04"
+                          ? "No hired jobs yet"
+                          : "No jobs with this status"
+                    }
+                    action={
+                      state.scenarioId === "L04" ? undefined : (
+                        <Action
+                          role={
+                            state.scenarioId === "L03" ? "entry" : "utility"
+                          }
+                          onClick={() =>
+                            send({
+                              type: "CHANGE_FILTER",
+                              filter:
+                                state.scenarioId === "L03" ? "all" : "active",
+                            })
+                          }
+                        >
+                          {state.scenarioId === "L03"
+                            ? "View all my jobs"
+                            : "Clear filter · Active jobs"}
+                        </Action>
+                      )
+                    }
+                  >
+                    {state.scenarioId === "L05"
+                      ? "Try a different status or return to Active jobs."
+                      : "Jobs appear here after a creator accepts your offer."}
+                  </EmptyState>
                 </Card>
               ) : (
                 state.scenarioId !== "L06" && (
@@ -426,20 +440,14 @@ export function MyJobs({
                     </dl>
                   </section>
                   <section className={detail.contract} data-ui="JobContract">
-                    <div
-                      className={`${detail.heading} ${detail.contractHeading}`}
-                    >
-                      <h2 className={detail.title}>Contract</h2>
-                      {state.statusKnown && state.jobStatus && (
-                        <LifecycleBadge
-                          status={
-                            (state.statusKnown
-                              ? state.jobStatus
-                              : state.lastConfirmedStatus) as JobStatus
-                          }
-                        />
-                      )}
-                    </div>
+                    <StatusHeading
+                      title="Contract"
+                      status={
+                        state.statusKnown
+                          ? (state.jobStatus as JobStatus)
+                          : undefined
+                      }
+                    />
                     {state.scenarioId === "R14" && (
                       <p className={detail.provenance}>
                         Last confirmed information
@@ -491,12 +499,6 @@ export function MyJobs({
                 </div>
               </>
             )
-          )}
-          {state.pending && !state.confirmationOpen && (
-            <OperationProgress
-              onReopen={() => send({ type: "REOPEN_PROGRESS" })}
-              onCheck={resolve}
-            />
           )}
           {state.offlineNotice && (
             <Feedback title="You’re offline" tone="warning">

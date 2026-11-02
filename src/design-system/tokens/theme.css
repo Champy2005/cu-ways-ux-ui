@@ -1,5 +1,20 @@
 /* Canonical current palette migrated from Rose × Slate 1.9.1. Palette acceptance pending. */
 [data-cu-theme="light"] {
+  --action-utility-hover-border: #75869d;
+  --action-tonal-hover-border: #879cb3;
+  --action-outline-hover-border: #687c98;
+  --action-secondary-hover-border: #244a77;
+  --depth-utility-hover:
+    0 1px 2px rgb(23 40 62 / 0.036), 0 3px 8px rgb(23 40 62 / 0.06);
+  --depth-primary-hover:
+    0 1px 2px rgb(23 40 62 / 0.084), 0 3px 8px rgb(23 40 62 / 0.14);
+  --depth-destructive-hover:
+    0 1px 2px rgb(23 40 62 / 0.084), 0 3px 8px rgb(23 40 62 / 0.14);
+  --depth-destructive:
+    0 1px 2px rgb(23 40 62 / 0.072), 0 3px 8px rgb(23 40 62 / 0.12);
+  --rating-star: #93601b;
+  --rating-bar: #69798c;
+  --rating-track: #edeff4;
   --warning-border: #ddceaf;
   --focus: #306bba;
   --overlay: rgb(24 32 49 / 0.46);
@@ -47,6 +62,25 @@
   --feedback-success-border: #bbdccc;
 }
 [data-cu-theme="dark"] {
+  --action-utility-hover-border: #a5b5ca;
+  --action-tonal-hover-border: #a3b6ce;
+  --action-outline-hover-border: #a3b3ca;
+  --action-secondary-hover-border: #c4daf5;
+  --depth-utility-hover:
+    inset 0 1px rgb(235 243 255 / 0.0265), 0 1px 2px rgb(176 207 243 / 0.0234),
+    0 3px 8px rgb(176 207 243 / 0.039);
+  --depth-primary-hover:
+    inset 0 1px rgb(235 243 255 / 0.03), 0 1px 2px rgb(234 134 177 / 0.039),
+    0 3px 8px rgb(234 134 177 / 0.065);
+  --depth-destructive-hover:
+    inset 0 1px rgb(235 243 255 / 0.03), 0 1px 2px rgb(228 139 153 / 0.039),
+    0 3px 8px rgb(228 139 153 / 0.065);
+  --depth-destructive:
+    inset 0 1px rgb(235 243 255 / 0.03), 0 1px 2px rgb(228 139 153 / 0.036),
+    0 3px 8px rgb(228 139 153 / 0.06);
+  --rating-star: #ddb875;
+  --rating-bar: #a6b3c3;
+  --rating-track: #30333b;
   --warning-border: #685738;
   --focus: #8ab4e8;
   --overlay: rgb(8 11 18 / 0.46);
@@ -112,7 +146,7 @@
 }
 
 :root {
-  --overlay-opaque: rgb(15 22 35 / 0.7);
+  --overlay-opaque: rgb(8 11 18 / 0.7);
   --shadow-deep: rgb(0 0 0 / 0.2);
   --shadow-menu: rgb(0 0 0 / 0.15);
   --shadow-contact: rgb(0 0 0 / 0.12);

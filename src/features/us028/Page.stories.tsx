@@ -5,7 +5,7 @@ const meta = {
   id: "us028",
   title: "Pages/US028",
   component: TaskPage,
-  args: { feature: "028", timing: "hold" },
+  args: { feature: "028", timing: "hold", fixture: "standard" },
   argTypes: {
     timing: { control: "select", options: ["hold", "auto", "stalled"] },
   },

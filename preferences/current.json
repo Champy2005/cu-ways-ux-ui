@@ -9,7 +9,7 @@
   "global": [
     {
       "id": "preview-navigation",
-      "statement": "Desktop product navigation must preserve the original Overview, Services, My Jobs, Invitations and Profile labels, icons and behavior. Story selection belongs to Storybook, not the product header. Current React navigation is rejected and awaits the one-to-one fidelity repair; preserve original responsive dock semantics.",
+      "statement": "Desktop product navigation preserves Overview, Services, My Jobs, Invitations and Profile labels/icons. Story selection belongs to Storybook. Preserve original responsive dock semantics, including enlarged-reading compact chrome. Implemented restoration still awaits complete fidelity and human acceptance.",
       "checks": ["scripts/ui/rendered.spec.mjs"]
     },
     {
@@ -47,6 +47,11 @@
     {
       "id": "motion",
       "statement": "Do not introduce fade-in/out animation. Preserve useful established interactions with reduced-motion fallbacks."
+    },
+    {
+      "id": "appearance-state-persistence",
+      "statement": "Theme, material and reading-size changes update appearance without remounting feature state, discarding drafts or resetting dispatched operations.",
+      "checks": ["src/testing/Appearance.stories.tsx"]
     }
   ],
   "components": [
@@ -129,9 +134,13 @@
       "source": "src/design-system/components/primitives.tsx",
       "style": "src/design-system/components/system.module.css",
       "rules": [
-        "Content modal dims/blurs backdrop, has bounded responsive width and usable overflow. Escape/X remain available during pending work. Navigation menus do not use this backdrop."
+        "Content modal dims/blurs backdrop, has bounded responsive width and usable overflow. Escape/X remain available during pending work. Navigation menus do not use this backdrop.",
+        "At narrow enlarged text, Close occupies its own first row and the full-width title follows. Overflow initially focuses the heading at scrollTop 0; footer actions stay keyboard reachable. Reduced-transparency scrim uses the exact original rgb(8 11 18 / .7)."
       ],
-      "checks": ["src/testing/scenario.ts"],
+      "checks": [
+        "src/testing/scenario.ts",
+        "scripts/ui/rendered-interactions.mjs"
+      ],
       "original": {
         "source": "theme/components.mjs",
         "symbol": "closeControl",
@@ -150,7 +159,8 @@
       "source": "src/design-system/components/primitives.tsx",
       "style": "src/design-system/components/system.module.css",
       "rules": [
-        "One borderless close control with accessible name and comfortable target. No filled rectangle hover."
+        "One borderless close control with accessible name and comfortable target. No filled rectangle hover.",
+        "The dialog size is a named canonical variant: narrow enlarged-reading dialogs use a 48px target, 10px padding and 24px icon; compare equivalent sizes rather than standalone controls."
       ],
       "checks": ["src/testing/scenario.ts"],
       "original": {
@@ -273,11 +283,17 @@
       "id": "ReviewCard",
       "aliases": ["review", "comment"],
       "source": "src/features/us034/Reviews.tsx",
-      "style": "src/features/shared/features.module.css",
+      "style": "src/features/us034/reviews.module.css",
       "rules": [
         "Long multilingual comments disclose. Public cards show job reference text without inaccessible private navigation. No verification explainer."
       ],
-      "checks": ["src/testing/scenario.ts"]
+      "checks": ["src/testing/scenario.ts"],
+      "original": {
+        "source": "US-034/demo/screen.mjs",
+        "symbol": "reviewCard",
+        "style": "stories/screen.css",
+        "selector": ".review-card"
+      }
     },
     {
       "id": "Field",
@@ -338,9 +354,15 @@
       "source": "src/design-system/components/primitives.tsx",
       "style": "src/design-system/components/system.module.css",
       "rules": [
-        "Keep page heading and navigation; expose Stop waiting. Hold is an authoring fixture; stalled operations reach explicit recovery after 12 seconds."
+        "Match the destination composition with proof, completion, cancellation and review scaffolds. Navigation and Stop waiting remain available; stopping presentation never cancels a dispatched write."
       ],
-      "checks": ["scripts/ui/rendered.spec.mjs"]
+      "checks": ["scripts/ui/rendered.spec.mjs"],
+      "original": {
+        "source": "theme/components.mjs",
+        "symbol": "loadingScaffold",
+        "style": "theme/recipes.css",
+        "selector": ".cu-loading-layout"
+      }
     },
     {
       "id": "JobSummary",
@@ -370,11 +392,17 @@
     },
     {
       "id": "LongTextDisclosure",
-      "aliases": ["Read more", "Show less", "long comment", "long description"],
+      "aliases": [
+        "Read full review",
+        "Read more",
+        "Show less",
+        "long comment",
+        "long description"
+      ],
       "source": "src/design-system/components/primitives.tsx",
       "style": "src/design-system/components/system.module.css",
       "rules": [
-        "Keep long text minimal until explicitly expanded. Expose aria-expanded and the controlled text region; quiet hover remains transparent."
+        "Use native details/summary for long reviews, with the bounded preview replaced by full text on expansion. Preserve complete Unicode text and keyboard semantics. Source typography and copy remain canonical."
       ],
       "checks": ["src/testing/scenario.ts", "scripts/ui/rendered.spec.mjs"]
     },
@@ -391,42 +419,58 @@
     {
       "id": "CompletionRequirements",
       "aliases": ["Completion requirements", "prerequisites"],
-      "source": "src/features/shared/TaskPage.tsx",
-      "style": "src/features/shared/features.module.css",
+      "source": "src/features/shared/TaskPageView.tsx",
+      "style": "src/features/shared/task.module.css",
       "rules": [
         "Verify lifecycle, Proof, accepted offer and payment independently. Read failures do not present trusted prerequisites."
       ],
-      "checks": ["src/testing/scenario.ts", "scripts/ui/rendered.spec.mjs"]
+      "checks": ["src/testing/scenario.ts", "scripts/ui/rendered.spec.mjs"],
+      "original": {
+        "source": "US-027/demo/screen.mjs",
+        "style": "stories/screen.css"
+      }
     },
     {
       "id": "CancellationEffects",
       "aliases": ["Cancellation effects", "cancel consequences"],
-      "source": "src/features/shared/TaskPage.tsx",
-      "style": "src/features/shared/features.module.css",
+      "source": "src/features/shared/TaskPageView.tsx",
+      "style": "src/features/shared/task.module.css",
       "rules": [
         "Use a short consequence list. Paid/Completed guards preserve related records on races."
       ],
-      "checks": ["src/testing/scenario.ts", "scripts/ui/rendered.spec.mjs"]
+      "checks": ["src/testing/scenario.ts", "scripts/ui/rendered.spec.mjs"],
+      "original": {
+        "source": "US-028/demo/screen.mjs",
+        "style": "stories/screen.css"
+      }
     },
     {
       "id": "ContractSummary",
       "aliases": ["Contract summary", "payment status"],
-      "source": "src/features/shared/TaskPage.tsx",
-      "style": "src/features/shared/features.module.css",
+      "source": "src/features/shared/TaskPageView.tsx",
+      "style": "src/features/shared/task.module.css",
       "rules": [
         "Keep payment and related-record facts legible. Unverified status exposes a read action."
       ],
-      "checks": ["src/testing/scenario.ts", "scripts/ui/rendered.spec.mjs"]
+      "checks": ["src/testing/scenario.ts", "scripts/ui/rendered.spec.mjs"],
+      "original": {
+        "source": "US-028/demo/screen.mjs",
+        "style": "stories/screen.css"
+      }
     },
     {
       "id": "DeliveryEvidence",
       "aliases": ["Delivery evidence"],
-      "source": "src/features/shared/TaskPage.tsx",
-      "style": "src/features/shared/features.module.css",
+      "source": "src/features/shared/TaskPageView.tsx",
+      "style": "src/features/shared/task.module.css",
       "rules": [
         "Canonical Proof records separate tag, destination and timestamp. Other attachment kinds do not replace Proof."
       ],
-      "checks": ["src/testing/scenario.ts", "scripts/ui/rendered.spec.mjs"]
+      "checks": ["src/testing/scenario.ts", "scripts/ui/rendered.spec.mjs"],
+      "original": {
+        "source": "US-027/demo/screen.mjs",
+        "style": "stories/screen.css"
+      }
     },
     {
       "id": "ReviewHistory",
@@ -494,6 +538,70 @@
         "style": "theme/recipes.css",
         "selector": ".cu-brand,.cu-role-birds"
       }
+    },
+    {
+      "id": "JobsLoading",
+      "aliases": ["Loading jobs", "Checking job details"],
+      "source": "src/design-system/components/primitives.tsx",
+      "style": "src/design-system/components/system.module.css",
+      "rules": [
+        "US025 preserves its own list/detail skeleton shapes and status label. Heading/filter remain stable. Back/home navigation provides escape."
+      ],
+      "checks": ["src/testing/scenario.ts", "scripts/ui/fidelity-runner.mjs"],
+      "original": {
+        "source": "US-025/demo/screen.mjs",
+        "symbol": "listSkeleton/detailSkeleton",
+        "style": "US-025/demo/screen.css",
+        "selector": ".loading-stack"
+      }
+    },
+    {
+      "id": "OperationNotice",
+      "aliases": ["View progress", "pending operation"],
+      "source": "src/design-system/components/primitives.tsx",
+      "style": "src/design-system/components/system.module.css",
+      "rules": [
+        "One pending summary above content. View progress reopens the dispatched operation; no UI control directly resolves it. Reads offer Stop waiting."
+      ],
+      "checks": ["src/testing/scenario.ts", "scripts/ui/fidelity-runner.mjs"],
+      "original": {
+        "source": "theme/components.mjs",
+        "symbol": "operationNotice",
+        "style": "theme/recipes.css",
+        "selector": ".cu-operation"
+      }
+    },
+    {
+      "id": "VerificationBadge",
+      "aliases": ["Verified completed job", "Verified review"],
+      "source": "src/design-system/components/primitives.tsx",
+      "style": "src/design-system/components/system.module.css",
+      "rules": [
+        "Verification is a quiet text/icon badge, separate from job lifecycle."
+      ],
+      "checks": ["src/testing/scenario.ts", "scripts/ui/fidelity-runner.mjs"],
+      "original": {
+        "source": "theme/components.mjs",
+        "symbol": "verificationBadge",
+        "style": "theme/recipes.css",
+        "selector": ".cu-status[data-verification=\"true\"]"
+      }
+    },
+    {
+      "id": "Requirement",
+      "aliases": ["completion criterion", "requirement met"],
+      "source": "src/design-system/compositions/layout.tsx",
+      "style": "src/design-system/compositions/layout.module.css",
+      "rules": [
+        "Use semantic met/missing state with consistent icon, label and optional meaningful description."
+      ],
+      "checks": ["src/testing/scenario.ts", "scripts/ui/fidelity-runner.mjs"],
+      "original": {
+        "source": "US-027/demo/screen.mjs",
+        "symbol": "view",
+        "style": "stories/screen.css",
+        "selector": ".criteria li"
+      }
     }
   ],
   "exceptions": [
@@ -508,6 +616,11 @@
     "status": "fidelity-recovery-in-progress",
     "originalReference": "reference/original.json",
     "baselinePromotion": "blocked",
-    "humanAcceptance": "pending; earlier React fidelity rejected"
+    "humanAcceptance": "pending; earlier React fidelity rejected",
+    "evidence": {
+      "report": ".artifacts/ui/fidelity/report.json",
+      "review": ".artifacts/ui/fidelity/current-independent-review.json",
+      "status": "Inspect source fingerprints; a captured or inspected subset does not establish migration acceptance."
+    }
   }
 }

@@ -31,13 +31,15 @@ export function ProofDelivery({
   scenario = "A01",
   timing = "hold",
   outcome = "confirmed",
+  fixture = "standard",
 }: {
   scenario?: string;
   timing?: Timing;
   outcome?: ProofOutcome;
+  fixture?: "standard" | "long";
 }) {
   const [state, send] = useReducer(reduceDemoState, scenario, (id) =>
-    createDemoState(id),
+    createDemoState(id, { fixtureId: fixture }),
   );
   const [open, setOpen] = useState(
     ["A02", "A03", "A05", "B01", "B04"].includes(scenario),
@@ -104,13 +106,17 @@ export function ProofDelivery({
   };
   const notice = state.feedback
     ? feedback[state.feedback]
-    : state.scenarioId === "B03"
-      ? {
-          title: "We couldn’t confirm the save",
-          body: "Check the saved list before trying again.",
-          tone: "warning" as const,
-        }
-      : null;
+    : state.scenarioId === "B04"
+      ? feedback["confirmed-miss"]
+      : state.scenarioId === "A04"
+        ? feedback["save-confirmed"]
+        : state.scenarioId === "B03"
+          ? {
+              title: "We couldn’t confirm the save",
+              body: "Check the saved list before trying again.",
+              tone: "warning" as const,
+            }
+          : null;
   return (
     <AppFrame
       title={state.view === "jobs" ? "My Jobs" : "Proof of delivery"}
@@ -155,31 +161,40 @@ export function ProofDelivery({
             !open &&
             state.listStatus !== "failed" &&
             !(state.scenarioId === "B03" && state.pending === "check") && (
-              <Feedback
-                title={notice.title}
-                tone={notice.tone}
-                action={
-                  state.scenarioId === "B02" ? (
-                    <Action onClick={add}>Reopen proof form</Action>
-                  ) : state.scenarioId === "B03" ? (
-                    <Action onClick={() => send({ type: "check-saved" })}>
-                      Check saved proof
-                    </Action>
-                  ) : state.scenarioId === "C02" ? (
-                    <Action onClick={() => send({ type: "refresh-status" })}>
-                      Refresh job
-                    </Action>
-                  ) : undefined
-                }
-              >
-                {notice.body}
-              </Feedback>
+              <div className={s.notice}>
+                <Feedback
+                  variant="proof"
+                  title={notice.title}
+                  tone={notice.tone}
+                  action={
+                    state.scenarioId === "B02" ? (
+                      <Action onClick={add}>Reopen proof form</Action>
+                    ) : state.scenarioId === "B03" ? (
+                      <Action onClick={() => send({ type: "check-saved" })}>
+                        Check saved proof
+                      </Action>
+                    ) : state.scenarioId === "C02" ? (
+                      <Action onClick={() => send({ type: "refresh-status" })}>
+                        Refresh job
+                      </Action>
+                    ) : undefined
+                  }
+                >
+                  {notice.body}
+                </Feedback>
+              </div>
             )}
-          {state.pending && state.pending !== "save" && (
-            <OperationProgress onCheck={resolve} />
-          )}
+          {state.pending &&
+            state.pending !== "save" &&
+            state.listStatus !== "loading" && (
+              <OperationProgress
+                title="Loading delivery evidence"
+                onStop={() => send({ type: "timeout" })}
+              />
+            )}
           {state.listStatus === "loading" ? (
             <Loading
+              kind="proof"
               title="Loading saved proof"
               onStop={() => send({ type: "timeout" })}
             />
@@ -259,8 +274,8 @@ export function ProofDelivery({
           )}
           {state.pending === "save" && !open && (
             <OperationProgress
+              title="Saving proof"
               onReopen={() => setOpen(true)}
-              onCheck={resolve}
             />
           )}
           <ContentDialog
@@ -297,6 +312,7 @@ export function ProofDelivery({
               <div className={s.formActions}>
                 <Action
                   role="primary"
+                  size="proof-save"
                   type="submit"
                   disabled={!state.draft.trim() || !canSubmitProof(state)}
                   busy={state.pending === "save"}

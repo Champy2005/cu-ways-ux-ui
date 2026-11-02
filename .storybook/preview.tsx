@@ -73,7 +73,6 @@ const preview: Preview = {
         : 100;
       return (
         <ThemeProvider
-          key={`${theme}-${material}-${textScale}`}
           initialTheme={theme}
           material={material}
           textScale={textScale}

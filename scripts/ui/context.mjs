@@ -101,6 +101,7 @@ export function context(query) {
       const symbol =
         {
           ProofWorkspace: "ProofDelivery",
+          JobDetailLayout: "MyJobs",
           CompletionRequirements: "TaskPageView",
           CancellationEffects: "TaskPageView",
           ContractSummary: "TaskPageView",

@@ -62,6 +62,13 @@ try {
         target: flag("target"),
         full: args.includes("--full"),
         native: args.includes("--native"),
+        diagnostic: args.includes("--diagnostic"),
+        height: flag("height"),
+        textScale: flag("text-scale"),
+        material: flag("material"),
+        fixture: flag("fixture"),
+        reducedMotion: args.includes("--reduced-motion"),
+        reducedTransparency: args.includes("--reduced-transparency"),
       });
       console.log(
         JSON.stringify(
@@ -103,6 +110,13 @@ try {
       });
     }
   } else if (command === "review" && args.includes("--fidelity")) {
+    const runState = readJSON(
+      path.join(process.cwd(), ".artifacts/ui/fidelity/run.json"),
+    );
+    if (runState.status !== "completed")
+      throw Error(
+        "Latest fidelity attempt is incomplete or failed; inspect .artifacts/ui/fidelity/run.json",
+      );
     const report = readJSON(
       path.join(process.cwd(), ".artifacts/ui/fidelity/report.json"),
     );

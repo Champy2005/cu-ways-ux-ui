@@ -131,12 +131,13 @@ export async function verifyScenario(
       ).not.toBeInTheDocument();
     if (feature === "028" && id === "B04")
       await expect(
-        canvas.getByRole("button", { name: "Check job status" }),
+        canvas.getByRole("button", { name: "Refresh job" }),
       ).toBeEnabled();
     if (id === "A06") {
       await expect(
         canvas.getByRole("heading", {
-          name: feature === "027" ? "Completion record" : "Cancellation record",
+          name:
+            feature === "027" ? "Completion requirements" : "Contract summary",
         }),
       ).toBeVisible();
       if (feature === "027") {
@@ -144,7 +145,7 @@ export async function verifyScenario(
           canvas.queryByText("Job is In Progress"),
         ).not.toBeInTheDocument();
         await expect(
-          element.querySelectorAll('[data-missing="true"]'),
+          element.querySelectorAll('[data-ui="Requirement"][data-met="false"]'),
         ).toHaveLength(0);
       }
     }
@@ -193,9 +194,10 @@ export async function verifyScenario(
       await userEvent.click(
         canvas.getByRole("button", { name: "View progress" }),
       );
-      await userEvent.click(doc.getByRole("button", { name: "Check status" }));
+      const { storyOperations } = await import("../fixtures/operationAdapter");
+      storyOperations(`us${feature}--a-04`).resolve();
       await expect(
-        canvas.getByText(feature === "027" ? "Completed" : "Cancelled", {
+        await canvas.findByText(feature === "027" ? "Completed" : "Cancelled", {
           exact: true,
         }),
       ).toBeVisible();
@@ -224,10 +226,8 @@ export async function verifyScenario(
         ).toBeVisible();
     }
     if (interactionTest && id === "A04") {
-      await userEvent.click(canvas.getByRole("button", { name: "Read more" }));
-      await expect(
-        canvas.getByRole("button", { name: "Show less" }),
-      ).toBeVisible();
+      await userEvent.click(canvas.getByText("Read full review"));
+      await expect(canvas.getByText("Show less")).toBeVisible();
     }
   } else {
     const state = createDemoState({ scenarioId: id });
@@ -249,15 +249,31 @@ export async function verifyScenario(
           name: /Job unavailable|Session expired|Marketer access required|My Jobs isn’t available yet/,
         }),
       ).toBeVisible();
-    else if (["L01", "D01"].includes(id))
+    else if (["L01", "D01"].includes(id)) {
+      await expect(canvas.getByRole("status")).toHaveTextContent(
+        id === "L01" ? "Loading jobs…" : "Checking job details…",
+      );
       await expect(
-        canvas.getByRole("button", { name: "Stop waiting" }),
-      ).toBeEnabled();
-    else if (["L08", "R01", "R13"].includes(id))
+        canvas.getByRole("link", {
+          name: id === "L01" ? "CU Ways home" : "Back to My Jobs",
+        }),
+      ).toBeVisible();
+    } else if (["L08", "R01", "R13"].includes(id))
       await expect(canvas.getByRole("status")).toBeVisible();
-    else if (["L03", "L04", "L05"].includes(id))
+    else if (id === "L03")
       await expect(
         canvas.getByRole("button", { name: "View all my jobs" }),
+      ).toBeEnabled();
+    else if (id === "L04") {
+      await expect(
+        canvas.getByRole("heading", { name: "No hired jobs yet" }),
+      ).toBeVisible();
+      await expect(
+        canvas.queryByRole("button", { name: "View all my jobs" }),
+      ).not.toBeInTheDocument();
+    } else if (id === "L05")
+      await expect(
+        canvas.getByRole("button", { name: "Clear filter · Active jobs" }),
       ).toBeEnabled();
     else if (state.route === "detail" && !["D03", "D08", "R10"].includes(id))
       await expect(

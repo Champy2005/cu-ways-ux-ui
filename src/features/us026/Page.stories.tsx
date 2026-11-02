@@ -5,7 +5,7 @@ const meta = {
   id: "us026",
   title: "Pages/US026",
   component: ProofDelivery,
-  args: { timing: "hold" },
+  args: { timing: "hold", fixture: "standard" },
   argTypes: {
     timing: { control: "select", options: ["hold", "auto", "stalled"] },
   },

@@ -1,27 +1,36 @@
 # Current migration status
 
-The React migration is a functional checkpoint, **not an accepted visual migration**. The user rejected its fidelity on 1 November 2026. Original HTML, selected Round 10 references and later explicit user corrections remain the visual authority.
+The React migration remains **rejected / fidelity recovery in progress** on `feat/source-fidelity-recovery`. The original HTML, selected Round 10 references and latest explicit user corrections remain authoritative. No original material has been removed. No React baseline, cutover or frontend adoption is authorized by passing functional checks.
 
-## Verified checkpoint
+## Current implementation
 
-- Source revision `5974db619f74f53b20b44a5eda8c4320b2a33d8c`: 48 unit/architecture tests and 105 story tests passed; all 94 legacy scenario identities are reachable.
-- Full canonical Linux report `a841d3bea4af6792`: 476 records, 1,432 captures and 11 rendered interaction checks, with no reported automated failure.
-- Fresh GitHub Actions checkout at `e9de3b5adbbd82e14dc97ac73ddb75de4b0d56b6` also passed static gates, 48 unit tests, 105 stories and the full canonical matrix; report `1cf31c0f40b5ac9f` remains **inconclusive** because the reference is missing. The workflow is therefore not green. Secret scanning passed. The portal-title landmark regression was repaired and retested without a layout change.
-- Visual regression is **inconclusive**: the durable reference is missing. Those checks establish behavior and React-internal consistency, not original-to-React fidelity.
-- Fresh-clone install/start and focused proof-dialog interaction were exercised. Durable reference retrieval and original-to-React visual comparison remain incomplete.
+- All 94 legacy identities remain mapped to executable Storybook scenarios. Additional component and workflow stories do not replace them.
+- Source-derived typography, fluid workspace bounds, Contract/Surveys hierarchy, contextual actions, loading scaffolds, feedback, proof workspace/records and review compositions have been restored at their canonical owners.
+- Product navigation is Overview, Services, My Jobs, Invitations and Profile. Mobile uses the original short labels. Feature shortcuts remain outside product navigation.
+- Appearance changes preserve drafts and dispatched operations. Pending presentation remains dismissible; uncertainty requires reconciliation before another write.
+- Narrow enlarged-reading dialogs retain the original gutters, separate close row, full-width title and initial heading focus when scrollable. Keyboard access to the footer is checked separately.
+- Reduced-transparency scrim paint uses the exact original source value. The comparator checks rendered backdrop RGBA and blur independently of its page-pixel tolerance.
 
-## Required correction
+## Verification and evidence
 
-Recovery is in progress on `feat/source-fidelity-recovery`. The immutable original packet now contains 47 files (about 1 MB), derived from imports, stylesheet/font references and an explicit artwork allowlist. Its descriptor maps all 94 identities. Matched Linux captures use the original host configuration APIs and a controlled browser clock.
+Use the current ignored `.artifacts/ui/current/report.json` for static, interaction and cross-instance checks, and `.artifacts/ui/fidelity/report.json` for original-to-React comparison. Read source fingerprints and run status before reuse. Old images outside a report are not current evidence.
 
-The US025 C02 detail slice matched geometry and the strict pixel tolerance across 14 light/dark captures at 320, 390, 768, 1024, 1440, 1920 and 2560px. That scoped run preceded subsequent proof-delivery repairs; it does not accept the remaining states or palette. An independent reviewer inspected close, contextual and page evidence and identified the navigation residuals repaired before that run.
+`pnpm ui check --full` runs recovery/keyboard checks first, then the complete canonical matrix and targeted stress states. Browser locators have bounded timeouts; capture waits for the intended DOM, fonts and stable layout rather than network-idle delays. A missing durable reference remains inconclusive even if these gates pass.
 
-Current functional checks: 52 unit/architecture tests and 105 story tests passed during recovery. Proof delivery is being restored and retested. Remaining US025 recovery/list differences and US027/028/034 visual parity are not complete. All migrated scenarios still await human acceptance. Baseline publication is mechanically blocked in the current preferences.
+The immutable original packet contains 47 required files (about 1 MB), with hashes and all 94 mappings in `reference/original.json`. Default comparisons cover 390/1440px and both themes. Diagnostic settings cover seven widths, text enlargement, short height, materials, long fixtures and media preferences. Original captures are reused only after environment/implementation/settings and image-checksum verification; React captures are always fresh.
 
-Restore original page hierarchy, navigation semantics, contextual action widths, responsive scaling, breakpoints, material treatment and component relationships. Desktop product navigation must read **Overview, Services, My Jobs, Invitations, Profile**. Story selection belongs to the workbench interface.
+US027/028/034 originally used superseded feature navigation. Their source capture explicitly applies the human's product-navigation correction through original navigation primitives and the four original US025 enlarged-reading chrome rules. Frozen files remain unchanged. This narrowly declared treatment does not permit other reference repainting.
 
-The detailed implementation specification is `docs/ONE-TO-ONE-FIDELITY-RECOVERY-PLAN.md`. Its measurements are evidence inputs, not permission to hardcode screenshot coordinates. Current human palette acceptance remains pending.
+Scoped detail/list/proof and enlarged-dialog comparisons have matched measured geometry and strict pixel tolerance. These results do not accept other states or prove all transitions. The independent review receipt records actual opened images, keyboard probes and crop limits. It does not grant human palette approval.
 
-## Handoff boundary
+## Remaining acceptance work
 
-No React visual baseline has been promoted. Workspace cutover, deletion of original evidence, frontend pointer replacement and closure of the old bulk PR are deferred until fidelity acceptance. Frontend/backend runtime remains unchanged. The private repository is a reviewable checkpoint; application adoption remains separate.
+- Fresh original comparisons after the latest repairs, covering all named states rather than only representative initial views.
+- Recovery/pending and review empty/error parity; long content, materials and responsive stress correspondence.
+- Original-to-React transition correspondence, including focus, dismissal, uncertain outcomes and navigation semantics.
+- Close, sibling/context and page inspection of changed regions. Modal-obscured context crops and captured-only footer images must not be described as inspected content.
+- Complete independent rendered review and explicit migration acceptance. All React scenarios and replacement palette values still await human acceptance.
+
+Baseline promotion remains mechanically blocked. Durable provisional-reference publication, original deletion, workspace cutover, frontend pointer replacement and closure of the old bulk PR remain deferred. Frontend and backend runtime are unchanged.
+
+The active specification is `docs/ONE-TO-ONE-FIDELITY-RECOVERY-PLAN.md`. Measurements verify responsive relationships; they do not authorize fixed screenshot coordinates.

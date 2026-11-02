@@ -33,12 +33,17 @@ During fidelity recovery, use the original comparison path:
 
 ```sh
 pnpm ui check --prepare-reference "../UX UI"
-pnpm ui check --fidelity --target us025--c-02
-pnpm ui check --fidelity --target us025--c-02 --full
+pnpm ui check --fidelity
+pnpm ui check --fidelity --target us025--c-02 --diagnostic
+pnpm ui check --fidelity --target us025--c-02 --diagnostic --full
+pnpm ui check --fidelity --target us026 --diagnostic --text-scale 200 --height 640 --material glass --reduced-motion --reduced-transparency
+pnpm ui check --fidelity --target us025--l-02 --diagnostic --fixture long
 pnpm ui review --fidelity
 ```
 
-Preparation copies only the runtime dependency closure and selected assets into ignored artifacts. `reference/original.json` pins its hashes and all 94 source/story correspondences. The comparison runs both implementations in the same Linux browser, clears local drafts, configures each original scene through its supported host protocol, freezes simulated time, and produces component/page pairs, measurements and pixel differences. `--full` currently expands the focused target to seven viewport widths. A focused run is diagnostic, not proof of global scope. Transition correspondence, stress dimensions, original-capture caching and complete migration acceptance remain in progress. Even a matching capture exits **2** until inspection; promotion is blocked while the migration remains rejected. No command rewrites a golden as a side effect.
+Preparation copies only the runtime dependency closure and selected assets into ignored artifacts. `reference/original.json` pins its hashes and all 94 source/story correspondences. The comparison configures both implementations in the pinned Linux browser, freezes simulated time, checks the requested appearance/media, and produces close/context/page pairs, geometry and strict pixel differences. Full-page capture precedes any scrolling crop; close crops disclose external-chrome treatment. Original captures are reused only when the source packet, browser, capture implementation and all settings match and every image checksum verifies. Candidates always render anew.
+
+Normal fidelity checks union requested targets with actual source impact; shared or uncertain reach expands to all scenarios. `--diagnostic` deliberately selects a subset and cannot establish affected-scope completion. `--full` adds seven viewport widths. Optional `--text-scale` (100/150/200), `--height` (320–2160), `--material` (opaque/glass), `--fixture` (standard/long), `--reduced-motion` and `--reduced-transparency` produce distinct evidence keys. For US027/028/034, the descriptor's explicit human navigation correction replaces obsolete story shortcuts using the original runtime's own navigation primitives and the four original US025 enlarged-reading chrome rules. Each source capture declares this treatment; frozen original files remain unchanged and available. This is a named correction, never permission to redesign other source regions or approve differences. Transition correspondence and complete migration acceptance remain unfinished. Even a matching capture exits **2** until inspection; promotion stays blocked. Review rejects failed, unfinished or stale runs. No command rewrites a golden as a side effect.
 
 ## Source of truth
 

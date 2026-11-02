@@ -126,9 +126,10 @@ export function prepareOriginal(source) {
     overrides: [
       {
         owner: "product-navigation",
+        responsiveSource: "US-025/demo/screen.css",
         labels: ["Overview", "Services", "My Jobs", "Invitations", "Profile"],
         reason:
-          "Latest explicit human decision supersedes feature shortcuts in legacy shared story runtime.",
+          "Latest explicit human decision supersedes feature shortcuts in legacy shared story runtime. Corrected navigation inherits US025 original enlarged-reading chrome rules; original files remain unchanged.",
       },
     ],
   };

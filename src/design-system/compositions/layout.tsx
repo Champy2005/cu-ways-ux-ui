@@ -6,6 +6,7 @@ import {
   ProofLink,
   Icon,
   LifecycleBadge,
+  OperationNotice,
   type JobStatus,
 } from "../components/primitives";
 import s from "./layout.module.css";
@@ -34,11 +35,13 @@ export function ProofRecord({
 }
 export function Card({
   title,
+  description,
   children,
   action,
   boundary = "Card",
 }: {
   title?: ReactNode;
+  description?: ReactNode;
   children: ReactNode;
   action?: ReactNode;
   boundary?:
@@ -49,13 +52,23 @@ export function Card({
     | "ContractSummary"
     | "DeliveryEvidence"
     | "ReviewHistory"
-    | "JobEntry";
+    | "EntitySummary"
+    | "JobEntry"
+    | "JobsEmpty";
 }) {
   return (
     <section className={s.card} data-ui={boundary}>
       {(title || action) && (
         <header className={s.cardHead}>
-          {title && <h2>{title}</h2>}
+          {title &&
+            (description ? (
+              <div>
+                <h2>{title}</h2>
+                <p className={s.cardDescription}>{description}</p>
+              </div>
+            ) : (
+              <h2>{title}</h2>
+            ))}
           {action}
         </header>
       )}
@@ -145,21 +158,23 @@ export function Columns({
   variant = "task",
 }: {
   children: ReactNode;
-  variant?: "task" | "sidebar";
+  variant?: "task" | "sidebar" | "single";
 }) {
   return (
-    <div className={s.columns} data-layout={variant}>
+    <div className={s.columns} data-layout={variant} data-ui="Columns">
       {children}
     </div>
   );
 }
 export function Metadata({
   items,
+  variant = "summary",
 }: {
   items: { label: string; value: ReactNode }[];
+  variant?: "summary" | "rows" | "dialog";
 }) {
   return (
-    <dl className={s.metadata}>
+    <dl className={s.metadata} data-variant={variant}>
       {items.map((item) => (
         <div key={item.label}>
           <dt>{item.label}</dt>
@@ -167,6 +182,25 @@ export function Metadata({
         </div>
       ))}
     </dl>
+  );
+}
+export function Requirement({
+  met,
+  label,
+  description,
+}: {
+  met: boolean;
+  label: string;
+  description?: string;
+}) {
+  return (
+    <li className={s.requirement} data-ui="Requirement" data-met={met}>
+      <Icon name={met ? "check" : "warning"} />
+      <div>
+        <strong>{label}</strong>
+        {description && <span>{description}</span>}
+      </div>
+    </li>
   );
 }
 export function JobSummary({
@@ -185,7 +219,9 @@ export function JobSummary({
   return (
     <article className={s.jobCard} data-ui="JobSummary">
       <div className={s.jobCardHeading}>
-        <span className={s.jobIdentity}>{context}</span>
+        <div>
+          <span className={s.jobIdentity}>{context}</span>
+        </div>
         <LifecycleBadge status={status} />
       </div>
       <div className={s.jobCardCopy}>
@@ -259,11 +295,17 @@ export function AppFrame({
     roleButton = useRef<HTMLButtonElement>(null),
     frame = useRef<HTMLDivElement>(null),
     dock = useRef<HTMLDivElement>(null);
-  const { theme, material, toggle } = useTheme();
+  const { theme, material, textScale, toggle } = useTheme();
   const nav = navigation,
     mobile = mobileNavigation;
   useLayoutEffect(() => {
     const measure = () => {
+      if (frame.current) {
+        frame.current.dataset.compactChrome = String(
+          innerWidth < 1024 || textScale !== 100,
+        );
+        frame.current.dataset.chromeLayout = "fixed";
+      }
       const nav = dock.current?.querySelector<HTMLElement>(
         '[data-ui="BottomNavigation"]',
       );
@@ -293,24 +335,63 @@ export function AppFrame({
           columns = Math.ceil(items.length / rows);
         nav.style.setProperty("--nav-columns", String(columns));
       }
-      if (frame.current && dock.current)
+      if (frame.current && dock.current) {
+        const host = frame.current,
+          tray = host.querySelector<HTMLElement>('[data-ui="ActionTray"]'),
+          main = host.querySelector<HTMLElement>('[data-ui="Page"]'),
+          header = host.querySelector<HTMLElement>(
+            '[data-ui="ApplicationHeader"]',
+          );
+        const visible = (element: HTMLElement | null) =>
+          element && getComputedStyle(element).display !== "none"
+            ? element.getBoundingClientRect().height
+            : 0;
+        const navHeight = visible(dock.current),
+          font = parseFloat(
+            getComputedStyle(document.documentElement).fontSize,
+          ),
+          trayHeight = visible(tray);
+        const start =
+          kind === "jobs"
+            ? main?.querySelector<HTMLElement>(
+                '[data-ui="RecoveryPanel"],[data-ui="OperationNotice"],[data-ui="JobSummary"],[data-ui="JobsEmpty"]',
+              )
+            : main?.querySelector<HTMLElement>(
+                '[data-ui="PageHeading"] + div > :first-child',
+              );
+        const leadIn =
+          navHeight && start && main
+            ? Math.max(
+                0,
+                start.getBoundingClientRect().top -
+                  main.getBoundingClientRect().top,
+              )
+            : 0;
+        const flow =
+          kind === "proof"
+            ? innerHeight < 500 ||
+              (Number(document.documentElement.dataset.textScale) >= 150 &&
+                innerHeight < 640)
+            : visible(header) +
+                navHeight +
+                (trayHeight ? trayHeight + font * 0.75 : 0) +
+                leadIn +
+                font * (kind === "jobs" ? 6 : 8) >
+              innerHeight;
+        host.dataset.chromeLayout = flow ? "flow" : "fixed";
         frame.current.style.setProperty(
           "--dock-height",
-          dock.current.getBoundingClientRect().height +
-            (frame.current
-              .querySelector('[data-ui="ActionTray"]')
-              ?.getBoundingClientRect().height ?? 0) +
-            (action &&
-            (frame.current
-              .querySelector('[data-ui="ActionTray"]')
-              ?.getBoundingClientRect().height ?? 0) > 0
-              ? 12
-              : 0) +
-            "px",
+          `${flow ? 0 : navHeight + (trayHeight ? trayHeight + font * 0.75 : 0)}px`,
         );
+      }
     };
     const observer = new ResizeObserver(measure);
-    if (dock.current) observer.observe(dock.current);
+    const bottom = dock.current?.querySelector('[data-ui="BottomNavigation"]');
+    if (bottom) observer.observe(bottom);
+    const header = frame.current?.querySelector(
+      '[data-ui="ApplicationHeader"]',
+    );
+    if (header) observer.observe(header);
     for (const label of dock.current?.querySelectorAll(
       '[data-ui="BottomNavigation"] a > span',
     ) ?? [])
@@ -318,8 +399,14 @@ export function AppFrame({
     const tray = frame.current?.querySelector('[data-ui="ActionTray"]');
     if (tray) observer.observe(tray);
     measure();
-    return () => observer.disconnect();
-  }, [action]);
+    window.addEventListener("resize", measure);
+    document.fonts.addEventListener("loadingdone", measure);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+      document.fonts.removeEventListener("loadingdone", measure);
+    };
+  }, [action, kind, textScale]);
   const dismissMenu = (event: React.KeyboardEvent) => {
     if (event.key === "Escape") {
       setMenu(false);
@@ -332,6 +419,11 @@ export function AppFrame({
       className={s.frame}
       data-ui="ApplicationFrame"
       data-kind={kind}
+      data-compact-chrome={
+        typeof window !== "undefined" &&
+        (window.innerWidth < 1024 || textScale !== 100)
+      }
+      data-chrome-layout="fixed"
       ref={frame}
     >
       <header
@@ -432,6 +524,7 @@ export function AppFrame({
       >
         {showBack && (
           <BackLink
+            href={brandHref}
             onClick={
               onBack ??
               (() => {
@@ -461,7 +554,7 @@ export function AppFrame({
             {headingAction}
           </div>
         )}
-        <div className={s.stack}>{children}</div>
+        <div className={s.content}>{children}</div>
       </main>
       <div
         className={s.dock}
@@ -508,23 +601,33 @@ export function AppFrame({
   );
 }
 export function OperationProgress({
+  title = "Request in progress",
   onReopen,
-  onCheck,
+  onStop,
 }: {
+  title?: string;
   onReopen?: () => void;
-  onCheck: () => void;
+  onStop?: () => void;
 }) {
   return (
-    <div className={s.operation} role="status">
-      <span>Request in progress</span>
-      {onReopen && (
-        <Action id="view-progress" role="utility" onClick={onReopen}>
-          View progress
-        </Action>
-      )}
-      <Action role="safe" onClick={onCheck}>
-        Check status
-      </Action>
-    </div>
+    <OperationNotice
+      title={title}
+      action={
+        onReopen ? (
+          <Action
+            size="operation"
+            id="view-progress"
+            role="utility"
+            onClick={onReopen}
+          >
+            View progress
+          </Action>
+        ) : onStop ? (
+          <Action size="operation" onClick={onStop}>
+            Stop waiting
+          </Action>
+        ) : undefined
+      }
+    />
   );
 }

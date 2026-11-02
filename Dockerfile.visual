@@ -3,6 +3,9 @@ WORKDIR /runner
 RUN npm install --ignore-scripts --save-exact @playwright/test@1.64.1
 COPY playwright.config.ts ./playwright.config.ts
 COPY scripts/ui/server.mjs scripts/ui/runtime.mjs scripts/ui/rendered.spec.mjs scripts/ui/visual-contracts.mjs ./scripts/ui/
+COPY scripts/ui/rendered-interactions.mjs ./scripts/ui/
 COPY scripts/ui/fidelity-runner.mjs scripts/ui/fidelity-contracts.mjs ./scripts/ui/
+COPY scripts/ui/fidelity-cache.mjs ./scripts/ui/
+COPY reference/original.json ./reference/original.json
 ENV CI=1
 CMD ["node", "node_modules/@playwright/test/cli.js", "test", "--config", "playwright.config.ts"]

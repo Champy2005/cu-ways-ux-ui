@@ -8,30 +8,96 @@ import {
   writeJSON,
   fingerprint,
   acquire,
+  changedFiles,
+  sourceScope,
 } from "./runtime.mjs";
 import { prepareOriginal, verifyOriginal } from "./original-reference.mjs";
 export function fidelity(options) {
   const release = acquire();
   try {
     return runFidelity(options);
+  } catch (error) {
+    if (!options.prepare)
+      writeJSON(path.join(artifacts, "fidelity/run.json"), {
+        status: "failed",
+        sourceFingerprint: fingerprint(),
+        reason: String(error),
+        report: "Previous report is not evidence for this failed attempt",
+      });
+    throw error;
   } finally {
     release();
   }
 }
-function runFidelity(options) {
-  if (options.prepare) return prepareOriginal(options.prepare);
-  const reference = verifyOriginal();
-  const selected = options.target
-    ? reference.scenarios.filter(
-        (s) =>
-          options.target.split(",").includes(s.story) ||
-          options.target
-            .split(",")
-            .some((target) => s.feature === target.replace(/^us/i, "")),
+export function selectFidelityScenarios(reference, options, scope) {
+  const requested = options.target
+    ? reference.scenarios.filter((s) =>
+        options.target
+          .split(",")
+          .some(
+            (target) =>
+              target === s.story || s.feature === target.replace(/^us/i, ""),
+          ),
       )
     : reference.scenarios;
-  if (!selected.length) throw Error("Unknown fidelity scenario/feature");
+  if (!requested.length) throw Error("Unknown fidelity scenario/feature");
+  const scenarios = options.diagnostic
+    ? requested
+    : scope.full
+      ? reference.scenarios
+      : reference.scenarios.filter(
+          (s) => requested.includes(s) || scope.features.includes(s.feature),
+        );
+  return {
+    scenarios,
+    diagnostic: !!options.diagnostic,
+    reason: options.diagnostic
+      ? "explicit diagnostic subset; cannot establish affected-scope completion"
+      : scope.reason,
+    requested: requested.map((s) => s.story),
+  };
+}
+export function fidelitySettings(options) {
+  const height = Number(options.height ?? 900),
+    textScale = Number(options.textScale ?? 100),
+    material = options.material ?? "opaque",
+    fixture = options.fixture ?? "standard";
+  if (
+    !Number.isInteger(height) ||
+    height < 320 ||
+    height > 2160 ||
+    ![100, 150, 200].includes(textScale) ||
+    !["opaque", "glass"].includes(material) ||
+    !["standard", "long"].includes(fixture)
+  )
+    throw Error(
+      "Invalid fidelity settings: height 320–2160, text scale 100/150/200, material opaque/glass, fixture standard/long",
+    );
+  return {
+    height,
+    textScale,
+    material,
+    fixture,
+    reducedMotion: !!options.reducedMotion,
+    reducedTransparency: !!options.reducedTransparency,
+  };
+}
+function runFidelity(options) {
+  if (options.prepare) return prepareOriginal(options.prepare);
+  const settings = fidelitySettings(options);
+  const reference = verifyOriginal();
+  const selection = selectFidelityScenarios(
+    reference,
+    options,
+    sourceScope(changedFiles().files),
+  );
   const before = fingerprint();
+  writeJSON(path.join(artifacts, "fidelity/run.json"), {
+    status: "running",
+    sourceFingerprint: before,
+    settings,
+    selection,
+  });
   const types = packageCommand("typescript", ["--noEmit"], {
     log: path.join(artifacts, "fidelity-types.log"),
   });
@@ -44,14 +110,19 @@ function runFidelity(options) {
   const input = {
     reference: reference.id,
     sourceFingerprint: before,
-    scenarios: selected,
+    scenarios: selection.scenarios,
+    navigationOverride: reference.overrides.find(
+      (override) => override.owner === "product-navigation",
+    ),
+    selection,
     widths: options.full
       ? [320, 390, 768, 1024, 1440, 1920, 2560]
       : [390, 1440],
     themes: ["light", "dark"],
-    height: 900,
-    material: "opaque",
-    textScale: 100,
+    ...settings,
+    environment: options.native
+      ? `native-${process.platform}-${process.arch}-${process.version}`
+      : "playwright-1.64.1-linux-amd64-47b510dd9230bf0b",
     scope: "source fidelity; not human palette approval",
   };
   writeJSON(path.join(artifacts, "fidelity-input.json"), input);
@@ -102,7 +173,14 @@ function runFidelity(options) {
     throw Error("Fidelity evidence stale: source changed");
   if (result.status !== 0)
     throw Error("Fidelity capture failed; inspect .artifacts/ui/fidelity.log");
-  return JSON.parse(
+  const report = JSON.parse(
     fs.readFileSync(path.join(artifacts, "fidelity/report.json"), "utf8"),
   );
+  writeJSON(path.join(artifacts, "fidelity/run.json"), {
+    status: "completed",
+    sourceFingerprint: before,
+    settings,
+    records: report.records.length,
+  });
+  return report;
 }

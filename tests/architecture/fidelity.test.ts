@@ -2,6 +2,105 @@ import { test, expect } from "vitest";
 import { compareMeasured } from "../../scripts/ui/fidelity-contracts.mjs";
 import reference from "../../reference/original.json";
 import { requireMigrationAcceptance } from "../../scripts/ui/baseline.mjs";
+import {
+  selectFidelityScenarios,
+  fidelitySettings,
+} from "../../scripts/ui/fidelity.mjs";
+test("fidelity settings preserve distinct stress captures and reject unsupported values", () => {
+  expect(fidelitySettings({})).toMatchObject({
+    height: 900,
+    textScale: 100,
+    fixture: "standard",
+    material: "opaque",
+  });
+  expect(
+    fidelitySettings({
+      textScale: "200",
+      height: "640",
+      fixture: "long",
+      material: "glass",
+      reducedTransparency: true,
+    }),
+  ).toMatchObject({ textScale: 200, height: 640, reducedTransparency: true });
+  for (const options of [
+    { height: 0 },
+    { height: "NaN" },
+    { textScale: 120 },
+    { fixture: "missing" },
+    { material: "missing" },
+  ])
+    expect(() => fidelitySettings(options)).toThrow(
+      "Invalid fidelity settings",
+    );
+});
+test("fidelity target focus cannot suppress shared or uncertain impact", () => {
+  const options = { target: "us026--a-01" };
+  expect(
+    selectFidelityScenarios(reference, options, {
+      full: true,
+      features: [],
+      reason: "shared source changed",
+    }).scenarios,
+  ).toHaveLength(94);
+  const diagnostic = selectFidelityScenarios(
+    reference,
+    { ...options, diagnostic: true },
+    { full: true },
+  );
+  expect(diagnostic.scenarios).toHaveLength(1);
+  expect(diagnostic.reason).toContain("cannot establish");
+  const union = selectFidelityScenarios(reference, options, {
+    full: false,
+    features: ["034"],
+    reason: "feature ownership",
+  });
+  expect(union.scenarios).toHaveLength(11);
+  expect(() =>
+    selectFidelityScenarios(reference, { target: "missing" }, { full: true }),
+  ).toThrow("Unknown fidelity");
+});
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import {
+  captureKey,
+  restoreCapture,
+  storeCapture,
+} from "../../scripts/ui/fidelity-cache.mjs";
+
+test("original capture reuse rejects corruption, missing artifacts and traversal", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "cuways-fidelity-"));
+  try {
+    const cache = path.join(root, "cache"),
+      output = path.join(root, "output");
+    fs.mkdirSync(output);
+    fs.writeFileSync(path.join(output, "original.png"), "fixture image bytes");
+    const key = captureKey({
+      reference: "frozen",
+      browser: "pinned",
+      width: 390,
+    });
+    const state = { image: "original.png", failures: [] };
+    storeCapture(cache, key, output, ["original.png"], state);
+    expect(restoreCapture(cache, key, output)).toEqual(state);
+    expect(
+      restoreCapture(cache, captureKey({ width: 1440 }), output),
+    ).toBeNull();
+    fs.writeFileSync(path.join(cache, key, "original.png"), "corrupted");
+    expect(restoreCapture(cache, key, output)).toBeNull();
+    storeCapture(cache, key, output, ["original.png"], state);
+    const manifest = path.join(cache, key, "capture.json");
+    const invalid = JSON.parse(fs.readFileSync(manifest, "utf8"));
+    invalid.files[0].name = "../original.png";
+    fs.writeFileSync(manifest, JSON.stringify(invalid));
+    expect(restoreCapture(cache, key, output)).toBeNull();
+    storeCapture(cache, key, output, ["original.png"], state);
+    fs.unlinkSync(path.join(cache, key, "original.png"));
+    expect(restoreCapture(cache, key, output)).toBeNull();
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
 test("provisional publication cannot override a rejected migration", () => {
   expect(() =>
     requireMigrationAcceptance({ migration: { baselinePromotion: "blocked" } }),
@@ -50,4 +149,18 @@ test("a missing original composition cannot pass by sharing the same root scale"
   expect(compareMeasured({ rootFont: "17px" }, { rootFont: "17px" })).toEqual(
     [],
   );
+});
+
+test("subtle backdrop paint drift cannot hide within the page pixel tolerance", () => {
+  expect(
+    compareMeasured(
+      { rootFont: "17px", backdrop: { fill: "8,11,18,179", filter: "none" } },
+      { rootFont: "17px", backdrop: { fill: "15,22,35,179", filter: "none" } },
+    ),
+  ).toContainEqual({
+    owner: "backdrop",
+    property: "fill",
+    original: "8,11,18,179",
+    react: "15,22,35,179",
+  });
 });

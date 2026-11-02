@@ -57,6 +57,9 @@ body {
   font-size: 1rem;
   line-height: 1.55;
 }
+[data-density="compact"] {
+  font-size: 0.9375rem;
+}
 button,
 input,
 select {
@@ -77,6 +80,11 @@ h3,
 p {
   margin: 0;
   text-wrap: pretty;
+}
+h1,
+h2,
+h3 {
+  text-wrap: balance;
 }
 h1 {
   font-size: clamp(1.5rem, 2.5vw, 1.875rem);

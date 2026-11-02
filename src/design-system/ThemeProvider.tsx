@@ -10,10 +10,12 @@ type Material = "opaque" | "glass";
 const ThemeContext = createContext<{
   theme: Theme;
   material: Material;
+  textScale: number;
   toggle: () => void;
 }>({
   theme: "light",
   material: "glass",
+  textScale: 100,
   toggle: () => {},
 });
 /** Ordinary React provider: no Storybook or fixture dependency. Portals inherit root tokens. */
@@ -30,6 +32,9 @@ export function ThemeProvider({
 }) {
   const [theme, setTheme] = useState(initialTheme);
   useLayoutEffect(() => {
+    setTheme(initialTheme);
+  }, [initialTheme]);
+  useLayoutEffect(() => {
     document.documentElement.dataset.cuTheme = theme;
     document.documentElement.dataset.textScale = String(textScale);
     document.documentElement.style.removeProperty("font-size");
@@ -39,10 +44,11 @@ export function ThemeProvider({
       value={{
         theme,
         material,
+        textScale,
         toggle: () => setTheme(theme === "light" ? "dark" : "light"),
       }}
     >
-      <div data-cu-theme={theme} data-ui="preview">
+      <div data-cu-theme={theme} data-ui="preview" data-density="compact">
         {children}
       </div>
     </ThemeContext.Provider>

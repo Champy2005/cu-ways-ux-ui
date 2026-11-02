@@ -4,16 +4,17 @@ import {
   Action,
   EmptyState,
   Feedback,
-  Icon,
   Loading,
   LongTextDisclosure,
   Pagination,
   SelectControl,
+  VerificationBadge,
+  Icon,
 } from "../../design-system/components/primitives";
 import { Card, Columns, Stack } from "../../design-system/compositions/layout";
 import * as model from "./model.mjs";
 import { date, useOperation, type Timing } from "../shared/operations";
-import s from "../shared/features.module.css";
+import s from "./reviews.module.css";
 type Review = {
   id: number;
   creator: string;
@@ -31,13 +32,16 @@ type ReviewState = {
   error: string | null;
   access: boolean;
   expanded: number[];
+  long?: boolean;
 };
 export function Reviews({
   scenario = "A01",
   timing = "hold",
+  fixture = "standard",
 }: {
   scenario?: string;
   timing?: Timing;
+  fixture?: "standard" | "long";
 }) {
   const [state, send] = useReducer(
     (s: ReviewState, e: { type: string; [key: string]: unknown }) =>
@@ -51,7 +55,9 @@ export function Reviews({
     () => send({ type: "resolve", read: "success" }),
     () => send({ type: "timeout" }),
   );
-  return <ReviewsView state={state} send={send} />;
+  return (
+    <ReviewsView state={{ ...state, long: fixture === "long" }} send={send} />
+  );
 }
 export function ReviewsView({
   state,
@@ -68,69 +74,102 @@ export function ReviewsView({
         state.filter === "all" || r.rating === Number(state.filter),
     ) as Review[];
   const pages = Math.max(1, Math.ceil(rows.length / 3));
+  const profile = (
+    <Card>
+      <div className={s.profile}>
+        <span className={s.avatar} aria-hidden="true">
+          MS
+        </span>
+        <div className={s.profileIdentity}>
+          <h2 className={s.profileName}>
+            {state.long
+              ? "Mali Sirichulalongkorn — มาลี ศิริจุฬาลงกรณ์"
+              : "Mali S."}
+          </h2>
+          <p className={s.profileRole}>Survey Marketer</p>
+        </div>
+      </div>
+      <p className={s.specialties}>Campus research · Survey distribution</p>
+      <p className={s.bio}>
+        I help research teams reach students with thoughtful survey campaigns
+        and clear delivery reports.
+      </p>
+    </Card>
+  );
   return (
     <AppFrame title="Marketer reviews" feature="034">
       {!state.access ? (
-        <Feedback title="Profile unavailable">
-          This marketer is no longer available.
-        </Feedback>
+        <Card title="Profile unavailable">
+          <p className={s.unavailableCopy}>This profile is not available.</p>
+        </Card>
       ) : state.pending ? (
         <Loading
+          kind="reviews"
           title="Loading reviews"
           onStop={() => send({ type: "timeout" })}
         />
       ) : state.error ? (
-        <Feedback
-          title="Reviews could not load"
-          tone="error"
-          action={
-            <Action onClick={() => send({ type: "check" })}>Try again</Action>
-          }
-        />
+        <>
+          {profile}
+          <div className={s.notice}>
+            <Feedback
+              title="Reviews could not load"
+              tone="error"
+              action={
+                <Action onClick={() => send({ type: "check" })}>
+                  <Icon name="refresh" />
+                  Try again
+                </Action>
+              }
+            >
+              Try again to load ratings and reviews.
+            </Feedback>
+          </div>
+        </>
       ) : (
         <Columns variant="sidebar">
           <Stack>
-            <Card>
-              <div className={s.profileCopy}>
-                <div className={s.profile}>
-                  <span className={s.avatar}>MS</span>
-                  <div>
-                    <h2>Mali S.</h2>
-                    <p className={s.muted}>Survey Marketer</p>
-                  </div>
-                </div>
-                <p className={s.muted}>Campus research · Survey distribution</p>
-                <p>
-                  I help research teams reach students with thoughtful survey
-                  campaigns and clear delivery reports.
-                </p>
-              </div>
-            </Card>
+            {profile}
             <Card title="Ratings">
               {stats.average === null ? (
-                <EmptyState title="No ratings yet" />
+                <EmptyState title="No ratings yet" variant="rating">
+                  Ratings appear after the first completed-job review.
+                </EmptyState>
               ) : (
                 <>
-                  <div className={s.ratingValue}>
-                    {stats.average.toFixed(2)}
-                    <span className={s.muted}> / 5</span>
-                  </div>
-                  <p className={s.muted}>{stats.count} verified reviews</p>
-                  {stats.distribution.map(([stars, count]) => (
-                    <div className={s.ratingBar} key={stars}>
-                      <span>{stars} ★</span>
-                      <span className={s.track}>
-                        <span
-                          className={s.bar}
-                          style={{
-                            display: "block",
-                            width: `${(count / stats.count) * 100}%`,
-                          }}
-                        />
+                  <div className={s.ratingSummary}>
+                    <div className={s.ratingValue}>
+                      <span className={s.ratingNumber}>
+                        {stats.average.toFixed(2)}
                       </span>
-                      <span>{count}</span>
+                      <span className={s.muted}> / 5</span>
+                      <p className={s.ratingTotal}>
+                        {stats.count} verified reviews
+                      </p>
                     </div>
-                  ))}
+                    <div
+                      className={s.distribution}
+                      aria-label="Rating distribution"
+                    >
+                      {stats.distribution.map(([stars, count]) => (
+                        <div className={s.ratingBar} key={stars}>
+                          <span className={s.ratingLevel}>
+                            {stars}
+                            <span className={s.levelStar} aria-hidden="true">
+                              ★
+                            </span>
+                          </span>
+                          <progress
+                            className={s.ratingProgress}
+                            max={stats.count}
+                            value={count}
+                            aria-label={`${stars} stars: ${count} reviews`}
+                          />
+                          <span className={s.ratingCount}>{count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </>
               )}
             </Card>
@@ -138,82 +177,102 @@ export function ReviewsView({
           <Card
             boundary="ReviewHistory"
             title="Verified reviews"
+            description={
+              state.filter !== "all"
+                ? `${rows.length} of ${model.qualifying(state.rows).length} reviews`
+                : undefined
+            }
             action={
-              <SelectControl
-                label="Filter by rating"
-                value={state.filter}
-                options={[
-                  { label: "All ratings", value: "all" },
-                  ...[5, 4, 3, 2, 1].map((n) => ({
-                    label: `${n} ${n === 1 ? "star" : "stars"}`,
-                    value: String(n),
-                  })),
-                ]}
-                onChange={(filter) => send({ type: "filter", filter })}
-              />
+              model.qualifying(state.rows).length ? (
+                <SelectControl
+                  label="Filter by rating"
+                  value={state.filter}
+                  options={[
+                    { label: "All ratings", value: "all" },
+                    ...[5, 4, 3, 2, 1].map((n) => ({
+                      label: `${n} ${n === 1 ? "star" : "stars"}`,
+                      value: String(n),
+                    })),
+                  ]}
+                  onChange={(filter) => send({ type: "filter", filter })}
+                />
+              ) : undefined
             }
           >
-            {rows.length ? (
-              rows.slice((state.page - 1) * 3, state.page * 3).map((row) => (
-                <article key={row.id} className={s.review} data-ui="ReviewCard">
-                  <header className={s.reviewHeading}>
-                    <div>
-                      <h3>{row.creator}</h3>
-                      <time className={s.reviewTime} dateTime={row.createdAt}>
-                        {date(row.createdAt)}
-                      </time>
-                    </div>
-                    <span className={s.verified}>
-                      <Icon name="check" />
-                      Verified
-                    </span>
-                  </header>
-                  <p
-                    className={s.stars}
-                    aria-label={`${row.rating} out of 5 stars`}
+            <div className={rows.length ? s.reviewList : undefined}>
+              {rows.length ? (
+                rows.slice((state.page - 1) * 3, state.page * 3).map((row) => (
+                  <article
+                    key={row.id}
+                    className={s.review}
+                    data-ui="ReviewCard"
                   >
-                    {"★".repeat(row.rating)}
-                    {"☆".repeat(5 - row.rating)}
-                  </p>
-                  {row.comment ? (
-                    <LongTextDisclosure
-                      text={row.comment}
-                      preview={
-                        row.comment.length > model.LONG_REVIEW_LENGTH
-                          ? model.reviewPreview(row.comment)
-                          : row.comment
-                      }
-                      expanded={state.expanded.includes(row.id)}
-                      onToggle={() =>
-                        send({
-                          type: "review-expansion",
-                          id: row.id,
-                          open: !state.expanded.includes(row.id),
-                        })
-                      }
-                    />
-                  ) : (
-                    <p className={s.muted}>No written feedback provided.</p>
-                  )}
-                  <footer className={s.reviewFooter}>Job #{row.jobId}</footer>
-                </article>
-              ))
-            ) : (
-              <>
-                <EmptyState
-                  title={
-                    state.filter === "all"
-                      ? "No reviews yet"
-                      : "No reviews match this rating"
-                  }
-                />
-                {state.filter !== "all" && (
-                  <Action onClick={() => send({ type: "clear-filter" })}>
-                    Show all ratings
-                  </Action>
-                )}
-              </>
-            )}
+                    <header className={s.reviewHeading}>
+                      <div className={s.author}>
+                        <strong className={s.authorName}>{row.creator}</strong>
+                        <time className={s.reviewTime} dateTime={row.createdAt}>
+                          {date(row.createdAt)}
+                        </time>
+                      </div>
+                      <VerificationBadge />
+                    </header>
+                    <p
+                      className={s.stars}
+                      aria-label={`${row.rating} out of 5 stars`}
+                    >
+                      {"★".repeat(row.rating)}
+                      {"☆".repeat(5 - row.rating)}
+                    </p>
+                    {row.comment ? (
+                      <LongTextDisclosure
+                        text={row.comment}
+                        preview={
+                          row.comment.length > model.LONG_REVIEW_LENGTH
+                            ? model.reviewPreview(row.comment)
+                            : row.comment
+                        }
+                        expanded={state.expanded.includes(row.id)}
+                        onToggle={() =>
+                          send({
+                            type: "review-expansion",
+                            id: row.id,
+                            open: !state.expanded.includes(row.id),
+                          })
+                        }
+                      />
+                    ) : (
+                      <p className={s.noComment}>No written feedback.</p>
+                    )}
+                    <footer className={s.reviewFooter}>Job #{row.jobId}</footer>
+                  </article>
+                ))
+              ) : (
+                <>
+                  <EmptyState
+                    variant="reviews"
+                    title={
+                      state.filter === "all"
+                        ? "No reviews yet"
+                        : "No reviews match this rating"
+                    }
+                    action={
+                      state.filter !== "all" ? (
+                        <Action
+                          role="quiet"
+                          onClick={() => send({ type: "clear-filter" })}
+                        >
+                          Show all ratings
+                        </Action>
+                      ) : undefined
+                    }
+                  >
+                    {state.filter === "all"
+                      ? "Completed-job reviews will appear here."
+                      : undefined}
+                  </EmptyState>
+                </>
+              )}
+            </div>
             <Pagination
               page={state.page}
               pages={pages}
