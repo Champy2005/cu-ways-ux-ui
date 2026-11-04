@@ -23,6 +23,10 @@ html {
   --viewport-scale: 1;
   font-size: calc(100% * var(--viewport-scale));
 }
+html:has([data-ui="ApplicationFrame"][data-kind="proof"]) {
+  scroll-padding-block-start: 6rem;
+  scroll-padding-block-end: calc(var(--proof-nav-clearance, 0px) + 1rem);
+}
 html[data-text-scale="150"] {
   font-size: calc(150% * var(--viewport-scale));
 }
@@ -85,6 +89,7 @@ h1,
 h2,
 h3 {
   text-wrap: balance;
+  overflow-wrap: break-word;
 }
 h1 {
   font-size: clamp(1.5rem, 2.5vw, 1.875rem);

@@ -40,6 +40,10 @@ type Props = Omit<
   | "workspaceLinks"
 > & { feature: string };
 export function WorkbenchFrame({ feature, ...props }: Props) {
+  const route = (item: NavigationItem) =>
+    feature === "025" && item.id === "jobs"
+      ? { ...item, onNavigate: props.onBack }
+      : item;
   return (
     <AppFrame
       {...props}
@@ -47,8 +51,8 @@ export function WorkbenchFrame({ feature, ...props }: Props) {
       backLabel={props.backLabel ?? "Story library"}
       activeKey={feature === "034" ? "profile" : "jobs"}
       mobileActiveKey={feature === "034" ? "profile" : "jobs"}
-      navigation={navigation}
-      mobileNavigation={mobileNavigation}
+      navigation={navigation.map(route)}
+      mobileNavigation={mobileNavigation.map(route)}
       brandHref={previewHref("025")}
       workspaceLinks={[
         { label: "Marketer workspace", href: previewHref("025") },

@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { MyJobs } from "./MyJobs";
 import { verifyScenario } from "../../testing/scenario";
+import { expect, within } from "storybook/test";
 const meta = {
   id: "us025",
   title: "Pages/US025",
@@ -140,8 +141,17 @@ export const D01: Story = {
         "Keep the detail layout with skeleton content and no Start action; mark loading accessibly. Do not expose unverified job data.",
     },
   },
-  play: async ({ canvasElement }) =>
-    verifyScenario(canvasElement, "025", "D01"),
+  play: async ({ canvasElement, args }) => {
+    if (args.jobId !== undefined) {
+      const canvas = within(canvasElement);
+      await expect(canvas.getByRole("main")).toBeVisible();
+      await expect(
+        canvas.queryByText("Loading job details"),
+      ).not.toBeInTheDocument();
+      return;
+    }
+    await verifyScenario(canvasElement, "025", "D01");
+  },
 };
 export const D02: Story = {
   name: "Accepted job ready to start",

@@ -33,11 +33,17 @@ During fidelity recovery, use the original comparison path:
 
 ```sh
 pnpm ui check --prepare-reference "../UX UI"
+pnpm ui check --export-reference .artifacts/ui/original/selected-source.zip
+pnpm ui check --restore-reference .artifacts/ui/original/selected-source.zip
 pnpm ui check --fidelity
 pnpm ui check --fidelity --target us025--c-02 --diagnostic
 pnpm ui check --fidelity --target us025--c-02 --diagnostic --full
 pnpm ui check --fidelity --target us026 --diagnostic --text-scale 200 --height 640 --material glass --reduced-motion --reduced-transparency
 pnpm ui check --fidelity --target us025--l-02 --diagnostic --fixture long
+pnpm ui check --fidelity --target us025--c-02 --diagnostic --widths "1023,1024,1025,1279,1280,1281"
+pnpm ui check --fidelity --target "us026--a-03,us027--a-05,us028--a-05" --diagnostic --state dismissed
+pnpm ui check --fidelity --target us026--a-03 --diagnostic --state reopened --widths "390" --height 568 --text-scale 200
+pnpm ui check --fidelity --target us026--b-03 --diagnostic --state reconciled
 pnpm ui review --fidelity
 ```
 
@@ -46,6 +52,10 @@ Preparation copies only the runtime dependency closure and selected assets into 
 Normal fidelity checks union requested targets with actual source impact; shared or uncertain reach expands to all scenarios. `--diagnostic` deliberately selects a subset and cannot establish affected-scope completion. `--full` adds seven viewport widths. Optional `--text-scale` (100/150/200), `--height` (320–2160), `--material` (opaque/glass), `--fixture` (standard/long), `--reduced-motion` and `--reduced-transparency` produce distinct evidence keys. For US027/028/034, the descriptor's explicit human navigation correction replaces obsolete story shortcuts using the original runtime's own navigation primitives and the four original US025 enlarged-reading chrome rules. Each source capture declares this treatment; frozen original files remain unchanged and available. This is a named correction, never permission to redesign other source regions or approve differences. Transition correspondence and complete migration acceptance remain unfinished. Even a matching capture exits **2** until inspection; promotion stays blocked. Review rejects failed, unfinished or stale runs. No command rewrites a golden as a side effect.
 
 ## Source of truth
+
+Fidelity preflight compares bounded reachable model states with the selected original before rendering. This complements browser/controller checks; it does not prove application behavior. `--state dismissed` sends Escape to an initially open dialog; `reopened` activates View progress afterward (keyboard Enter for proof); `reconciled` checks the pending outcome and delivers the controlled successful read. These capture actual resulting pages with distinct evidence/cache keys and fail if required controls are absent. Proof transitions compare focus as well as geometry and pixels. The original's declared navigation correction is applied after its legacy renderer rebuilds the markup.
+
+Original runtime archives contain only the descriptor's exact allowlisted files. Restore verifies archive and per-file checksums, names and bounded sizes before replacing the owned cache. The selected 47-file original is pinned to a private Release asset in `reference/original.json`; a missing cache is retrieved using existing `gh` authentication. This source packet is distinct from a React visual golden and never promotes one.
 
 - `src/design-system/tokens/theme.css`: current paint and depth values.
 - Canonical components own internal appearance; compositions own child relationships; features own local arrangement and behavior.

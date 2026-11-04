@@ -2,6 +2,7 @@ import {
   useId,
   useRef,
   useEffect,
+  useLayoutEffect,
   type ReactNode,
   type ButtonHTMLAttributes,
   Fragment,
@@ -78,6 +79,7 @@ export function Icon({
   };
   return (
     <svg
+      data-icon={name}
       width="1.125em"
       height="1.125em"
       viewBox="0 0 24 24"
@@ -181,13 +183,39 @@ export function ActionLink({
   href,
   children,
   role = "supporting",
+  size = "default",
+  id,
+  onClick,
 }: {
   href: string;
   children: ReactNode;
   role?: ActionRole;
+  size?: ActionProps["size"];
+  id?: string;
+  onClick?: () => void;
 }) {
   return (
-    <a href={href} className={s.action} data-ui="Action" data-role={role}>
+    <a
+      href={href}
+      id={id}
+      className={s.action}
+      data-ui="Action"
+      data-role={role}
+      data-size={size}
+      onClick={(event) => {
+        if (
+          onClick &&
+          !event.ctrlKey &&
+          !event.metaKey &&
+          !event.shiftKey &&
+          !event.altKey &&
+          event.button === 0
+        ) {
+          event.preventDefault();
+          onClick();
+        }
+      }}
+    >
       {children}
     </a>
   );
@@ -204,7 +232,9 @@ export function LifecycleBadge({ status }: { status: JobStatus }) {
               ? "close"
               : status === "Accepted"
                 ? "person-check"
-                : "clock"
+                : status === "Unverified"
+                  ? "warning"
+                  : "clock"
         }
       />
       {status}
@@ -300,6 +330,8 @@ export function ContentDialog({
   onClose,
   children,
   initialFocusId,
+  finalFocusId,
+  busy = false,
   variant = "content",
 }: {
   open: boolean;
@@ -307,6 +339,8 @@ export function ContentDialog({
   onClose: () => void;
   children: ReactNode;
   initialFocusId?: string;
+  finalFocusId?: string;
+  busy?: boolean;
   variant?: "content" | "job-start" | "proof-entry";
 }) {
   const heading = useRef<HTMLHeadingElement>(null);
@@ -323,16 +357,45 @@ export function ContentDialog({
           className={s.dialog}
           data-ui="ContentDialog"
           data-variant={variant}
+          aria-busy={busy || undefined}
+          finalFocus={
+            finalFocusId
+              ? () => {
+                  const target = document.getElementById(finalFocusId);
+                  if (!target) return true;
+                  // Source return targets use native focus scrolling. Base UI's
+                  // default restoration suppresses it and can leave this control
+                  // outside the viewport after a short/enlarged dialog closes.
+                  target.focus();
+                  return false;
+                }
+              : undefined
+          }
           initialFocus={() => {
             const popup = heading.current?.closest('[role="dialog"]');
+            const explicit = initialFocusId
+              ? document.getElementById(initialFocusId)
+              : null;
+            const validExplicit =
+              explicit &&
+              popup?.contains(explicit) &&
+              !explicit.matches(":disabled");
+            // The source's explicit "View progress" action returns to its
+            // retained URL, even in an overflowing proof dialog. Initial
+            // pending/overflow presentation still begins at the heading.
+            if (
+              validExplicit &&
+              variant === "proof-entry" &&
+              explicit instanceof HTMLInputElement
+            )
+              return explicit;
             // Keep the beginning readable when enlarged content overflows.
             // Focusing a footer action would otherwise scroll the title away.
             if (popup && popup.scrollHeight > popup.clientHeight + 1)
               return heading.current;
+            if (validExplicit) return explicit;
+            if (busy) return heading.current;
             return (
-              (initialFocusId
-                ? document.getElementById(initialFocusId)
-                : null) ??
               heading.current
                 ?.closest('[role="dialog"]')
                 ?.querySelector<HTMLElement>('[aria-invalid="true"]') ??
@@ -388,22 +451,34 @@ export function SelectControl({
   );
 }
 export function Field({
+  id: providedId,
   label,
   value,
   error,
   onChange,
   readOnly = false,
 }: {
+  id?: string;
   label: string;
   value: string;
   error?: string;
   onChange: (value: string) => void;
   readOnly?: boolean;
 }) {
-  const id = useId();
+  const generatedId = useId();
+  const id = providedId ?? generatedId;
   const input = useRef<HTMLInputElement>(null);
+  const previousError = useRef(error);
+  useLayoutEffect(() => {
+    // Match a freshly parsed URL field without resetting the user's caret on edits.
+    input.current?.setSelectionRange(0, 0);
+    if (input.current) input.current.scrollLeft = 0;
+  }, []);
   useEffect(() => {
-    if (error) input.current?.focus();
+    // Initial dialog focus belongs to ContentDialog, especially when it overflows.
+    // Validation introduced by a later submission still targets the field.
+    if (error && error !== previousError.current) input.current?.focus();
+    previousError.current = error;
   }, [error]);
   return (
     <div className={s.field} data-ui="Field">
@@ -412,6 +487,9 @@ export function Field({
         ref={input}
         id={id}
         type="url"
+        inputMode="url"
+        autoComplete="url"
+        required
         value={value}
         onChange={(e) => onChange(e.target.value)}
         readOnly={readOnly}
@@ -449,7 +527,11 @@ export function Feedback({
       data-variant={variant}
       className={s.recovery}
     >
-      <div role="status" className={s.feedback} data-tone={tone}>
+      <div
+        role={tone === "error" ? "alert" : "status"}
+        className={s.feedback}
+        data-tone={tone}
+      >
         <Icon
           name={
             pending
@@ -621,10 +703,10 @@ export function ProofLink({
       <Icon name="external" />
       {tail && (
         <span className={s.proofPath}>
-          {tail.split(/([/\-?&])/).map((text, index) => (
+          {tail.split(/(?<=[/\-?&])/).map((text, index) => (
             <Fragment key={index}>
               {text}
-              {["/", "-", "?", "&"].includes(text) && <wbr />}
+              {/[/\-?&]$/.test(text) && <wbr />}
             </Fragment>
           ))}
         </span>

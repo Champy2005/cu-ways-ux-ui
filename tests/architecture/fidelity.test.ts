@@ -7,6 +7,29 @@ import {
   fidelitySettings,
 } from "../../scripts/ui/fidelity.mjs";
 test("fidelity settings preserve distinct stress captures and reject unsupported values", () => {
+  expect(fidelitySettings({ state: "dismissed" }).interactionState).toBe(
+    "dismissed",
+  );
+  for (const state of ["reopened", "reconciled"])
+    expect(fidelitySettings({ state }).interactionState).toBe(state);
+  expect(() => fidelitySettings({ state: "unknown" })).toThrow(
+    "Invalid fidelity state",
+  );
+  expect(
+    fidelitySettings({ widths: "1023,1024,1025,1279,1280,1281" }).widths,
+  ).toEqual([1023, 1024, 1025, 1279, 1280, 1281]);
+  for (const widths of [
+    "",
+    "0",
+    "390,390",
+    "390.5",
+    "3841",
+    "NaN",
+    Array.from({ length: 25 }, (_, i) => 300 + i).join(","),
+  ])
+    expect(() => fidelitySettings({ widths })).toThrow(
+      "Invalid fidelity widths",
+    );
   expect(fidelitySettings({})).toMatchObject({
     height: 900,
     textScale: 100,

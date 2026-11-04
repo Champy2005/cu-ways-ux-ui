@@ -20,6 +20,7 @@ import {
 } from "./runtime.mjs";
 import { retrieve, canonicalEnvironment } from "./baseline.mjs";
 import { nativeCall } from "./native.mjs";
+import { runOwnedRenderer } from "./renderer.mjs";
 export function verifyRegistry(preferences, index) {
   const ids = new Set();
   for (const rule of [
@@ -255,10 +256,8 @@ export async function check(options) {
           );
           capture =
             build.status === 0
-              ? run(
-                  "docker",
+              ? runOwnedRenderer(
                   [
-                    "run",
                     "--rm",
                     "--init",
                     "--ipc=host",

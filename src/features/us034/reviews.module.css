@@ -127,17 +127,6 @@
 .review + .review {
   border-top: 1px solid var(--border);
 }
-.reviewHeading {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
-  gap: 0.75rem 1rem;
-}
-.author {
-  display: grid;
-  gap: 0.25rem;
-  min-width: 0;
-}
 .authorName {
   font-size: 1rem;
   line-height: 1.4;

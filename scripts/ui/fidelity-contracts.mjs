@@ -1,6 +1,12 @@
 /** Original geometry is the comparator, never a React-only approved screenshot. */
 export function compareMeasured(original, candidate) {
   const differences = [];
+  if (original.focus !== candidate.focus)
+    differences.push({
+      owner: "focus",
+      original: original.focus,
+      react: candidate.focus,
+    });
   if (Boolean(original.backdrop) !== Boolean(candidate.backdrop))
     differences.push({ owner: "backdrop", reason: "missing counterpart" });
   else if (original.backdrop)
@@ -23,10 +29,12 @@ export function compareMeasured(original, candidate) {
     "header",
     "page",
     "dialog",
+    "dialogTitle",
     "contract",
     "surveys",
     "jobCard",
     "proofWorkspace",
+    "proofProgress",
     "entitySummary",
     "taskContext",
     "evidence",

@@ -26,9 +26,11 @@
     },
     {
       "id": "escapable-operations",
-      "statement": "Closing pending presentation does not cancel dispatch. Preserve progress, prevent duplicate writes and reconcile unknown outcomes.",
+      "statement": "Closing pending presentation or returning to the job list does not cancel dispatch. Preserve progress and confirmed mock lifecycle, associate late results with their originating job, prevent duplicate writes and reconcile unknown outcomes. Native detail links preserve known mock lifecycle and pending/uncertain context; these fixtures do not establish application persistence.",
       "checks": [
         "tests/architecture/contracts.test.ts",
+        "tests/architecture/jobs-controller.test.ts",
+        "scripts/ui/rendered-interactions.mjs",
         "src/testing/scenario.ts"
       ]
     },
@@ -95,7 +97,8 @@
       "source": "src/design-system/components/primitives.tsx",
       "style": "src/design-system/components/system.module.css",
       "rules": [
-        "Job lifecycle owns label, icon and paint. Separate operation outcomes and attachment tags. Equivalent status/theme/size/state instances must share component-owned styling."
+        "Job lifecycle owns label, icon and paint. Separate operation outcomes and attachment tags. Equivalent status/theme/size/state instances must share component-owned styling.",
+        "Unverified is a neutral lifecycle with a warning icon, never a clock or confirmed progress."
       ],
       "checks": [
         "scripts/ui/rendered.spec.mjs",
@@ -114,7 +117,8 @@
       "source": "src/design-system/compositions/layout.tsx",
       "style": "src/design-system/compositions/layout.module.css",
       "rules": [
-        "Place lifecycle at upper right relative to heading. Preserve wrapping and separation without fixed page coordinates."
+        "Place lifecycle at upper right relative to heading. Preserve wrapping and separation without fixed page coordinates.",
+        "Use StatusHeadingFrame for the shared row relationship; feature headings and review verification must not recreate its responsive grid."
       ],
       "checks": ["scripts/ui/rendered.spec.mjs"]
     },
@@ -134,8 +138,9 @@
       "source": "src/design-system/components/primitives.tsx",
       "style": "src/design-system/components/system.module.css",
       "rules": [
-        "Content modal dims/blurs backdrop, has bounded responsive width and usable overflow. Escape/X remain available during pending work. Navigation menus do not use this backdrop.",
-        "At narrow enlarged text, Close occupies its own first row and the full-width title follows. Overflow initially focuses the heading at scrollTop 0; footer actions stay keyboard reachable. Reduced-transparency scrim uses the exact original rgb(8 11 18 / .7)."
+        "Content modal dims/blurs backdrop, has bounded responsive width and usable overflow. Escape/X remain available during pending work. Navigation menus do not use this backdrop. finalFocusId may name a meaningful surviving control when the opener disappears; pending proof returns to View progress.",
+        "At narrow enlarged text, Close occupies its own first row and the full-width title follows. Initial overflow/pending presentation focuses the heading at scrollTop 0; explicit proof-progress reopening focuses its retained URL even when overflowing, matching the source action. Footer actions stay keyboard reachable. Reduced-transparency scrim uses the exact original rgb(8 11 18 / .7).",
+        "Preserve named source shadows: content uses depth-dialog (none), job-start uses depth-dialog-job-start and proof-entry uses depth-dialog-proof-entry. Do not repaint every prompt with the same generic shadow."
       ],
       "checks": [
         "src/testing/scenario.ts",
@@ -197,7 +202,8 @@
       "source": "src/design-system/components/primitives.tsx",
       "style": "src/design-system/components/system.module.css",
       "rules": [
-        "Omit unavailable directions entirely. Borderless at rest; enabled icons show a soft tonal circle/fine inset edge on hover without geometry shift."
+        "Omit unavailable directions entirely. Borderless at rest; enabled icons show a soft tonal circle/fine inset edge on hover without geometry shift.",
+        "Narrow enlarged-reading pagination preserves fixed 48px targets and 24px icons instead of scaling to oversized rem circles."
       ],
       "checks": ["scripts/ui/rendered.spec.mjs"],
       "original": {
@@ -254,7 +260,9 @@
       "source": "src/design-system/compositions/layout.tsx",
       "style": "src/design-system/compositions/layout.module.css",
       "rules": [
-        "Sticky header with 10px lower corners, original logo/role artwork and theme control. Desktop bounded selection; mobile icon-based selection without filled tile. Floating Start tray above a separate navigation dock, 12px upper corners, measured bottom clearance and short-height fallback. No content-modal blur on navigation menus. Global shell changes require full checks."
+        "Sticky header with 10px lower corners, original logo/role artwork and theme control. Desktop bounded selection; mobile icon-based selection without filled tile. Floating Start tray above a separate navigation dock, 12px upper corners, measured bottom clearance and short-height fallback. No content-modal blur on navigation menus. Global shell changes require full checks.",
+        "Proof chrome retains desktop navigation at wide enlarged reading, matching its source specialization; other feature chrome uses the original enlarged compact mode. Flow proof content ends with 1.25rem padding.",
+        "Keep page focus clear of actual fixed/sticky chrome with the source 8px guard. Proof document scroll padding is 6rem above and measured dock clearance plus 1rem below. Proof main disables retained-sibling scroll anchoring to preserve source document position across progress dismissal/reopening."
       ],
       "checks": ["scripts/ui/rendered.spec.mjs"],
       "original": {
@@ -275,9 +283,10 @@
       "source": "src/design-system/compositions/layout.tsx",
       "style": "src/design-system/compositions/layout.module.css",
       "rules": [
-        "Separate neutral attachment tag, readable blue destination and timestamp. No Newest first or saving-does-not-complete reminder."
+        "Separate neutral attachment tag, readable blue destination and timestamp. No Newest first or saving-does-not-complete reminder.",
+        "Task evidence timestamps use proportional numerals; saved-proof timestamps retain the source tabular treatment. The typed task/proof variant owns this difference."
       ],
-      "checks": ["src/testing/scenario.ts"]
+      "checks": ["src/testing/scenario.ts", "scripts/ui/rendered.spec.mjs"]
     },
     {
       "id": "ReviewCard",
@@ -301,7 +310,8 @@
       "source": "src/design-system/components/primitives.tsx",
       "style": "src/design-system/components/system.module.css",
       "rules": [
-        "Keep labels, input, error and focus together. Invalid submission focuses the field; no repeated helper paragraphs."
+        "Keep labels, input, error and focus together. Invalid submission focuses the field; no repeated helper paragraphs.",
+        "Initial overflow-dialog focus belongs to its heading. A subsequent validation failure may focus the invalid field. Preserve initial URL caret at the start without resetting edits."
       ],
       "checks": ["scripts/ui/rendered.spec.mjs"]
     },
@@ -408,11 +418,11 @@
     },
     {
       "id": "ProofWorkspace",
-      "aliases": ["Saved proof", "Add proof"],
+      "aliases": ["Saved proof", "Add proof", "Saving proof", "proof progress"],
       "source": "src/features/us026/ProofDelivery.tsx",
       "style": "src/features/shared/features.module.css",
       "rules": [
-        "Compact saved-record workspace. Add proof opens a content dialog without moving the list."
+        "Compact saved-record workspace. Add proof opens a content dialog without moving the list. Closing pending presentation puts the 52rem-bounded progress panel above the saved workspace, with its source margin and visible focus on View progress; dispatch continues. Reopening preserves the retained URL and document scroll. A reconciled miss reopens the retained form and focuses its result; retry remains explicit."
       ],
       "checks": ["src/testing/scenario.ts", "scripts/ui/rendered.spec.mjs"]
     },
@@ -493,7 +503,8 @@
       "source": "src/features/us025/MyJobs.tsx",
       "style": "src/features/us025/detail.module.css",
       "rules": [
-        "Port the original Contract/Surveys hierarchy and intrinsic container56rem transition. Contract uses18–22rem; mobile shows Contract first. Facts use auto-fit9rem. Do not replace this with a generic summary card."
+        "Port the original Contract/Surveys hierarchy and intrinsic container56rem transition. Contract uses18–22rem; mobile shows Contract first. Facts use auto-fit9rem. Do not replace this with a generic summary card.",
+        "Match source recovery anatomy: no filter on unavailable/error list states, retain the filterless list-heading variant where defined, preserve optional-field fallbacks and disabled pending contract actions. Tray eligibility follows authoritative status; unknown pending status must not reserve a tray."
       ],
       "checks": ["tests/architecture/fidelity.test.ts"],
       "original": {
@@ -602,6 +613,33 @@
         "style": "stories/screen.css",
         "selector": ".criteria li"
       }
+    },
+    {
+      "id": "Metadata",
+      "aliases": ["summary numbers", "contract facts", "metadata typography"],
+      "source": "src/design-system/compositions/layout.tsx",
+      "style": "src/design-system/compositions/layout.module.css",
+      "rules": [
+        "Summary values retain source tabular numerals; row and dialog facts use proportional numerals. The named composition owns the distinction."
+      ],
+      "checks": [
+        "scripts/ui/rendered.spec.mjs",
+        "tests/architecture/workflow.test.ts"
+      ]
+    },
+    {
+      "id": "StatusHeadingFrame",
+      "aliases": [
+        "status row",
+        "review verification placement",
+        "identity badge layout"
+      ],
+      "source": "src/design-system/compositions/layout.tsx",
+      "style": "src/design-system/compositions/layout.module.css",
+      "rules": [
+        "One owner for entity, proof identity, and review author/status placement. On narrow enlarged reading, badge occupies the first row and full-width copy follows. Review variant owns author/date stacking."
+      ],
+      "checks": ["scripts/ui/rendered.spec.mjs"]
     }
   ],
   "exceptions": [
@@ -619,7 +657,13 @@
     "humanAcceptance": "pending; earlier React fidelity rejected",
     "evidence": {
       "report": ".artifacts/ui/fidelity/report.json",
-      "review": ".artifacts/ui/fidelity/current-independent-review.json",
+      "review": ".artifacts/ui/fidelity-audit/current-parity-review/summary.json",
+      "core": ".artifacts/ui/fidelity-audit/core-current.json",
+      "breakpoints": ".artifacts/ui/fidelity-audit/boundary-current.json",
+      "stress": ".artifacts/ui/fidelity-audit/stress-current.json",
+      "transitions": ".artifacts/ui/fidelity-audit/current-transition-review/report.json",
+      "models": ".artifacts/ui/model-correspondence.json",
+      "proofRecoveryReview": ".artifacts/ui/fidelity-audit/proof-recovery-current/summary.json",
       "status": "Inspect source fingerprints; a captured or inspected subset does not establish migration acceptance."
     }
   }

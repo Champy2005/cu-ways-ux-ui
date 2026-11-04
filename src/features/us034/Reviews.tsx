@@ -11,7 +11,12 @@ import {
   VerificationBadge,
   Icon,
 } from "../../design-system/components/primitives";
-import { Card, Columns, Stack } from "../../design-system/compositions/layout";
+import {
+  Card,
+  Columns,
+  Stack,
+  StatusHeadingFrame,
+} from "../../design-system/compositions/layout";
 import * as model from "./model.mjs";
 import { date, useOperation, type Timing } from "../shared/operations";
 import s from "./reviews.module.css";
@@ -207,15 +212,16 @@ export function ReviewsView({
                     className={s.review}
                     data-ui="ReviewCard"
                   >
-                    <header className={s.reviewHeading}>
-                      <div className={s.author}>
-                        <strong className={s.authorName}>{row.creator}</strong>
-                        <time className={s.reviewTime} dateTime={row.createdAt}>
-                          {date(row.createdAt)}
-                        </time>
-                      </div>
-                      <VerificationBadge />
-                    </header>
+                    <StatusHeadingFrame
+                      as="header"
+                      variant="review"
+                      badge={<VerificationBadge />}
+                    >
+                      <strong className={s.authorName}>{row.creator}</strong>
+                      <time className={s.reviewTime} dateTime={row.createdAt}>
+                        {date(row.createdAt)}
+                      </time>
+                    </StatusHeadingFrame>
                     <p
                       className={s.stars}
                       aria-label={`${row.rating} out of 5 stars`}

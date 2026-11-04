@@ -8,7 +8,12 @@ import {
   readJSON,
   writeJSON,
   ownedArtifact,
+  run,
 } from "./runtime.mjs";
+import {
+  exportOriginalPacket,
+  restoreOriginalPacket,
+} from "./original-packet.mjs";
 export const originalDirectory = path.join(artifacts, "original/source");
 const descriptor = path.join(root, "reference/original.json");
 const features = ["025", "026", "027", "028", "034"];
@@ -134,6 +139,11 @@ export function prepareOriginal(source) {
     ],
   };
   if (fs.existsSync(previous)) fs.rmSync(previous, { recursive: true });
+  if (fs.existsSync(descriptor)) {
+    const selected = readJSON(descriptor);
+    if (selected.id === identity && selected.archive)
+      value.archive = selected.archive;
+  }
   ownedArtifact(originalDirectory);
   if (fs.existsSync(originalDirectory))
     fs.renameSync(originalDirectory, previous);
@@ -155,6 +165,38 @@ export function prepareOriginal(source) {
 }
 export function verifyOriginal() {
   const value = readJSON(descriptor);
+  if (!fs.existsSync(originalDirectory) && value.archive) {
+    const archive = ownedArtifact(
+      path.join(artifacts, "original/reference.zip"),
+    );
+    fs.mkdirSync(path.dirname(archive), { recursive: true });
+    if (
+      !fs.existsSync(archive) ||
+      digest(fs.readFileSync(archive)) !== value.archive.sha256
+    ) {
+      const download = run(
+        "gh",
+        [
+          "release",
+          "download",
+          value.archive.release,
+          "--repo",
+          value.archive.repository,
+          "--pattern",
+          value.archive.asset,
+          "--output",
+          archive,
+          "--clobber",
+        ],
+        { timeout: 120000 },
+      );
+      if (download.status !== 0)
+        throw Error(
+          "Selected original archive unavailable; verify GitHub authentication and release access",
+        );
+    }
+    restoreOriginalPacket(value, archive, originalDirectory);
+  }
   for (const entry of value.files) {
     const file = path.resolve(originalDirectory, entry.file);
     if (
@@ -167,4 +209,16 @@ export function verifyOriginal() {
   if (digest(JSON.stringify(value.files)) !== value.id)
     throw Error("Original reference descriptor identity mismatch");
   return value;
+}
+export function exportOriginal(destination) {
+  return exportOriginalPacket(verifyOriginal(), originalDirectory, destination);
+}
+export function restoreOriginal(archive) {
+  const result = restoreOriginalPacket(
+    readJSON(descriptor),
+    archive,
+    originalDirectory,
+  );
+  verifyOriginal();
+  return result;
 }

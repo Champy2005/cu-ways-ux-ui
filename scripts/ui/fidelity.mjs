@@ -11,7 +11,13 @@ import {
   changedFiles,
   sourceScope,
 } from "./runtime.mjs";
-import { prepareOriginal, verifyOriginal } from "./original-reference.mjs";
+import {
+  prepareOriginal,
+  verifyOriginal,
+  exportOriginal,
+  restoreOriginal,
+} from "./original-reference.mjs";
+import { fidelityTimeout, runOwnedRenderer } from "./renderer.mjs";
 export function fidelity(options) {
   const release = acquire();
   try {
@@ -58,6 +64,32 @@ export function selectFidelityScenarios(reference, options, scope) {
   };
 }
 export function fidelitySettings(options) {
+  const interactionState = options.state ?? "initial";
+  if (
+    !["initial", "dismissed", "reopened", "reconciled"].includes(
+      interactionState,
+    )
+  )
+    throw Error(
+      "Invalid fidelity state: initial, dismissed, reopened or reconciled",
+    );
+  const widths =
+    options.widths === undefined
+      ? options.full
+        ? [320, 390, 768, 1024, 1440, 1920, 2560]
+        : [390, 1440]
+      : String(options.widths).split(",").map(Number);
+  if (
+    !widths.length ||
+    widths.length > 24 ||
+    widths.some(
+      (width) => !Number.isSafeInteger(width) || width < 280 || width > 3840,
+    ) ||
+    new Set(widths).size !== widths.length
+  )
+    throw Error(
+      "Invalid fidelity widths: 1–24 unique integer widths between 280 and 3840",
+    );
   const height = Number(options.height ?? 900),
     textScale = Number(options.textScale ?? 100),
     material = options.material ?? "opaque",
@@ -74,6 +106,8 @@ export function fidelitySettings(options) {
       "Invalid fidelity settings: height 320–2160, text scale 100/150/200, material opaque/glass, fixture standard/long",
     );
   return {
+    interactionState,
+    widths,
     height,
     textScale,
     material,
@@ -84,6 +118,9 @@ export function fidelitySettings(options) {
 }
 function runFidelity(options) {
   if (options.prepare) return prepareOriginal(options.prepare);
+  if (options.exportReference) return exportOriginal(options.exportReference);
+  if (options.restoreReference)
+    return restoreOriginal(options.restoreReference);
   const settings = fidelitySettings(options);
   const reference = verifyOriginal();
   const selection = selectFidelityScenarios(
@@ -103,6 +140,18 @@ function runFidelity(options) {
   });
   if (types.status !== 0)
     throw Error("Fidelity preflight failed: .artifacts/ui/fidelity-types.log");
+  const models = run(
+    process.execPath,
+    ["scripts/ui/model-correspondence.mjs"],
+    {
+      log: path.join(artifacts, "fidelity-models.log"),
+      timeout: 30000,
+    },
+  );
+  if (models.status !== 0)
+    throw Error(
+      "Original model correspondence failed; inspect .artifacts/ui/fidelity-models.log",
+    );
   const built = packageCommand("storybook", ["build", "--disable-telemetry"], {
     log: path.join(artifacts, "fidelity-build.log"),
   });
@@ -115,9 +164,6 @@ function runFidelity(options) {
       (override) => override.owner === "product-navigation",
     ),
     selection,
-    widths: options.full
-      ? [320, 390, 768, 1024, 1440, 1920, 2560]
-      : [390, 1440],
     themes: ["light", "dark"],
     ...settings,
     environment: options.native
@@ -126,11 +172,14 @@ function runFidelity(options) {
     scope: "source fidelity; not human palette approval",
   };
   writeJSON(path.join(artifacts, "fidelity-input.json"), input);
+  const timeout = fidelityTimeout(
+    input.scenarios.length * input.widths.length * input.themes.length,
+  );
   let result;
   if (options.native)
     result = run(process.execPath, ["scripts/ui/fidelity-runner.mjs"], {
       log: path.join(artifacts, "fidelity.log"),
-      timeout: 900000,
+      timeout,
     });
   else {
     const build = run(
@@ -150,10 +199,8 @@ function runFidelity(options) {
     );
     if (build.status !== 0)
       throw Error("Canonical fidelity renderer unavailable");
-    result = run(
-      "docker",
+    result = runOwnedRenderer(
       [
-        "run",
         "--rm",
         "--init",
         "--ipc=host",
@@ -166,7 +213,7 @@ function runFidelity(options) {
         "node",
         "scripts/ui/fidelity-runner.mjs",
       ],
-      { log: path.join(artifacts, "fidelity.log"), timeout: 900000 },
+      { log: path.join(artifacts, "fidelity.log"), timeout },
     );
   }
   if (fingerprint() !== before)

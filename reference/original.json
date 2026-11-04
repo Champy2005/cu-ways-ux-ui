@@ -5,6 +5,12 @@
   "environment": "Dockerfile.visual pinned Playwright Linux renderer; identical contexts for both implementations",
   "id": "2579c6a069077929e50c62e4d8eec1ccce8ead417999413a24a706ab869dbf36",
   "classification": "selected-original; human overrides apply",
+  "archive": {
+    "repository": "Champy2005/cu-ways-ux-ui",
+    "release": "source-reference-2579c6a0",
+    "asset": "selected-source.zip",
+    "sha256": "d40a7a0808bd8d1eb352caccf42a0d6769a81cf46e0bce40eccd19f991a0d821"
+  },
   "files": [
     {
       "file": "stories/runtime.mjs",

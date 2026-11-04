@@ -8,6 +8,7 @@ import {
   visualProperties,
   compareEquivalent,
   compareProtected,
+  numericContract,
 } from "./visual-contracts.mjs";
 import { verifyRenderedInteractions } from "./rendered-interactions.mjs";
 
@@ -225,6 +226,17 @@ test("canonical scenario matrix, cross-instance contracts and protected boundari
                   });
               }, visualProperties);
             for (const node of nodes) {
+              const expectedNumeric = numericContract(node);
+              if (
+                expectedNumeric &&
+                node.values.fontVariantNumeric !== expectedNumeric
+              )
+                record.invariants.push({
+                  group: `${node.ui}/${node.variant}/numeric`,
+                  differences: ["fontVariantNumeric"],
+                  actual: node.values.fontVariantNumeric,
+                  expected: expectedNumeric,
+                });
               if (
                 ![
                   "LifecycleBadge",
@@ -306,7 +318,9 @@ test("canonical scenario matrix, cross-instance contracts and protected boundari
               for (const h of document.querySelectorAll(
                 '[data-ui="StatusHeading"]',
               )) {
-                const badge = h.querySelector('[data-ui="LifecycleBadge"]');
+                const badge = h.querySelector(
+                  '[data-ui="LifecycleBadge"],[data-ui="VerificationBadge"]',
+                );
                 if (!badge) continue;
                 const a = h.getBoundingClientRect(),
                   b = badge.getBoundingClientRect();
@@ -351,6 +365,8 @@ test("canonical scenario matrix, cross-instance contracts and protected boundari
             for (const id of [
               "RecoveryPanel",
               "Loading",
+              "JobsLoading",
+              "UnavailableState",
               ...featureChoices,
               "LifecycleBadge",
               "Action",
@@ -389,6 +405,12 @@ test("canonical scenario matrix, cross-instance contracts and protected boundari
             const contextOptions = {};
             let contextAnchor;
             if (!(await dialog.count())) {
+              // Layout-transparent wrappers have no screenshot box. Capture the
+              // nearest rendered ancestor, retaining the actual parent context.
+              for (let depth = 0; depth < 8; depth++) {
+                if (await contextTarget.boundingBox()) break;
+                contextTarget = contextTarget.locator("..");
+              }
               const parentBounds = await contextTarget.boundingBox();
               if (parentBounds) {
                 contextAnchor = await contextTarget.evaluate(

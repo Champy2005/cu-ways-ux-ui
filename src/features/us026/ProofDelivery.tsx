@@ -9,6 +9,7 @@ import {
   Loading,
   ProofLink,
   LifecycleBadge,
+  Icon,
 } from "../../design-system/components/primitives";
 import {
   Card,
@@ -44,13 +45,22 @@ export function ProofDelivery({
   const [open, setOpen] = useState(
     ["A02", "A03", "A05", "B01", "B04"].includes(scenario),
   );
+  const [focusReason, setFocusReason] = useState<
+    "initial" | "draft" | "result"
+  >("initial");
   const resolve = () => {
     if (state.pending === "save") {
       send({ type: "resolve-save", outcome });
       setOpen(false);
-    } else if (state.pending === "check")
-      send({ type: "resolve-check", outcome: "available" });
-    else if (state.pending === "refresh") send({ type: "resolve-status" });
+    } else if (state.pending === "check") {
+      const event = { type: "resolve-check", outcome: "available" };
+      const next = reduceDemoState(state, event);
+      send(event);
+      if (next.scenarioId === "B04") {
+        setFocusReason("result");
+        setOpen(true);
+      }
+    } else if (state.pending === "refresh") send({ type: "resolve-status" });
     else send({ type: "resolve-list", outcome: "loaded" });
   };
   useOperation(state.pending, timing, resolve, () => {
@@ -58,6 +68,7 @@ export function ProofDelivery({
     setOpen(false);
   });
   const add = () => {
+    setFocusReason("initial");
     if (["A04", "A06"].includes(state.scenarioId))
       send({ type: "add-another" });
     else if (state.scenarioId === "B02") send({ type: "reopen-form" });
@@ -157,6 +168,30 @@ export function ProofDelivery({
         </Card>
       ) : (
         <>
+          {state.pending && !open && state.listStatus !== "loading" && (
+            <div className={s.progress} data-ui="ProofProgress">
+              <OperationProgress
+                title={
+                  state.pending === "save"
+                    ? "Saving proof"
+                    : "Loading delivery evidence"
+                }
+                onReopen={
+                  state.pending === "save"
+                    ? () => {
+                        setFocusReason("draft");
+                        setOpen(true);
+                      }
+                    : undefined
+                }
+                onStop={
+                  state.pending !== "save"
+                    ? () => send({ type: "timeout" })
+                    : undefined
+                }
+              />
+            </div>
+          )}
           {notice &&
             !open &&
             state.listStatus !== "failed" &&
@@ -171,10 +206,12 @@ export function ProofDelivery({
                       <Action onClick={add}>Reopen proof form</Action>
                     ) : state.scenarioId === "B03" ? (
                       <Action onClick={() => send({ type: "check-saved" })}>
+                        <Icon name="refresh" />
                         Check saved proof
                       </Action>
                     ) : state.scenarioId === "C02" ? (
                       <Action onClick={() => send({ type: "refresh-status" })}>
+                        <Icon name="refresh" />
                         Refresh job
                       </Action>
                     ) : undefined
@@ -183,14 +220,6 @@ export function ProofDelivery({
                   {notice.body}
                 </Feedback>
               </div>
-            )}
-          {state.pending &&
-            state.pending !== "save" &&
-            state.listStatus !== "loading" && (
-              <OperationProgress
-                title="Loading delivery evidence"
-                onStop={() => send({ type: "timeout" })}
-              />
             )}
           {state.listStatus === "loading" ? (
             <Loading
@@ -201,9 +230,11 @@ export function ProofDelivery({
           ) : state.listStatus === "failed" ? (
             <Feedback
               title={notice?.title ?? "Saved proof unavailable"}
+              variant="proof"
               tone="error"
               action={
                 <Action onClick={() => send({ type: "retry-list" })}>
+                  <Icon name="refresh" />
                   Try again
                 </Action>
               }
@@ -272,20 +303,29 @@ export function ProofDelivery({
               )}
             </Card>
           )}
-          {state.pending === "save" && !open && (
-            <OperationProgress
-              title="Saving proof"
-              onReopen={() => setOpen(true)}
-            />
-          )}
           <ContentDialog
+            busy={!!state.pending}
             variant="proof-entry"
             open={open}
             title={state.pending === "save" ? "Saving proof" : "Add proof"}
             onClose={() => setOpen(false)}
+            finalFocusId={
+              state.pending === "save" ? "view-progress" : undefined
+            }
+            initialFocusId={
+              focusReason === "draft"
+                ? "proof-url"
+                : focusReason === "result"
+                  ? "proof-reconcile-result"
+                  : undefined
+            }
           >
             {state.scenarioId === "B04" && notice && (
-              <div className={s.formFeedback}>
+              <div
+                className={s.formFeedback}
+                id="proof-reconcile-result"
+                tabIndex={-1}
+              >
                 <Feedback title={notice.title} tone={notice.tone}>
                   {notice.body}
                 </Feedback>
@@ -303,6 +343,7 @@ export function ProofDelivery({
               noValidate
             >
               <Field
+                id="proof-url"
                 label="Delivery link"
                 value={state.draft}
                 error={state.fieldError}

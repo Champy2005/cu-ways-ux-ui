@@ -1,7 +1,9 @@
 import { WorkbenchFrame as AppFrame } from "../shared/WorkbenchFrame";
-import { useReducer, useEffect, type ComponentProps } from "react";
+import { useReducer, useEffect, useState, type ComponentProps } from "react";
 import {
   Action,
+  ActionLink,
+  BackLink,
   ContentDialog,
   EmptyState,
   Feedback,
@@ -20,31 +22,63 @@ import {
   UnavailableState,
   StatusHeading,
 } from "../../design-system/compositions/layout";
-import { createDemoState, transitionDemo } from "./model.mjs";
+import {
+  createJobsPreview,
+  reduceJobsController,
+  type RecordStatus,
+} from "./controller";
 import { FIXTURES, SCENARIO_BY_ID } from "./scenarios.mjs";
-import { mockJobRecords } from "./records.mjs";
+import { mockJobRecords, mockReadStatus } from "./records.mjs";
+import { useTheme } from "../../design-system/ThemeProvider";
 import { money, date, useOperation, type Timing } from "../shared/operations";
 import s from "../shared/features.module.css";
 import detail from "./detail.module.css";
-type JobEvent = { type: string; [key: string]: unknown };
+function JobOperationTask({
+  timing,
+  onResolve,
+  onTimeout,
+}: {
+  timing: Timing;
+  onResolve: () => void;
+  onTimeout: () => void;
+}) {
+  useOperation(true, timing, onResolve, onTimeout);
+  return null;
+}
 export function MyJobs({
   scenario = "L02",
   fixture = "standard",
   timing = "hold",
+  jobId,
+  filter,
+  page = 1,
+  readStatus,
+  pendingRequest,
+  needsCheck,
 }: {
   scenario?: string;
   fixture?: string;
   timing?: Timing;
+  jobId?: number;
+  filter?: string;
+  page?: number;
+  readStatus?: RecordStatus;
+  pendingRequest?: number;
+  needsCheck?: boolean;
 }) {
-  const [state, send] = useReducer(
-    (
-      previous: ReturnType<typeof createDemoState> & {
-        offlineNotice?: boolean;
-      },
-      event: JobEvent,
-    ) => transitionDemo(previous, event).state,
-    scenario,
-    (id) => createDemoState({ scenarioId: id, fixtureName: fixture }),
+  const appearance = useTheme();
+  const [announcement, setAnnouncement] = useState("");
+  const [state, send] = useReducer(reduceJobsController, scenario, (id) =>
+    createJobsPreview({
+      scenario: id,
+      fixture,
+      jobId,
+      filter,
+      page,
+      readStatus,
+      pendingRequest,
+      needsCheck,
+    }),
   );
   const model = SCENARIO_BY_ID[state.scenarioId];
   useEffect(() => {
@@ -68,39 +102,51 @@ export function MyJobs({
     state.jobId,
   ]);
   const data = FIXTURES[state.fixtureName as keyof typeof FIXTURES];
-  const records = mockJobRecords(data);
-  const selected =
+  const records = mockJobRecords(data, state.confirmedStatuses);
+  const selectedRecord =
     records.find((job: { id: number }) => job.id === state.jobId) ?? data;
-  const resolve = () =>
-    send(
-      state.pending
-        ? { type: "RESOLVE_START", outcome: "started" }
-        : { type: "DETAIL_READ_RESULT", status: "accepted" },
-    );
+  const selected =
+    state.optionalMissingJobId === state.jobId
+      ? {
+          ...selectedRecord,
+          deliveryDate: null,
+          deadline: null,
+          targetResponses: null,
+          briefUrl: null,
+        }
+      : selectedRecord;
   const loading = ["L01", "D01"].includes(state.scenarioId);
-  useOperation(
-    state.pending || loading,
-    timing,
-    () => (state.route === "list" ? send({ type: "RETRY_LIST" }) : resolve()),
-    () =>
-      send(
-        state.pending
-          ? { type: "RESOLVE_START", outcome: "unknown" }
-          : state.route === "list"
-            ? { type: "LIST_READ_FAILED" }
-            : { type: "DETAIL_READ_RESULT", status: "failed" },
-      ),
+  const reading = ["L01", "D01", "C08", "R01", "R13"].includes(
+    state.scenarioId,
   );
+  const activeStart =
+    state.starts.get(state.jobId) ?? state.starts.values().next().value;
   const openJob = (jobId: number) => {
     send({ type: "OPEN_JOB", jobId });
     send({
       type: "DETAIL_READ_RESULT",
-      status:
-        records.find((r: { id: number }) => r.id === jobId)?.status ===
-        "In Progress"
-          ? "in-progress"
-          : "accepted",
+      status: mockReadStatus(
+        records.find((r: { id: number }) => r.id === jobId),
+        {
+          useConfiguredOutcome: state.uncertainStarts.has(jobId),
+          configuredOutcome: "in-progress",
+        },
+      ),
     });
+  };
+  const jobHref = (id: number) => {
+    const record = records.find((record: { id: number }) => record.id === id);
+    const task = state.starts.get(id);
+    const read = record ? `;readStatus:${record.status}` : "";
+    const pending = task ? `;pendingRequest:${task.requestId}` : "";
+    const uncertain = state.uncertainStarts.has(id) ? ";needsCheck:true" : "";
+    const query = new URLSearchParams({
+      id: "us025--d-01",
+      viewMode: "story",
+      args: `jobId:${id};fixture:${state.fixtureName};timing:${timing};filter:${state.listFilter};page:${state.page}${read}${pending}${uncertain}`,
+      globals: `theme:${appearance.theme};material:${appearance.material};textScale:${appearance.textScale}`,
+    });
+    return `iframe.html?${query}`;
   };
   const filterOptions = [
     { value: "active", label: "Active jobs" },
@@ -138,13 +184,16 @@ export function MyJobs({
     "D08",
     "R10",
   ];
-  const notice = ["C07", "R02", "R05"].includes(state.scenarioId)
-    ? null
-    : model.bannerTone
-      ? (model.bannerTitle ?? "")
-      : null;
-  const canStart =
-    ["D02", "D09", "C02", "R03", "R11"].includes(viewId) && !state.pending;
+  const notice =
+    state.scenarioId === "C06"
+      ? "Start request may still be processing"
+      : ["C07", "R02", "R05", "R06"].includes(state.scenarioId)
+        ? null
+        : model.bannerTone
+          ? (model.bannerTitle ?? "")
+          : null;
+  const canStart = ["D02", "D09", "C02", "R03", "R11"].includes(viewId);
+  const standaloneRecovery = ["D03", "D08", "R10"].includes(state.scenarioId);
   const panelRefresh =
     !["D05", "R06"].includes(viewId) && !recoveryIds.includes(viewId);
   return (
@@ -161,8 +210,9 @@ export function MyJobs({
       showBack={state.route !== "list"}
       feature="025"
       busy={loading}
+      headingLayout={state.scenarioId === "L06" ? "list" : undefined}
       headingAction={
-        state.route === "list" ? (
+        state.route === "list" && !["L06", "L09"].includes(state.scenarioId) ? (
           <label className={detail.filter}>
             Status
             <SelectControl
@@ -176,7 +226,9 @@ export function MyJobs({
         ) : undefined
       }
       action={
-        canStart && !state.pending ? (
+        canStart &&
+        ((state.statusKnown && state.jobStatus === "Accepted") ||
+          viewId === "R11") ? (
           <Action
             role="primary"
             disabled={state.pending}
@@ -203,12 +255,25 @@ export function MyJobs({
               : privateTitle
           }
           action={
-            privateTitle === "Session expired" ? (
-              <Action
-                role="supporting"
-                onClick={() => send({ type: "SIGN_IN" })}
+            state.scenarioId === "L09" ? (
+              <BackLink
+                href="#overview"
+                onClick={() =>
+                  setAnnouncement("Overview is outside this demo.")
+                }
               >
-                Sign in
+                Back to overview
+              </BackLink>
+            ) : privateTitle === "Session expired" ? (
+              <Action
+                role="entry"
+                onClick={() =>
+                  state.demoSignInComplete
+                    ? openJob(state.jobId)
+                    : send({ type: "SIGN_IN" })
+                }
+              >
+                {state.demoSignInComplete ? "Continue" : "Sign in"}
               </Action>
             ) : undefined
           }
@@ -223,16 +288,44 @@ export function MyJobs({
         </UnavailableState>
       ) : (
         <>
-          {state.pending && !state.confirmationOpen && (
+          {activeStart && !state.confirmationOpen && (
             <div className={detail.notice}>
               <OperationProgress
-                title={`Starting Job #${state.jobId}`}
-                onReopen={() => send({ type: "REOPEN_PROGRESS" })}
+                title={`Starting Job #${activeStart.jobId}`}
+                onReopen={() =>
+                  send({ type: "REOPEN_OPERATION", jobId: activeStart.jobId })
+                }
               />
             </div>
           )}
+          {!activeStart &&
+            state.backgroundResult &&
+            !state.confirmationOpen &&
+            !state.unknownOutcome && (
+              <div className={detail.notice}>
+                <Feedback
+                  variant="jobs"
+                  title={state.backgroundResult.title}
+                  tone={state.backgroundResult.tone}
+                  action={
+                    state.route === "list" ||
+                    state.jobId !== state.backgroundResult.jobId ? (
+                      <Action
+                        onClick={() => openJob(state.backgroundResult!.jobId)}
+                      >
+                        View job
+                      </Action>
+                    ) : undefined
+                  }
+                >
+                  {state.backgroundResult.body}
+                </Feedback>
+              </div>
+            )}
           {notice !== null && (
-            <div className={detail.notice}>
+            <div
+              className={standaloneRecovery ? detail.recovery : detail.notice}
+            >
               <Feedback
                 variant="jobs"
                 title={notice}
@@ -252,10 +345,9 @@ export function MyJobs({
                         if (state.route === "list")
                           send({ type: "RETRY_LIST" });
                         else {
-                          send({ type: "REFRESH_DETAIL" });
                           send({
-                            type: "DETAIL_READ_RESULT",
-                            status: "accepted",
+                            type: "REFRESH_DETAIL",
+                            status: "in-progress",
                           });
                         }
                       }}
@@ -268,15 +360,20 @@ export function MyJobs({
                   ) : undefined
                 }
               >
-                {model.bannerBody?.replace(
-                  "{status}",
-                  state.jobStatus ?? "Unavailable",
-                )}
+                {state.scenarioId === "C06"
+                  ? "Opening a job checks its current status. This page will not repeat the start request."
+                  : model.bannerBody?.replace(
+                      "{status}",
+                      state.jobStatus ?? "Unavailable",
+                    )}
               </Feedback>
             </div>
           )}
           {state.scenarioId === "L08" && (
-            <p role="status">Updating your results…</p>
+            <div className={detail.listUpdating} role="status">
+              <Icon name="spinner" />
+              Updating your results…
+            </div>
           )}
           {loading ? (
             <JobsLoading detail={state.route !== "list"} />
@@ -356,14 +453,15 @@ export function MyJobs({
                                 },
                               ]}
                               action={
-                                <Action
+                                <ActionLink
+                                  href={jobHref(job.id)}
                                   role="entry"
                                   size="list-entry"
                                   id={`view-job-${job.id}`}
                                   onClick={() => openJob(job.id)}
                                 >
                                   View job
-                                </Action>
+                                </ActionLink>
                               }
                             />
                           ),
@@ -417,11 +515,14 @@ export function MyJobs({
                         },
                         {
                           label: "Target responses",
-                          value: `${selected.targetResponses} responses`,
+                          value:
+                            selected.targetResponses == null
+                              ? "Target not specified"
+                              : `${selected.targetResponses.toLocaleString("en-US")} responses`,
                         },
                         {
                           label: "Brief",
-                          value: (
+                          value: selected.briefUrl ? (
                             <InlineLink
                               href={selected.briefUrl}
                               external
@@ -429,6 +530,8 @@ export function MyJobs({
                             >
                               Open brief
                             </InlineLink>
+                          ) : (
+                            "No brief attached"
                           ),
                         },
                       ].map((item) => (
@@ -456,7 +559,9 @@ export function MyJobs({
                     {!state.statusKnown && state.lastConfirmedStatus && (
                       <p className={detail.lastConfirmed}>
                         Last confirmed:{" "}
-                        <strong>{state.lastConfirmedStatus}</strong>
+                        <strong className={detail.lastStatus}>
+                          {state.lastConfirmedStatus}
+                        </strong>
                       </p>
                     )}
                     <dl className={detail.price}>
@@ -482,9 +587,8 @@ export function MyJobs({
                           <Action
                             disabled={state.pending}
                             onClick={() => {
-                              send({ type: "REFRESH_DETAIL" });
                               send({
-                                type: "DETAIL_READ_RESULT",
+                                type: "REFRESH_DETAIL",
                                 status: "in-progress",
                               });
                             }}
@@ -507,6 +611,7 @@ export function MyJobs({
           )}
           <ContentDialog
             variant="job-start"
+            busy={!!state.pending}
             initialFocusId={!state.pending ? "keep-accepted" : undefined}
             open={state.confirmationOpen}
             title={state.pending ? "Starting job" : "Start job"}
@@ -519,7 +624,12 @@ export function MyJobs({
                 {money(selected.offeredPrice)}
               </dd>
             </dl>
-            {state.pending && <p role="status">Submitting…</p>}
+            {state.pending && (
+              <div className={detail.dialogProgress} role="status">
+                <Icon name="spinner" />
+                <span>Submitting…</span>
+              </div>
+            )}
             <ConfirmationActions
               variant="job-start"
               safe={
@@ -546,6 +656,59 @@ export function MyJobs({
             />
           </ContentDialog>
         </>
+      )}
+      {announcement && (
+        <p role="status" className={detail.srOnly}>
+          {announcement}
+        </p>
+      )}
+      {[...state.starts.values()].map((task) => (
+        <JobOperationTask
+          key={`start-${task.jobId}-${task.requestId}`}
+          timing={timing}
+          onResolve={() =>
+            send({
+              type: "SETTLE_START",
+              jobId: task.jobId,
+              requestId: task.requestId,
+              outcome: "started",
+            })
+          }
+          onTimeout={() =>
+            send({
+              type: "SETTLE_START",
+              jobId: task.jobId,
+              requestId: task.requestId,
+              outcome: "unknown",
+            })
+          }
+        />
+      ))}
+      {reading && (
+        <JobOperationTask
+          key={`read-${state.jobId}-${state.requestId}-${state.scenarioId}`}
+          timing={timing}
+          onResolve={() =>
+            send(
+              state.route === "list"
+                ? { type: "RETRY_LIST" }
+                : {
+                    type: "DETAIL_READ_RESULT",
+                    status: mockReadStatus(selectedRecord, {
+                      useConfiguredOutcome: state.readMode === "configured",
+                      configuredOutcome: "in-progress",
+                    }),
+                  },
+            )
+          }
+          onTimeout={() =>
+            send(
+              state.route === "list"
+                ? { type: "LIST_READ_FAILED" }
+                : { type: "DETAIL_READ_RESULT", status: "failed" },
+            )
+          }
+        />
       )}
     </AppFrame>
   );

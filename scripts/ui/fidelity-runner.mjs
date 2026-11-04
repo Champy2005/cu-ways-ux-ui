@@ -28,6 +28,77 @@ const captureImplementation = captureKey([
   fs.readFileSync(new URL("./fidelity-cache.mjs", import.meta.url), "utf8"),
 ]);
 let originalsReused = 0;
+const progress = (phase, last) =>
+  fs.writeFileSync(
+    path.join(output, "progress.json"),
+    JSON.stringify({
+      sourceFingerprint: input.sourceFingerprint,
+      phase,
+      completed: records.length,
+      total: input.scenarios.length * input.widths.length * input.themes.length,
+      last,
+    }),
+  );
+progress("capturing");
+async function applyInteraction(page, kind, scenario) {
+  if (input.interactionState === "initial") return;
+  if (input.interactionState === "reconciled") {
+    if (!["026", "027", "028"].includes(scenario.feature))
+      throw Error(
+        "Reconciliation capture requires a proof or task recovery scenario",
+      );
+    await page
+      .getByRole("button", {
+        name:
+          scenario.feature === "026" ? "Check saved proof" : "Check job status",
+        exact: true,
+      })
+      .click();
+    if (kind === "original")
+      await page.evaluate(
+        (feature) =>
+          window.postMessage(
+            feature === "026"
+              ? { namespace: "us026-demo", type: "resolve" }
+              : {
+                  channel: "cu-story-v1",
+                  story: `US-${feature}`,
+                  type: "resolve",
+                },
+            location.origin,
+          ),
+        scenario.feature,
+      );
+    await page.clock.runFor(1000);
+    return;
+  }
+  const dialog = page.getByRole("dialog");
+  await dialog.waitFor({ state: "visible", timeout: 10000 });
+  await page.keyboard.press("Escape");
+  // Advance the controlled animation clock, not the held operation.
+  await page.clock.runFor(250);
+  await dialog.waitFor({ state: "hidden", timeout: 10000 });
+  if (input.interactionState === "reopened") {
+    const progress = page.getByRole("button", {
+      name: "View progress",
+      exact: true,
+    });
+    if (scenario.feature === "026") {
+      await page.clock.runFor(50);
+      if (
+        !(await progress.evaluate(
+          (element) => element === document.activeElement,
+        ))
+      )
+        throw Error("Proof dismissal did not restore View progress focus");
+      // A keyboard reopening must not acquire Playwright's automatic click
+      // scrolling, which is separate from the user's Enter action.
+      await page.keyboard.press("Enter");
+    } else await progress.click();
+    await page.clock.runFor(100);
+    await dialog.waitFor({ state: "visible", timeout: 10000 });
+  }
+}
 // Browser canvas decodes the PNGs already produced by Playwright. No second
 // screenshot engine, platform font substitution or automatic reference update.
 async function pixelDifference(before, after, destination) {
@@ -119,6 +190,7 @@ try {
           reducedTransparency: input.reducedTransparency,
           states: [],
           differences: [],
+          interactionState: input.interactionState,
         };
         const defaultSettings =
           input.height === 900 &&
@@ -131,7 +203,10 @@ try {
           `${scenario.story}-${width}-${theme}` +
           (defaultSettings
             ? ""
-            : `-${input.height}-${input.textScale}-${input.material}-${input.fixture}-${input.reducedMotion ? "rm" : "motion"}-${input.reducedTransparency ? "rt" : "transparency"}`);
+            : `-${input.height}-${input.textScale}-${input.material}-${input.fixture}-${input.reducedMotion ? "rm" : "motion"}-${input.reducedTransparency ? "rt" : "transparency"}`) +
+          (input.interactionState !== "initial"
+            ? `-${input.interactionState}`
+            : "");
         for (const kind of ["original", "react"]) {
           const key = captureKey({
             reference: input.reference,
@@ -148,6 +223,7 @@ try {
             browser: browser.version(),
             captureImplementation,
             navigationOverride: input.navigationOverride,
+            interactionState: input.interactionState,
           });
           if (kind === "original") {
             const cached = restoreCapture(cache, key, output);
@@ -200,7 +276,7 @@ try {
           const url =
             kind === "original"
               ? `${original.url}/${scenario.source}?scenario=${scenario.legacy}&fixture=${input.fixture}&theme=${theme}&material=${input.material}&textScale=${input.textScale}&responseMode=hold&timing=hold`
-              : `${candidate.url}/iframe.html?id=${scenario.story}&args=fixture:${input.fixture}&globals=theme:${theme};material:${input.material};textScale:${input.textScale}`;
+              : `${candidate.url}/iframe.html?id=${scenario.story}&args=fixture:${input.fixture};timing:${input.interactionState === "reconciled" ? "auto" : "hold"}&globals=theme:${theme};material:${input.material};textScale:${input.textScale}`;
           await p.goto(url);
           await p.clock.runFor(100);
           await p.locator("main").first().waitFor();
@@ -283,6 +359,9 @@ try {
               (id) => document.documentElement.dataset.selectedScenario === id,
               scenario.legacy,
             );
+            // Legacy interactions rebuild chrome. Apply the declared human
+            // correction to the resulting scene, not to discarded markup.
+            await applyInteraction(p, kind, scenario);
             if (
               input.navigationOverride &&
               ["027", "028", "034"].includes(scenario.feature)
@@ -373,6 +452,7 @@ try {
               );
             }
           }
+          if (kind === "react") await applyInteraction(p, kind, scenario);
           await p.evaluate(() => document.fonts.ready);
           if (
             kind === "original" &&
@@ -397,6 +477,17 @@ try {
           await p.clock.runFor(50);
           await layoutReady;
           const regions = {
+            proofProgress:
+              scenario.feature === "026" &&
+              input.interactionState === "dismissed"
+                ? kind === "original"
+                  ? ".cu-operation"
+                  : '[data-ui="ProofProgress"] [data-ui="OperationNotice"]'
+                : ":not(*)",
+            dialogTitle:
+              kind === "original"
+                ? "dialog[open] h2"
+                : '[data-ui="ContentDialog"] h2',
             page: "main",
             header: "header",
             heading: "main h1",
@@ -450,6 +541,15 @@ try {
                 : '[data-ui="ReviewHistory"]',
           };
           const measures = {};
+          if (
+            scenario.feature === "026" &&
+            input.interactionState !== "initial"
+          )
+            measures.focus = await p.evaluate(() =>
+              document.activeElement instanceof HTMLInputElement
+                ? `input:${document.activeElement.labels?.[0]?.textContent?.trim() ?? ""}`
+                : (document.activeElement?.textContent?.trim() ?? ""),
+            );
           for (const [name, selector] of Object.entries(regions)) {
             const element = p
               .locator(selector)
@@ -499,7 +599,15 @@ try {
                   }),
               };
             });
-            if (!["page", "heading", "navigation", "dock"].includes(name)) {
+            if (
+              ![
+                "page",
+                "heading",
+                "navigation",
+                "dock",
+                "dialogTitle",
+              ].includes(name)
+            ) {
               const crop = `${prefix}-${kind}-${name}.png`;
               crops.push({ element, crop });
               captureFiles.push(crop);
@@ -572,6 +680,13 @@ try {
                 })),
             );
           const image = `${prefix}-${kind}.png`;
+          await p.evaluate(() => {
+            for (const animation of document.getAnimations())
+              if (animation instanceof CSSAnimation) {
+                animation.pause();
+                animation.currentTime = 0;
+              }
+          });
           const captureLevel = measures.dialog
             ? "viewport with open dialog"
             : "full page";
@@ -585,7 +700,7 @@ try {
             await p.clock.runFor(17);
             const png = await p.screenshot({
               fullPage: !measures.dialog,
-              animations: "disabled",
+              animations: "allow",
             });
             stabilityFrames++;
             if (previous?.equals(png)) {
@@ -607,7 +722,7 @@ try {
           for (const { element, crop } of crops)
             await element.screenshot({
               path: path.join(output, crop),
-              animations: "disabled",
+              animations: "allow",
               style: crop.endsWith("-header.png")
                 ? undefined
                 : '.cu-bar--top,.cu-bar--bottom,[data-ui="ApplicationHeader"],[data-ui="ApplicationDock"]{visibility:hidden!important}',
@@ -619,6 +734,8 @@ try {
             measures,
             failures,
             stabilityFrames,
+            animationTreatment:
+              "CSS keyframes paused at frame zero for deterministic capture; requested media remains unchanged. Motion behavior needs separate interaction checks.",
             captureLevel,
             cropTreatment:
               "Close/context crops hide only external application chrome; full-page image retains it. Source and candidate boundaries are named separately and must be inspected.",
@@ -659,6 +776,13 @@ try {
             ? "different"
             : "measurement-match; image inspection required";
         records.push(record);
+        progress("capturing", {
+          story: record.story,
+          width,
+          theme,
+          status: record.status,
+          images: record.states.map((state) => state.image),
+        });
       }
 } finally {
   await browser.close();
@@ -687,6 +811,7 @@ fs.writeFileSync(
   path.join(output, "report.json"),
   JSON.stringify(report, null, 2),
 );
+progress("completed");
 const escape = (s) =>
   String(s)
     .replaceAll("&", "&amp;")

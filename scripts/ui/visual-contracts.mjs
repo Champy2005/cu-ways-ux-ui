@@ -10,6 +10,7 @@ export const visualProperties = [
   "fontFamily",
   "fontSize",
   "fontWeight",
+  "fontVariantNumeric",
   "lineHeight",
   "opacity",
   "boxShadow",
@@ -19,6 +20,14 @@ export const visualProperties = [
   "paddingLeft",
   "gap",
 ];
+export function numericContract(node) {
+  const variant = node.variant.split("/")[0];
+  if (node.ui === "MetadataValue")
+    return variant === "summary" ? "tabular-nums" : "normal";
+  if (node.ui === "ProofTimestamp")
+    return variant === "proof" ? "tabular-nums" : "normal";
+  return null;
+}
 export function compareEquivalent(previous, observed) {
   return visualProperties.filter((p) => previous[p] !== observed[p]);
 }

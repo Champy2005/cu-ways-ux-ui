@@ -56,14 +56,22 @@ try {
     }
     console.log(JSON.stringify(result, null, args.includes("--json") ? 0 : 2));
   } else if (command === "check") {
-    if (args.includes("--fidelity") || flag("prepare-reference")) {
+    const referenceOperation =
+      flag("prepare-reference") ??
+      flag("export-reference") ??
+      flag("restore-reference");
+    if (args.includes("--fidelity") || referenceOperation) {
       const result = fidelity({
         prepare: flag("prepare-reference"),
+        exportReference: flag("export-reference"),
+        restoreReference: flag("restore-reference"),
         target: flag("target"),
         full: args.includes("--full"),
         native: args.includes("--native"),
         diagnostic: args.includes("--diagnostic"),
         height: flag("height"),
+        widths: flag("widths"),
+        state: flag("state"),
         textScale: flag("text-scale"),
         material: flag("material"),
         fixture: flag("fixture"),
@@ -72,7 +80,7 @@ try {
       });
       console.log(
         JSON.stringify(
-          flag("prepare-reference")
+          referenceOperation
             ? result
             : {
                 reference: result.reference,
@@ -91,7 +99,7 @@ try {
           2,
         ),
       );
-      process.exitCode = flag("prepare-reference")
+      process.exitCode = referenceOperation
         ? 0
         : result.records.some(
               (r: { status: string }) => r.status === "different",

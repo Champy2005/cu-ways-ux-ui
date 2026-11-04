@@ -11,6 +11,9 @@
   max-width: 52rem;
   margin: 0 0 1.5rem;
 }
+.progress {
+  max-width: 52rem;
+}
 .form {
   display: grid;
   gap: 1rem;

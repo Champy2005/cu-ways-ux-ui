@@ -54,6 +54,7 @@ import {
 } from "../../scripts/ui/baseline.mjs";
 import {
   compareEquivalent,
+  numericContract,
   compareProtected,
 } from "../../scripts/ui/visual-contracts.mjs";
 test("local global-token edits fail scope and still broaden verification", () => {
@@ -175,6 +176,25 @@ test("cross-instance style invariants detect pre-existing drift without a baseli
     "color",
   ]);
   expect(compareEquivalent({ color: "blue" }, { color: "blue" })).toEqual([]);
+});
+test("numeric contracts distinguish source compositions even when all consumers drift", () => {
+  expect(
+    numericContract({ ui: "MetadataValue", variant: "summary/default" }),
+  ).toBe("tabular-nums");
+  for (const variant of ["rows/default", "dialog/default"])
+    expect(numericContract({ ui: "MetadataValue", variant })).toBe("normal");
+  expect(
+    numericContract({ ui: "ProofTimestamp", variant: "task/default" }),
+  ).toBe("normal");
+  expect(
+    numericContract({ ui: "ProofTimestamp", variant: "proof/default" }),
+  ).toBe("tabular-nums");
+  expect(
+    compareEquivalent(
+      { fontVariantNumeric: "normal" },
+      { fontVariantNumeric: "tabular-nums" },
+    ),
+  ).toEqual(["fontVariantNumeric"]);
 });
 test("protected sibling paint and disappearance are detected", () => {
   const original = [{ key: "badge", values: { color: "blue" } }];

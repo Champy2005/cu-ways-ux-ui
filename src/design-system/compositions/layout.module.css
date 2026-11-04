@@ -25,11 +25,19 @@
   border-bottom: 1px solid var(--border);
 }
 .main[data-kind="proof"] {
+  /* The original replaces this main on render. Retained React siblings must
+     not anchor-scroll the document when its progress panel disappears. */
+  overflow-anchor: none;
   padding-block-end: calc(var(--dock-height, 0px) + 2rem);
 }
 @media (min-width: 64rem) {
   .main[data-kind="proof"] {
     padding-block-end: 3rem;
+  }
+}
+@media (max-width: 62rem) {
+  .main[data-kind="story"] {
+    padding-top: 1.25rem;
   }
 }
 @media (max-width: 25rem) {
@@ -50,6 +58,8 @@
   box-shadow: var(--depth-header);
 }
 .headerRow {
+  position: relative;
+  z-index: 1;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -87,6 +97,8 @@
   display: block;
 }
 .desktop {
+  position: relative;
+  isolation: isolate;
   --nav-cutout: var(--nav-selected-fill);
   display: none;
   gap: 0.25rem;
@@ -114,6 +126,24 @@
   color: var(--nav-selected-ink);
   font-weight: 600;
   text-shadow: 0.2px 0 currentColor;
+}
+.desktop a {
+  position: relative;
+  z-index: 1;
+  white-space: nowrap;
+}
+.desktop[data-moving-tile="true"] a[aria-current] {
+  background: transparent;
+}
+.selectionTile {
+  position: absolute;
+  pointer-events: none;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 0;
+  border-radius: 0.875rem;
+  background: var(--nav-selected-fill);
 }
 .desktop a svg {
   width: 1.375rem;
@@ -237,12 +267,6 @@
 .frame[data-kind="proof"] .dock {
   border-top: 1px solid var(--border);
 }
-.identityHeading {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
-  gap: 1rem;
-}
 .pageHeading[data-back="false"] {
   margin-top: 0;
 }
@@ -277,6 +301,9 @@
   border-radius: 0.75rem;
   padding: 1.25rem;
   min-width: 0;
+}
+.card > :last-child {
+  margin-bottom: 0;
 }
 .unavailableCard {
   padding: 1.25rem;
@@ -435,6 +462,10 @@
   grid-row: 1;
   min-width: 0;
 }
+.statusHeading[data-variant="review"] > .statusCopy {
+  display: grid;
+  gap: 0.25rem;
+}
 .statusHeading > span {
   grid-column: 2;
   grid-row: 1;
@@ -525,6 +556,10 @@
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
+.metadata[data-variant="rows"] dd,
+.metadata[data-variant="dialog"] dd {
+  font-variant-numeric: normal;
+}
 .metadata[data-variant="rows"],
 .metadata[data-variant="dialog"] {
   grid-template-columns: minmax(0, 1fr);
@@ -566,7 +601,15 @@
 .metadata[data-variant="dialog"] dd {
   font-weight: 400;
 }
+.pageReturn {
+  display: contents;
+}
+.pageReturn[data-standalone="true"] {
+  display: flex;
+  margin-bottom: 0.5rem;
+}
 .requirement {
+  text-wrap: pretty;
   display: flex;
   align-items: start;
   gap: 0.7rem;
@@ -657,6 +700,7 @@
 }
 .proofRecord[data-variant="task"] .timestamp {
   font-size: 0.875rem;
+  font-variant-numeric: normal;
 }
 .jobSummaryBody {
   display: grid;
@@ -912,6 +956,9 @@
 }
 .frame[data-chrome-layout="flow"] .header {
   position: relative;
+}
+.frame[data-kind="proof"][data-chrome-layout="flow"] .main {
+  padding-bottom: 1.25rem;
 }
 .frame[data-chrome-layout="flow"] .dock {
   position: relative;

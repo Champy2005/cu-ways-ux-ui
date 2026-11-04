@@ -29,7 +29,13 @@ export function ProofRecord({
     >
       <AttachmentTag />
       <ProofLink url={url} variant={variant} />
-      <p className={s.timestamp}>{timestamp}</p>
+      <p
+        className={s.timestamp}
+        data-ui="ProofTimestamp"
+        data-variant={variant}
+      >
+        {timestamp}
+      </p>
     </article>
   );
 }
@@ -76,6 +82,30 @@ export function Card({
     </section>
   );
 }
+/** Shared status placement, including enlarged-reading stack order. */
+export function StatusHeadingFrame({
+  children,
+  badge,
+  as = "div",
+  variant = "default",
+}: {
+  children: ReactNode;
+  badge?: ReactNode;
+  as?: "div" | "header";
+  variant?: "default" | "review";
+}) {
+  const Element = as;
+  return (
+    <Element
+      className={s.statusHeading}
+      data-ui="StatusHeading"
+      data-variant={variant}
+    >
+      <div className={s.statusCopy}>{children}</div>
+      {badge}
+    </Element>
+  );
+}
 export function StatusHeading({
   title,
   context,
@@ -91,15 +121,12 @@ export function StatusHeading({
 }) {
   const Heading = level === 1 ? "h1" : "h2";
   return (
-    <div className={s.statusHeading} data-ui="StatusHeading">
-      <div>
-        {context && <p className={s.context}>{context}</p>}
-        <Heading className={compact ? s.compactTitle : undefined}>
-          {title}
-        </Heading>
-      </div>
-      {status && <LifecycleBadge status={status} />}
-    </div>
+    <StatusHeadingFrame badge={status && <LifecycleBadge status={status} />}>
+      {context && <p className={s.context}>{context}</p>}
+      <Heading className={compact ? s.compactTitle : undefined}>
+        {title}
+      </Heading>
+    </StatusHeadingFrame>
   );
 }
 export function ConfirmationActions({
@@ -174,11 +201,13 @@ export function Metadata({
   variant?: "summary" | "rows" | "dialog";
 }) {
   return (
-    <dl className={s.metadata} data-variant={variant}>
+    <dl className={s.metadata} data-ui="Metadata" data-variant={variant}>
       {items.map((item) => (
         <div key={item.label}>
           <dt>{item.label}</dt>
-          <dd>{item.value}</dd>
+          <dd data-ui="MetadataValue" data-variant={variant}>
+            {item.value}
+          </dd>
         </div>
       ))}
     </dl>
@@ -246,6 +275,7 @@ export type NavigationItem = {
   id: string;
   label: string;
   href?: string;
+  onNavigate?: () => void;
   icon: Parameters<typeof Icon>[0]["name"];
 };
 export function AppFrame({
@@ -261,6 +291,7 @@ export function AppFrame({
   workspaceLinks = [],
   busy = false,
   headingAction,
+  headingLayout,
   action,
   showBack = true,
   actionHidden = false,
@@ -281,6 +312,7 @@ export function AppFrame({
   workspaceLinks?: { label: string; href: string }[];
   busy?: boolean;
   headingAction?: ReactNode;
+  headingLayout?: "list";
   action?: ReactNode;
   showBack?: boolean;
   actionHidden?: boolean;
@@ -294,15 +326,31 @@ export function AppFrame({
   const menuButton = useRef<HTMLButtonElement>(null),
     roleButton = useRef<HTMLButtonElement>(null),
     frame = useRef<HTMLDivElement>(null),
+    desktopNav = useRef<HTMLElement>(null),
+    selectionTile = useRef<HTMLSpanElement>(null),
     dock = useRef<HTMLDivElement>(null);
   const { theme, material, textScale, toggle } = useTheme();
   const nav = navigation,
     mobile = mobileNavigation;
   useLayoutEffect(() => {
+    const html = document.documentElement;
+    const previousProofClearance = html.style.getPropertyValue(
+      "--proof-nav-clearance",
+    );
     const measure = () => {
+      const desktop = desktopNav.current;
+      const current = desktop?.querySelector<HTMLElement>(
+        '[aria-current="page"]',
+      );
+      if (desktop && current && selectionTile.current) {
+        const selected = current.getBoundingClientRect();
+        const parent = desktop.getBoundingClientRect();
+        selectionTile.current.style.width = `${selected.width}px`;
+        selectionTile.current.style.transform = `translateX(${selected.left - parent.left + desktop.scrollLeft - desktop.clientLeft}px)`;
+      }
       if (frame.current) {
         frame.current.dataset.compactChrome = String(
-          innerWidth < 1024 || textScale !== 100,
+          innerWidth < 1024 || (textScale !== 100 && kind !== "proof"),
         );
         frame.current.dataset.chromeLayout = "fixed";
       }
@@ -379,6 +427,11 @@ export function AppFrame({
                 font * (kind === "jobs" ? 6 : 8) >
               innerHeight;
         host.dataset.chromeLayout = flow ? "flow" : "fixed";
+        if (kind === "proof")
+          html.style.setProperty(
+            "--proof-nav-clearance",
+            `${flow ? 0 : navHeight}px`,
+          );
         frame.current.style.setProperty(
           "--dock-height",
           `${flow ? 0 : navHeight + (trayHeight ? trayHeight + font * 0.75 : 0)}px`,
@@ -386,6 +439,11 @@ export function AppFrame({
       }
     };
     const observer = new ResizeObserver(measure);
+    if (desktopNav.current) {
+      observer.observe(desktopNav.current);
+      for (const item of desktopNav.current.querySelectorAll("a"))
+        observer.observe(item);
+    }
     const bottom = dock.current?.querySelector('[data-ui="BottomNavigation"]');
     if (bottom) observer.observe(bottom);
     const header = frame.current?.querySelector(
@@ -405,13 +463,40 @@ export function AppFrame({
       observer.disconnect();
       window.removeEventListener("resize", measure);
       document.fonts.removeEventListener("loadingdone", measure);
+      if (kind === "proof") {
+        if (previousProofClearance)
+          html.style.setProperty(
+            "--proof-nav-clearance",
+            previousProofClearance,
+          );
+        else html.style.removeProperty("--proof-nav-clearance");
+      }
     };
-  }, [action, kind, textScale]);
+  }, [action, activeKey, kind, navigation, textScale]);
   const dismissMenu = (event: React.KeyboardEvent) => {
     if (event.key === "Escape") {
       setMenu(false);
       setRoleMenu(false);
       (roleMenu ? roleButton : menuButton).current?.focus();
+    }
+  };
+  const navigate = (
+    event: React.MouseEvent<HTMLAnchorElement>,
+    onNavigate?: () => void,
+  ) => {
+    if (
+      event.button !== 0 ||
+      event.ctrlKey ||
+      event.metaKey ||
+      event.shiftKey ||
+      event.altKey
+    )
+      return;
+    setMenu(false);
+    setRoleMenu(false);
+    if (onNavigate) {
+      event.preventDefault();
+      onNavigate();
     }
   };
   return (
@@ -425,6 +510,48 @@ export function AppFrame({
       }
       data-chrome-layout="fixed"
       ref={frame}
+      onFocusCapture={(event) => {
+        const target = event.target;
+        if (
+          !(target instanceof HTMLElement) ||
+          target.closest('[data-ui="ContentDialog"]')
+        )
+          return;
+        requestAnimationFrame(() => {
+          if (document.activeElement !== target || !target.isConnected) return;
+          const bars = [
+            ...(frame.current?.querySelectorAll<HTMLElement>(
+              '[data-ui="ApplicationHeader"],[data-ui="ApplicationDock"],[data-ui="ActionTray"]',
+            ) ?? []),
+          ].filter(
+            (bar) =>
+              bar.getClientRects().length &&
+              ["fixed", "sticky"].includes(getComputedStyle(bar).position),
+          );
+          if (bars.some((bar) => bar.contains(target))) return;
+          let top = 0,
+            bottom = innerHeight;
+          for (const bar of bars) {
+            const bounds = bar.getBoundingClientRect();
+            if (bar.dataset.ui === "ApplicationHeader" && bounds.top <= 1)
+              top = Math.max(top, bounds.bottom);
+            else if (bar.dataset.ui !== "ApplicationHeader")
+              bottom = Math.min(bottom, bounds.top);
+          }
+          const bounds = target.getBoundingClientRect(),
+            clear = 8;
+          let delta = 0;
+          if (
+            bounds.height > bottom - top - 2 * clear ||
+            bounds.top < top + clear
+          )
+            delta = bounds.top - top - clear;
+          else if (bounds.bottom > bottom - clear)
+            delta = bounds.bottom - bottom + clear;
+          if (Math.abs(delta) > 1)
+            window.scrollBy({ top: delta, left: 0, behavior: "instant" });
+        });
+      }}
     >
       <header
         className={s.header}
@@ -436,12 +563,23 @@ export function AppFrame({
           <a className={s.brand} href={brandHref} aria-label="CU Ways home">
             <Artwork kind="logo" theme={theme} />
           </a>
-          <nav aria-label="Main navigation" className={s.desktop}>
-            {nav.map(({ id, label, icon, href }) => (
+          <nav
+            aria-label="Main navigation"
+            className={s.desktop}
+            ref={desktopNav}
+            data-moving-tile={kind === "jobs"}
+          >
+            <span
+              ref={selectionTile}
+              className={s.selectionTile}
+              aria-hidden="true"
+            />
+            {nav.map(({ id, label, icon, href, onNavigate }) => (
               <a
                 key={id}
                 aria-current={activeKey === id ? "page" : undefined}
                 href={href}
+                onClick={(event) => navigate(event, onNavigate)}
               >
                 <Icon name={icon} filled={activeKey === id} />
                 <span>{label}</span>
@@ -495,8 +633,12 @@ export function AppFrame({
             aria-label="Mobile menu"
             onKeyDown={dismissMenu}
           >
-            {nav.map(({ id, label, href }) => (
-              <a key={id} href={href}>
+            {nav.map(({ id, label, href, onNavigate }) => (
+              <a
+                key={id}
+                href={href}
+                onClick={(event) => navigate(event, onNavigate)}
+              >
                 {label}
               </a>
             ))}
@@ -523,17 +665,19 @@ export function AppFrame({
         aria-busy={busy || undefined}
       >
         {showBack && (
-          <BackLink
-            href={brandHref}
-            onClick={
-              onBack ??
-              (() => {
-                window.location.href = brandHref;
-              })
-            }
-          >
-            {backLabel}
-          </BackLink>
+          <div className={s.pageReturn} data-standalone={!showHeading}>
+            <BackLink
+              href={brandHref}
+              onClick={
+                onBack ??
+                (() => {
+                  window.location.href = brandHref;
+                })
+              }
+            >
+              {backLabel}
+            </BackLink>
+          </div>
         )}
         {showHeading && (
           <div
@@ -541,15 +685,26 @@ export function AppFrame({
             data-ui="PageHeading"
             data-back={showBack}
             data-layout={
-              headingStatus ? "identity" : headingAction ? "list" : undefined
+              headingStatus
+                ? "identity"
+                : (headingLayout ?? (headingAction ? "list" : undefined))
             }
           >
-            <div className={headingStatus ? s.identityHeading : s.headingCopy}>
-              <h1 id="page-heading" tabIndex={-1}>
-                {title}
-              </h1>
-              {headingStatus && <LifecycleBadge status={headingStatus} />}
-            </div>
+            {headingStatus ? (
+              <StatusHeadingFrame
+                badge={<LifecycleBadge status={headingStatus} />}
+              >
+                <h1 id="page-heading" tabIndex={-1}>
+                  {title}
+                </h1>
+              </StatusHeadingFrame>
+            ) : (
+              <div className={s.headingCopy}>
+                <h1 id="page-heading" tabIndex={-1}>
+                  {title}
+                </h1>
+              </div>
+            )}
             {headingDescription}
             {headingAction}
           </div>
@@ -579,13 +734,14 @@ export function AppFrame({
           aria-label="Bottom navigation"
           data-ui="BottomNavigation"
         >
-          {mobile.map(({ id, label, icon, href }) => {
+          {mobile.map(({ id, label, icon, href, onNavigate }) => {
             const active = mobileActiveKey === id;
             return (
               <a
                 key={label}
                 aria-current={active ? "page" : undefined}
                 href={href}
+                onClick={(event) => navigate(event, onNavigate)}
                 role={href ? undefined : "link"}
                 aria-disabled={!href || undefined}
                 title={href ? undefined : `${label} is outside this preview`}

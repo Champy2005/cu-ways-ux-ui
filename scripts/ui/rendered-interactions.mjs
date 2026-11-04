@@ -67,7 +67,94 @@ export async function verifyRenderedInteractions(browser, serverUrl) {
     await expect(p.getByRole("button", { name: "Try again" })).toBeEnabled();
     await p.getByRole("button", { name: "Try again" }).click();
     await expect(
-      p.getByRole("button", { name: "View job" }).first(),
+      p.getByRole("link", { name: "View job" }).first(),
+    ).toBeVisible();
+    // A terminal job must never be reinterpreted as Accepted by list navigation.
+    await p.getByRole("combobox", { name: "Status" }).selectOption("Cancelled");
+    const jobLink = p.getByRole("link", { name: "View job" }).first();
+    const detailUrl = new URL(await jobLink.getAttribute("href"), p.url()).href;
+    // A real modifier click keeps the list open and performs a fresh mock read.
+    const [detailPage] = await Promise.all([
+      interactionContext.waitForEvent("page"),
+      jobLink.click({ modifiers: ["ControlOrMeta"] }),
+    ]);
+    try {
+      await expect(detailPage).toHaveURL(detailUrl);
+      await expect(
+        detailPage.locator(
+          '[data-ui="LifecycleBadge"][data-status="Cancelled"]',
+        ),
+      ).toBeVisible();
+      await expect(
+        detailPage.getByRole("button", { name: "Start job", exact: true }),
+      ).toHaveCount(0);
+    } finally {
+      await detailPage.close();
+    }
+    await expect(jobLink).toBeVisible();
+    await jobLink.click();
+    await expect(
+      p.locator('[data-ui="LifecycleBadge"][data-status="Cancelled"]'),
+    ).toBeVisible();
+    await expect(
+      p.getByRole("button", { name: "Start job", exact: true }),
+    ).toHaveCount(0);
+    await p.goto(`${serverUrl}/iframe.html?id=us025--c-01&args=timing:auto`);
+    await p
+      .getByRole("dialog")
+      .getByRole("button", { name: "Start job", exact: true })
+      .click();
+    await expect(p.getByRole("dialog")).toContainText("Submitting");
+    await p.clock.fastForward(801);
+    await expect(
+      p.locator('[data-ui="LifecycleBadge"][data-status="In Progress"]'),
+    ).toBeVisible();
+    await p.getByRole("link", { name: "Back to My Jobs" }).click();
+    const startedRow = p
+      .locator('[data-ui="JobSummary"]')
+      .filter({ has: p.getByText("Job #41", { exact: true }) });
+    await expect(
+      startedRow.getByText("In Progress", { exact: true }),
+    ).toBeVisible();
+    const [startedTab] = await Promise.all([
+      interactionContext.waitForEvent("page"),
+      startedRow
+        .getByRole("link", { name: "View job" })
+        .click({ modifiers: ["ControlOrMeta"] }),
+    ]);
+    try {
+      await expect(
+        startedTab.locator(
+          '[data-ui="LifecycleBadge"][data-status="In Progress"]',
+        ),
+      ).toBeVisible();
+      await expect(
+        startedTab.getByRole("button", { name: "Start job", exact: true }),
+      ).toHaveCount(0);
+    } finally {
+      await startedTab.close();
+    }
+    await p.goto(`${serverUrl}/iframe.html?id=us025--c-03&args=timing:auto`);
+    await p
+      .getByRole("dialog")
+      .getByRole("button", { name: "Close", exact: true })
+      .click();
+    await p
+      .locator('[data-ui="BottomNavigation"]')
+      .getByRole("link", { name: "Jobs", exact: true })
+      .click();
+    await expect(
+      p.getByRole("button", { name: "View progress", exact: true }),
+    ).toBeVisible();
+    await p.clock.fastForward(801);
+    await expect(
+      p.getByRole("heading", { name: "Job #41 started", exact: true }),
+    ).toBeVisible();
+    await expect(
+      p
+        .locator('[data-ui="JobSummary"]')
+        .filter({ has: p.getByText("Job #41", { exact: true }) })
+        .getByText("In Progress", { exact: true }),
     ).toBeVisible();
     // Objective fault injection: a canonical token reaches direct and transitive consumers.
     for (const id of ["us025--l-02", "us027--b-03", "us028--a-02"]) {
@@ -132,8 +219,46 @@ export async function verifyRenderedInteractions(browser, serverUrl) {
     await expect(
       p.locator('[data-ui="LifecycleBadge"][data-status="In Progress"]'),
     ).toBeVisible();
+    await p.setViewportSize({ width: 390, height: 568 });
+    await p.goto(
+      `${serverUrl}/iframe.html?id=us026--a-03&args=timing:hold&globals=theme:dark;material:opaque;textScale:200`,
+    );
+    await expect(
+      p.getByRole("heading", { name: "Saving proof", exact: true }),
+    ).toBeFocused();
+    await p.keyboard.press("Escape");
+    await p.clock.runFor(250);
+    const progress = p.getByRole("button", {
+      name: "View progress",
+      exact: true,
+    });
+    await expect(progress).toBeFocused();
+    await expect(progress).toBeInViewport({ ratio: 1 });
+    const returnScroll = await p.evaluate(() => scrollY);
+    expect(returnScroll).toBeGreaterThan(0);
+    await p.keyboard.press("Enter");
+    await p.clock.runFor(100);
+    const retainedUrl = p.getByRole("textbox", {
+      name: "Delivery link",
+      exact: true,
+    });
+    await expect(retainedUrl).toBeFocused();
+    await expect(retainedUrl).toHaveAttribute("readonly", "");
+    await expect(retainedUrl).toHaveValue(
+      "https://example.com/proof/campus-dining",
+    );
+    expect(
+      Math.abs((await p.evaluate(() => scrollY)) - returnScroll),
+    ).toBeLessThanOrEqual(1);
+    await p.keyboard.press("Escape");
+    await p.clock.runFor(250);
+    await expect(progress).toBeFocused();
+    await expect(progress).toBeInViewport({ ratio: 1 });
     return [
       "pagination navigation",
+      "native job links preserve terminal lifecycle in in-place and fresh-page reads",
+      "confirmed start survives list return and a native modified-click detail tab",
+      "product navigation retains a dispatched start until background completion",
       "stable hover geometry",
       "keyboard focus",
       "mobile menu escape and focus return",
@@ -144,6 +269,7 @@ export async function verifyRenderedInteractions(browser, serverUrl) {
       "rendered invariant detects injected pre-existing drift independently of baseline",
       "local spacing leaves protected sibling paint and other feature geometry unchanged",
       "enlarged dialog footer remains keyboard reachable and Escape preserves job status",
+      "short enlarged proof dismissal exposes focus and keyboard reopening preserves document scroll and draft",
     ];
   } finally {
     await interactionContext.close();

@@ -56,6 +56,7 @@
   color: var(--text-muted);
 }
 .reasons {
+  text-wrap: pretty;
   font-size: 1rem;
   margin: 0.75rem 0 1.25rem;
   padding-inline-start: 1.15em;
@@ -72,8 +73,12 @@
   align-items: center;
   gap: 0.6em;
   margin-block: 1rem;
-  margin-bottom: 1.5rem;
   color: var(--text-muted);
+}
+@media (max-width: 30rem) {
+  .progress {
+    margin-bottom: 1.5rem;
+  }
 }
 @media (max-width: 25rem) {
   .actions,

@@ -255,30 +255,35 @@ export function TaskPageView({
                         </ul>
                       </>
                     )}
-                    <div className={cancel ? s.cancelActions : s.actions}>
-                      {(cancel
-                        ? cancellation.eligible(state)
-                        : state.status === "In Progress") &&
-                        !unknown && (
-                          <Action
-                            role={cancel ? "destructive" : "primary"}
-                            disabled={!!state.pending}
-                            onClick={() =>
-                              send({ type: cancel ? "cancel-job" : "complete" })
-                            }
+                    {(!cancel ||
+                      (cancellation.eligible(state) && !unknown)) && (
+                      <div className={cancel ? s.cancelActions : s.actions}>
+                        {(cancel
+                          ? cancellation.eligible(state)
+                          : state.status === "In Progress") &&
+                          !unknown && (
+                            <Action
+                              role={cancel ? "destructive" : "primary"}
+                              disabled={!!state.pending}
+                              onClick={() =>
+                                send({
+                                  type: cancel ? "cancel-job" : "complete",
+                                })
+                              }
+                            >
+                              {cancel ? "Cancel job" : "Run completion check"}
+                            </Action>
+                          )}
+                        {!cancel && !state.proof && (
+                          <ActionLink
+                            href="?id=us026--a-01&viewMode=story"
+                            role="entry"
                           >
-                            {cancel ? "Cancel job" : "Run completion check"}
-                          </Action>
+                            View proof of delivery
+                          </ActionLink>
                         )}
-                      {!cancel && !state.proof && (
-                        <ActionLink
-                          href="?id=us026--a-01&viewMode=story"
-                          role="entry"
-                        >
-                          View proof of delivery
-                        </ActionLink>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </Card>
                 )}
                 <Card
@@ -313,6 +318,7 @@ export function TaskPageView({
             </>
           )}
           <ContentDialog
+            busy={!!state.pending}
             initialFocusId={!state.pending ? `task-${feature}-safe` : undefined}
             open={!!state.modal}
             title={

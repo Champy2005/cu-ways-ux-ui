@@ -65,10 +65,28 @@ export async function verifyScenario(
       await expect(doc.getByRole("dialog")).toBeVisible();
     if (id === "B01") {
       await expect(doc.getByRole("alert")).toHaveTextContent("HTTP");
-      await expect(
-        doc.getByRole("textbox", { name: "Delivery link" }),
-      ).toHaveFocus();
+      await waitFor(() => {
+        const popup = doc.getByRole("dialog");
+        const overflow = popup.scrollHeight > popup.clientHeight + 1;
+        expect(
+          overflow
+            ? doc.getByRole("heading", { name: "Add proof" })
+            : doc.getByRole("textbox", { name: "Delivery link" }),
+        ).toHaveFocus();
+      });
     }
+    if (id === "A02") {
+      const field = doc.getByRole("textbox", { name: "Delivery link" });
+      await waitFor(() => expect(field).toHaveFocus());
+      await expect((field as HTMLInputElement).selectionStart).toBe(0);
+      await expect(field.scrollLeft).toBe(0);
+    }
+    if (id === "A03")
+      await waitFor(() =>
+        expect(
+          doc.getByRole("heading", { name: "Saving proof" }),
+        ).toHaveFocus(),
+      );
     if (interactionTest && id === "A01") {
       await userEvent.click(canvas.getByRole("button", { name: "Add proof" }));
       await userEvent.type(
@@ -83,15 +101,48 @@ export async function verifyScenario(
       await waitFor(() =>
         expect(doc.queryByRole("dialog")).not.toBeInTheDocument(),
       );
+      const progress = canvas.getByRole("button", { name: "View progress" });
+      await waitFor(() => expect(progress).toHaveFocus());
+      const progressPanel = element.querySelector('[data-ui="ProofProgress"]')!;
+      const workspace = element.querySelector('[data-ui="ProofWorkspace"]')!;
+      expect(progressPanel.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+        workspace.getBoundingClientRect().top,
+      );
       await userEvent.click(
         canvas.getByRole("button", { name: "View progress" }),
       );
       await expect(doc.getByRole("dialog")).toHaveTextContent("Saving proof");
+      await waitFor(() =>
+        expect(
+          doc.getByRole("textbox", { name: "Delivery link" }),
+        ).toHaveFocus(),
+      );
       const { storyOperations } = await import("../fixtures/operationAdapter");
       storyOperations(`us026--a-01`).resolve();
       await expect(
         await canvas.findByRole("heading", { name: "Saved proof (1)" }),
       ).toBeVisible();
+    }
+    if (interactionTest && id === "B03") {
+      await userEvent.click(
+        canvas.getByRole("button", { name: "Check saved proof" }),
+      );
+      const { storyOperations } = await import("../fixtures/operationAdapter");
+      storyOperations("us026--b-03").resolve();
+      await expect(await doc.findByRole("dialog")).toHaveTextContent(
+        "Link not saved",
+      );
+      await waitFor(() =>
+        expect(
+          doc.getByText("Link not saved").closest('[tabindex="-1"]'),
+        ).toHaveFocus(),
+      );
+      await expect(
+        doc.getByRole("textbox", { name: "Delivery link" }),
+      ).toHaveValue("https://example.com/proof/campus-dining");
+      await expect(
+        doc.getByRole("button", { name: "Save proof" }),
+      ).toBeEnabled();
     }
   } else if (feature === "027" || feature === "028") {
     const state = feature === "027" ? complete.seed(id) : cancel.seed(id);
@@ -129,10 +180,14 @@ export async function verifyScenario(
           hidden: true,
         }),
       ).not.toBeInTheDocument();
-    if (feature === "028" && id === "B04")
+    if (feature === "028" && id === "B04") {
       await expect(
         canvas.getByRole("button", { name: "Refresh job" }),
       ).toBeEnabled();
+      await expect(
+        element.querySelector('[data-ui="LifecycleBadge"] svg'),
+      ).toHaveAttribute("data-icon", "warning");
+    }
     if (id === "A06") {
       await expect(
         canvas.getByRole("heading", {
@@ -283,6 +338,25 @@ export async function verifyScenario(
       await expect(
         canvas.queryByText("THB", { exact: false }),
       ).not.toBeInTheDocument();
+    if (["L06", "L09"].includes(id))
+      await expect(
+        canvas.queryByRole("combobox", { name: "Filter jobs by status" }),
+      ).not.toBeInTheDocument();
+    if (id === "D09") {
+      await expect(canvas.getByText("Target not specified")).toBeVisible();
+      await expect(canvas.getByText("No brief attached")).toBeVisible();
+      await expect(
+        canvas.queryByRole("link", { name: /Open brief/ }),
+      ).not.toBeInTheDocument();
+    }
+    if (interactionTest && id === "D10") {
+      await userEvent.click(canvas.getByRole("button", { name: "Sign in" }));
+      await userEvent.click(canvas.getByRole("button", { name: "Continue" }));
+      await expect(
+        canvas.getByRole("heading", { name: "Contract" }),
+      ).toBeVisible();
+      await expect(doc.queryByRole("dialog")).not.toBeInTheDocument();
+    }
     if (state.confirmationOpen)
       await expect(doc.getByRole("dialog")).toBeVisible();
     if (interactionTest && id === "C01") {
@@ -292,6 +366,93 @@ export async function verifyScenario(
       await expect(
         canvas.getByRole("button", { name: "View progress" }),
       ).toBeVisible();
+      const { storyOperations } = await import("../fixtures/operationAdapter");
+      storyOperations("us025--c-01").resolve();
+      await expect(
+        await canvas.findByText("In Progress", { exact: true }),
+      ).toBeVisible();
+      await userEvent.click(
+        canvas.getByRole("link", { name: "Back to My Jobs" }),
+      );
+      const row = canvas
+        .getByText("Job #41", { exact: true })
+        .closest("article")!;
+      await expect(
+        within(row).getByText("In Progress", { exact: true }),
+      ).toBeVisible();
+      await userEvent.click(
+        within(row).getByRole("link", { name: "View job" }),
+      );
+      await expect(
+        canvas.getByText("In Progress", { exact: true }),
+      ).toBeVisible();
+      await expect(
+        canvas.queryByRole("button", { name: "Start job" }),
+      ).not.toBeInTheDocument();
+    }
+    if (interactionTest && ["C03", "C04"].includes(id)) {
+      const { storyOperations } = await import("../fixtures/operationAdapter");
+      await userEvent.click(doc.getByRole("button", { name: "Close" }));
+      // Product navigation must retain the same controller as the back link.
+      await userEvent.click(canvas.getByRole("link", { name: "My Jobs" }));
+      const jobId = id === "C03" ? 41 : 60;
+      const row = canvas
+        .getByText(`Job #${jobId}`, { exact: true })
+        .closest("article")!;
+      await userEvent.click(
+        within(row).getByRole("link", { name: "View job" }),
+      );
+      if (id === "C03") {
+        const start = canvas.queryByRole("button", {
+          name: "Start job",
+        });
+        if (start) await expect(start).toBeDisabled();
+        await userEvent.click(
+          canvas.getByRole("button", { name: "View progress" }),
+        );
+        await expect(doc.getByRole("dialog")).toHaveTextContent("Starting job");
+      }
+      storyOperations(`us025--c-${id.slice(1)}`).resolve();
+      if (id === "C03")
+        await expect(
+          await canvas.findByText("In Progress", { exact: true }),
+        ).toBeVisible();
+      else {
+        await expect(
+          canvas.getByRole("heading", { level: 1 }),
+        ).toHaveTextContent("Job #60");
+        await expect(
+          canvas.getByText("Accepted", { exact: true }),
+        ).toBeVisible();
+        await expect(
+          await canvas.findByText("Job #41 started", { exact: true }),
+        ).toBeVisible();
+      }
+    }
+    if (interactionTest && id === "C05") {
+      const { storyOperations } = await import("../fixtures/operationAdapter");
+      storyOperations("us025--c-05").timeout();
+      await expect(
+        await canvas.findByText("Checking job status…", { exact: true }),
+      ).toBeVisible();
+      await expect(
+        canvas.queryByRole("button", { name: "Start job" }),
+      ).not.toBeInTheDocument();
+      await userEvent.click(
+        canvas.getByRole("link", { name: "Back to My Jobs" }),
+      );
+      const row = canvas
+        .getByText("Job #41", { exact: true })
+        .closest("article")!;
+      const link = within(row).getByRole("link", { name: "View job" });
+      await expect(link.getAttribute("href")).toContain("needsCheck%3Atrue");
+      await userEvent.click(link);
+      await expect(
+        canvas.getByText("In Progress", { exact: true }),
+      ).toBeVisible();
+      await expect(
+        canvas.queryByRole("button", { name: "Start job" }),
+      ).not.toBeInTheDocument();
     }
   }
 }
