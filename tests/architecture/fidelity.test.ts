@@ -2,11 +2,16 @@ import { test, expect } from "vitest";
 import { compareMeasured } from "../../scripts/ui/fidelity-contracts.mjs";
 import reference from "../../reference/original.json";
 import { requireMigrationAcceptance } from "../../scripts/ui/baseline.mjs";
+import { fidelityArtifacts, digest } from "../../scripts/ui/runtime.mjs";
 import {
   selectFidelityScenarios,
   fidelitySettings,
+  verifyFidelityEvidence,
 } from "../../scripts/ui/fidelity.mjs";
 test("fidelity settings preserve distinct stress captures and reject unsupported values", () => {
+  expect(fidelityArtifacts(true)).toBe(
+    path.join(fidelityArtifacts(), "diagnostic"),
+  );
   expect(fidelitySettings({ state: "dismissed" }).interactionState).toBe(
     "dismissed",
   );
@@ -122,6 +127,38 @@ test("original capture reuse rejects corruption, missing artifacts and traversal
     expect(restoreCapture(cache, key, output)).toBeNull();
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+test("fidelity review rejects replaced, missing and unsafe image evidence", () => {
+  const directory = fs.mkdtempSync(
+    path.join(os.tmpdir(), "cuways-fidelity-integrity-"),
+  );
+  try {
+    const bytes = Buffer.from("captured evidence"),
+      file = path.join(directory, "page.png");
+    fs.writeFileSync(file, bytes);
+    const state = {
+      image: "page.png",
+      imageSha256: digest(bytes),
+      crops: [],
+      cropHashes: {},
+    };
+    const report = { records: [{ states: [state] }] };
+    expect(verifyFidelityEvidence(report, directory)).toBe(true);
+    fs.writeFileSync(file, "changed");
+    expect(() => verifyFidelityEvidence(report, directory)).toThrow(
+      "missing or changed",
+    );
+    fs.unlinkSync(file);
+    expect(() => verifyFidelityEvidence(report, directory)).toThrow(
+      "missing or changed",
+    );
+    state.image = "../page.png";
+    expect(() => verifyFidelityEvidence(report, directory)).toThrow(
+      "metadata is invalid",
+    );
+  } finally {
+    fs.rmSync(directory, { recursive: true });
   }
 });
 test("provisional publication cannot override a rejected migration", () => {

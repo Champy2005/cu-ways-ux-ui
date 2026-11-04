@@ -22,6 +22,8 @@ The React migration remains **rejected / fidelity recovery in progress** on `fea
 
 Use the current ignored `.artifacts/ui/current/report.json` for static, interaction and cross-instance checks, and `.artifacts/ui/fidelity/report.json` for original-to-React comparison. Read source fingerprints and run status before reuse. Old images outside a report are not current evidence.
 
+Focused comparisons have a separate `.artifacts/ui/fidelity/diagnostic/` receipt and image namespace; they cannot overwrite complete-scope evidence. Page/crop checksums guard review against replaced files. CSS animation pause readiness and frame-zero state are verified before capture/cache, independently of production motion behavior.
+
 `pnpm ui check --full` runs recovery/keyboard checks first, then the complete canonical matrix and targeted stress states. Browser locators have bounded timeouts; capture waits for the intended DOM, fonts and stable layout rather than network-idle delays. A missing durable reference remains inconclusive even if these gates pass.
 
 The immutable original packet contains 47 required files (about 1 MB), with hashes and all 94 mappings in `reference/original.json`. Default comparisons cover 390/1440px and both themes. Diagnostic settings cover seven widths, text enlargement, short height, materials, long fixtures and media preferences. Original captures are reused only after environment/implementation/settings and image-checksum verification; React captures are always fresh.

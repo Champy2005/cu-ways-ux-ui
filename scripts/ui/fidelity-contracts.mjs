@@ -1,3 +1,30 @@
+/** Snapshot frame zero only after the browser has committed animation pauses. */
+export async function freezeCssAnimations() {
+  const animations = document
+    .getAnimations()
+    .filter((animation) => animation instanceof CSSAnimation);
+  for (const animation of animations) animation.pause();
+  // pause() queues a browser animation task. Freezing time before that task
+  // commits can retain an earlier compositor frame in an immutable cache.
+  await Promise.all(animations.map((animation) => animation.ready));
+  for (const animation of animations) animation.currentTime = 0;
+  const states = animations.map((animation) => ({
+    name: animation.animationName,
+    state: animation.playState,
+    pending: animation.pending,
+    currentTime: animation.currentTime,
+  }));
+  if (
+    states.some(
+      (animation) =>
+        animation.pending ||
+        animation.state !== "paused" ||
+        animation.currentTime !== 0,
+    )
+  )
+    throw Error("Frame-zero animation pause has not settled");
+  return states;
+}
 /** Original geometry is the comparator, never a React-only approved screenshot. */
 export function compareMeasured(original, candidate) {
   const differences = [];

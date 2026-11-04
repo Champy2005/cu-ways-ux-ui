@@ -31,8 +31,9 @@ Exit codes: **0** completed automated comparison; **1** defect/regression; **2**
 
 During fidelity recovery, use the original comparison path:
 
+The pinned original downloads automatically with existing `gh` authentication. A sibling legacy workspace is unnecessary. Use `--prepare-reference "../UX UI"` only when deliberately selecting that local source again.
+
 ```sh
-pnpm ui check --prepare-reference "../UX UI"
 pnpm ui check --export-reference .artifacts/ui/original/selected-source.zip
 pnpm ui check --restore-reference .artifacts/ui/original/selected-source.zip
 pnpm ui check --fidelity
@@ -45,9 +46,12 @@ pnpm ui check --fidelity --target "us026--a-03,us027--a-05,us028--a-05" --diagno
 pnpm ui check --fidelity --target us026--a-03 --diagnostic --state reopened --widths "390" --height 568 --text-scale 200
 pnpm ui check --fidelity --target us026--b-03 --diagnostic --state reconciled
 pnpm ui review --fidelity
+pnpm ui review --fidelity --diagnostic
 ```
 
 Preparation copies only the runtime dependency closure and selected assets into ignored artifacts. `reference/original.json` pins its hashes and all 94 source/story correspondences. The comparison configures both implementations in the pinned Linux browser, freezes simulated time, checks the requested appearance/media, and produces close/context/page pairs, geometry and strict pixel differences. Full-page capture precedes any scrolling crop; close crops disclose external-chrome treatment. Original captures are reused only when the source packet, browser, capture implementation and all settings match and every image checksum verifies. Candidates always render anew.
+
+Complete evidence stays in `.artifacts/ui/fidelity/`; focused `--diagnostic` evidence stays in its `diagnostic/` child. Each keeps one current input, progress, logs, images and report, so a focused investigation cannot replace the complete receipt. Page and crop hashes are verified before completion and review. Snapshot capture waits for CSS animation pause tasks, freezes frame zero and records settled animation state; it does not cancel production effects or change requested motion preferences.
 
 Normal fidelity checks union requested targets with actual source impact; shared or uncertain reach expands to all scenarios. `--diagnostic` deliberately selects a subset and cannot establish affected-scope completion. `--full` adds seven viewport widths. Optional `--text-scale` (100/150/200), `--height` (320–2160), `--material` (opaque/glass), `--fixture` (standard/long), `--reduced-motion` and `--reduced-transparency` produce distinct evidence keys. For US027/028/034, the descriptor's explicit human navigation correction replaces obsolete story shortcuts using the original runtime's own navigation primitives and the four original US025 enlarged-reading chrome rules. Each source capture declares this treatment; frozen original files remain unchanged and available. This is a named correction, never permission to redesign other source regions or approve differences. Transition correspondence and complete migration acceptance remain unfinished. Even a matching capture exits **2** until inspection; promotion stays blocked. Review rejects failed, unfinished or stale runs. No command rewrites a golden as a side effect.
 

@@ -10,6 +10,8 @@ import {
   acquire,
   changedFiles,
   sourceScope,
+  fidelityArtifacts,
+  digest,
 } from "./runtime.mjs";
 import {
   prepareOriginal,
@@ -18,13 +20,40 @@ import {
   restoreOriginal,
 } from "./original-reference.mjs";
 import { fidelityTimeout, runOwnedRenderer } from "./renderer.mjs";
+export function verifyFidelityEvidence(report, directory) {
+  for (const record of report.records)
+    for (const state of record.states) {
+      const images = { [state.image]: state.imageSha256, ...state.cropHashes };
+      if (
+        !Array.isArray(state.crops) ||
+        state.crops.some((file) => !state.cropHashes?.[file])
+      )
+        throw Error("Fidelity crop integrity metadata is incomplete");
+      for (const [name, checksum] of Object.entries(images)) {
+        if (
+          !/^[a-z0-9][a-z0-9.-]*\.png$/i.test(name) ||
+          typeof checksum !== "string" ||
+          !/^[a-f0-9]{64}$/.test(checksum)
+        )
+          throw Error("Fidelity image integrity metadata is invalid");
+        const file = path.join(directory, name);
+        if (!fs.existsSync(file) || digest(fs.readFileSync(file)) !== checksum)
+          throw Error(`Fidelity evidence image missing or changed: ${name}`);
+      }
+    }
+  return true;
+}
 export function fidelity(options) {
   const release = acquire();
   try {
     return runFidelity(options);
   } catch (error) {
-    if (!options.prepare)
-      writeJSON(path.join(artifacts, "fidelity/run.json"), {
+    if (
+      !options.prepare &&
+      !options.exportReference &&
+      !options.restoreReference
+    )
+      writeJSON(path.join(fidelityArtifacts(options.diagnostic), "run.json"), {
         status: "failed",
         sourceFingerprint: fingerprint(),
         reason: String(error),
@@ -129,31 +158,34 @@ function runFidelity(options) {
     sourceScope(changedFiles().files),
   );
   const before = fingerprint();
-  writeJSON(path.join(artifacts, "fidelity/run.json"), {
+  const output = fidelityArtifacts(options.diagnostic);
+  const log = (name) => path.join(output, name);
+  const runnerArgs = options.diagnostic ? ["--diagnostic"] : [];
+  writeJSON(path.join(output, "run.json"), {
     status: "running",
     sourceFingerprint: before,
     settings,
     selection,
   });
   const types = packageCommand("typescript", ["--noEmit"], {
-    log: path.join(artifacts, "fidelity-types.log"),
+    log: log("types.log"),
   });
   if (types.status !== 0)
-    throw Error("Fidelity preflight failed: .artifacts/ui/fidelity-types.log");
+    throw Error(`Fidelity preflight failed: ${log("types.log")}`);
   const models = run(
     process.execPath,
     ["scripts/ui/model-correspondence.mjs"],
     {
-      log: path.join(artifacts, "fidelity-models.log"),
+      log: log("models.log"),
       timeout: 30000,
     },
   );
   if (models.status !== 0)
     throw Error(
-      "Original model correspondence failed; inspect .artifacts/ui/fidelity-models.log",
+      `Original model correspondence failed; inspect ${log("models.log")}`,
     );
   const built = packageCommand("storybook", ["build", "--disable-telemetry"], {
-    log: path.join(artifacts, "fidelity-build.log"),
+    log: log("build.log"),
   });
   if (built.status !== 0) throw Error("Fidelity preview build failed");
   const input = {
@@ -171,16 +203,20 @@ function runFidelity(options) {
       : "playwright-1.64.1-linux-amd64-47b510dd9230bf0b",
     scope: "source fidelity; not human palette approval",
   };
-  writeJSON(path.join(artifacts, "fidelity-input.json"), input);
+  writeJSON(path.join(output, "input.json"), input);
   const timeout = fidelityTimeout(
     input.scenarios.length * input.widths.length * input.themes.length,
   );
   let result;
   if (options.native)
-    result = run(process.execPath, ["scripts/ui/fidelity-runner.mjs"], {
-      log: path.join(artifacts, "fidelity.log"),
-      timeout,
-    });
+    result = run(
+      process.execPath,
+      ["scripts/ui/fidelity-runner.mjs", ...runnerArgs],
+      {
+        log: log("capture.log"),
+        timeout,
+      },
+    );
   else {
     const build = run(
       "docker",
@@ -193,7 +229,7 @@ function runFidelity(options) {
         ".",
       ],
       {
-        log: path.join(artifacts, "fidelity-renderer-build.log"),
+        log: log("renderer-build.log"),
         timeout: 300000,
       },
     );
@@ -212,18 +248,20 @@ function runFidelity(options) {
         "cuways-uxui-renderer:1.64.1",
         "node",
         "scripts/ui/fidelity-runner.mjs",
+        ...runnerArgs,
       ],
-      { log: path.join(artifacts, "fidelity.log"), timeout },
+      { log: log("capture.log"), timeout },
     );
   }
   if (fingerprint() !== before)
     throw Error("Fidelity evidence stale: source changed");
   if (result.status !== 0)
-    throw Error("Fidelity capture failed; inspect .artifacts/ui/fidelity.log");
+    throw Error(`Fidelity capture failed; inspect ${log("capture.log")}`);
   const report = JSON.parse(
-    fs.readFileSync(path.join(artifacts, "fidelity/report.json"), "utf8"),
+    fs.readFileSync(path.join(output, "report.json"), "utf8"),
   );
-  writeJSON(path.join(artifacts, "fidelity/run.json"), {
+  verifyFidelityEvidence(report, output);
+  writeJSON(path.join(output, "run.json"), {
     status: "completed",
     sourceFingerprint: before,
     settings,

@@ -2,13 +2,12 @@ import fs from "node:fs";
 import path from "node:path";
 import { chromium } from "@playwright/test";
 import { serve } from "./server.mjs";
-import { compareMeasured } from "./fidelity-contracts.mjs";
+import { compareMeasured, freezeCssAnimations } from "./fidelity-contracts.mjs";
 import { captureKey, restoreCapture, storeCapture } from "./fidelity-cache.mjs";
+import { fidelityArtifacts, digest } from "./runtime.mjs";
 const base = path.resolve(".artifacts/ui");
-const input = JSON.parse(
-  fs.readFileSync(path.join(base, "fidelity-input.json")),
-);
-const output = path.join(base, "fidelity");
+const output = fidelityArtifacts(process.argv.includes("--diagnostic"));
+const input = JSON.parse(fs.readFileSync(path.join(output, "input.json")));
 fs.mkdirSync(output, { recursive: true });
 const original = await serve(
   path.join(base, "original/source"),
@@ -26,6 +25,7 @@ const cache = path.join(base, "fidelity-cache/original");
 const captureImplementation = captureKey([
   fs.readFileSync(new URL(import.meta.url), "utf8"),
   fs.readFileSync(new URL("./fidelity-cache.mjs", import.meta.url), "utf8"),
+  fs.readFileSync(new URL("./fidelity-contracts.mjs", import.meta.url), "utf8"),
 ]);
 let originalsReused = 0;
 const progress = (phase, last) =>
@@ -680,13 +680,21 @@ try {
                 })),
             );
           const image = `${prefix}-${kind}.png`;
-          await p.evaluate(() => {
-            for (const animation of document.getAnimations())
-              if (animation instanceof CSSAnimation) {
-                animation.pause();
-                animation.currentTime = 0;
-              }
-          });
+          const freezing = p.evaluate(freezeCssAnimations);
+          await p.clock.runFor(34);
+          let animationDeadline;
+          const frozenAnimations = await Promise.race([
+            freezing,
+            new Promise((_, reject) => {
+              animationDeadline = setTimeout(
+                () =>
+                  reject(
+                    Error("Animation pause did not settle within two seconds"),
+                  ),
+                2000,
+              );
+            }),
+          ]).finally(() => clearTimeout(animationDeadline));
           const captureLevel = measures.dialog
             ? "viewport with open dialog"
             : "full page";
@@ -731,11 +739,13 @@ try {
             kind,
             url,
             image,
+            imageSha256: digest(stable),
             measures,
             failures,
             stabilityFrames,
+            frozenAnimations,
             animationTreatment:
-              "CSS keyframes paused at frame zero for deterministic capture; requested media remains unchanged. Motion behavior needs separate interaction checks.",
+              "CSS animation pause tasks awaited before freezing frame zero; paused/pending/time state recorded. Requested media remains unchanged. Motion behavior needs separate interaction checks.",
             captureLevel,
             cropTreatment:
               "Close/context crops hide only external application chrome; full-page image retains it. Source and candidate boundaries are named separately and must be inspected.",
@@ -746,6 +756,12 @@ try {
                 ? "Immutable original runtime with declared human product-navigation correction, rendered using its own original nav primitives; original files unchanged"
                 : "unmodified runtime",
             crops: captureFiles,
+            cropHashes: Object.fromEntries(
+              captureFiles.map((file) => [
+                file,
+                digest(fs.readFileSync(path.join(output, file))),
+              ]),
+            ),
           };
           record.states.push(state);
           if (kind === "original")

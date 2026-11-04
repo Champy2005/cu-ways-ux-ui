@@ -4,6 +4,10 @@ import crypto from "node:crypto";
 import { spawnSync } from "node:child_process";
 export const root = process.cwd();
 export const artifacts = path.join(root, ".artifacts/ui");
+// One current complete receipt and one current diagnostic receipt. Focused
+// investigation must not replace the full-scope evidence or its image files.
+export const fidelityArtifacts = (diagnostic = false) =>
+  path.join(artifacts, "fidelity", diagnostic ? "diagnostic" : "");
 export let current = process.env.UI_RUN_DIR ?? path.join(artifacts, "current");
 export function ownedArtifact(file) {
   const resolved = path.resolve(file);

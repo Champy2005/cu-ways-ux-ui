@@ -3,7 +3,7 @@ import path from "node:path";
 import { context } from "./context.mjs";
 import { nativeCall, nativeConsumers } from "./native.mjs";
 import { check } from "./check.mjs";
-import { fidelity } from "./fidelity.mjs";
+import { fidelity, verifyFidelityEvidence } from "./fidelity.mjs";
 import { promote } from "./baseline.mjs";
 import {
   current,
@@ -11,6 +11,7 @@ import {
   fingerprint,
   packageCommand,
   targetMatcher,
+  fidelityArtifacts,
 } from "./runtime.mjs";
 
 const [command, ...args] = process.argv.slice(2);
@@ -92,7 +93,13 @@ try {
                 inconclusive: result.records.filter(
                   (r: { status: string }) => r.status === "inconclusive",
                 ).length,
-                report: ".artifacts/ui/fidelity/report.json",
+                report: path.relative(
+                  process.cwd(),
+                  path.join(
+                    fidelityArtifacts(args.includes("--diagnostic")),
+                    "report.json",
+                  ),
+                ),
                 acceptance: result.acceptance,
               },
           null,
@@ -118,31 +125,26 @@ try {
       });
     }
   } else if (command === "review" && args.includes("--fidelity")) {
-    const runState = readJSON(
-      path.join(process.cwd(), ".artifacts/ui/fidelity/run.json"),
-    );
+    const directory = fidelityArtifacts(args.includes("--diagnostic"));
+    const runState = readJSON(path.join(directory, "run.json"));
     if (runState.status !== "completed")
       throw Error(
-        "Latest fidelity attempt is incomplete or failed; inspect .artifacts/ui/fidelity/run.json",
+        `Latest fidelity attempt is incomplete or failed; inspect ${path.join(directory, "run.json")}`,
       );
-    const report = readJSON(
-      path.join(process.cwd(), ".artifacts/ui/fidelity/report.json"),
-    );
+    const report = readJSON(path.join(directory, "report.json"));
     if (report.sourceFingerprint !== fingerprint())
       throw Error(
         "Fidelity review is stale; rerun the matched original comparison.",
       );
+    verifyFidelityEvidence(report, directory);
     console.log(
       JSON.stringify(
         {
           reference: report.reference,
           environment: report.environment,
           records: report.records.length,
-          board: path.join(process.cwd(), ".artifacts/ui/fidelity/review.html"),
-          report: path.join(
-            process.cwd(),
-            ".artifacts/ui/fidelity/report.json",
-          ),
+          board: path.join(directory, "review.html"),
+          report: path.join(directory, "report.json"),
           acceptance: "unchanged; review cannot promote a reference",
         },
         null,
