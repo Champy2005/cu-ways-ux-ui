@@ -226,8 +226,7 @@ export function ReviewsView({
                       className={s.stars}
                       aria-label={`${row.rating} out of 5 stars`}
                     >
-                      {"★".repeat(row.rating)}
-                      {"☆".repeat(5 - row.rating)}
+                      {"★".repeat(row.rating) + "☆".repeat(5 - row.rating)}
                     </p>
                     {row.comment ? (
                       <LongTextDisclosure
@@ -249,7 +248,9 @@ export function ReviewsView({
                     ) : (
                       <p className={s.noComment}>No written feedback.</p>
                     )}
-                    <footer className={s.reviewFooter}>Job #{row.jobId}</footer>
+                    <footer
+                      className={s.reviewFooter}
+                    >{`Job #${row.jobId}`}</footer>
                   </article>
                 ))
               ) : (

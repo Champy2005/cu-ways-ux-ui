@@ -25,8 +25,18 @@ export function restoreCapture(directory, key, output) {
       if (hash(fs.readFileSync(path.join(folder, file.name))) !== file.sha256)
         return null;
     }
-    if (!manifest.files.some((file) => file.name === manifest.state?.image))
-      return null;
+    const state = manifest.state;
+    if (state?.cropRegions && !state.scene) return null;
+    const promised = [
+      [state?.image, state?.imageSha256],
+      ...(state?.crops ?? []).map((name) => [name, state.cropHashes?.[name]]),
+      ...(state?.scene ? [[state.scene.image, state.scene.imageSha256]] : []),
+    ];
+    for (const [name, checksum] of promised) {
+      const file = manifest.files.find((file) => file.name === name);
+      if (!safeName(name) || !file || (checksum && file.sha256 !== checksum))
+        return null;
+    }
     for (const file of manifest.files)
       fs.copyFileSync(
         path.join(folder, file.name),

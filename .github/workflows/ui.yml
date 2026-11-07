@@ -47,6 +47,43 @@ jobs:
             .artifacts/ui/current/playwright/
             .artifacts/ui/failed/
           retention-days: 3
+  fidelity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 24.13.0
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Original-to-React correspondence (independent of React-baseline gate)
+        run: pnpm ui check --fidelity --full --widths "390,1440"
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: current-original-fidelity-report
+          path: |
+            .artifacts/ui/fidelity/report.json
+            .artifacts/ui/fidelity/run.json
+            .artifacts/ui/fidelity/progress.json
+            .artifacts/ui/fidelity/*.log
+            .artifacts/ui/model-correspondence.json
+          retention-days: 3
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: failure()
+        with:
+          name: original-fidelity-evidence
+          path: |
+            .artifacts/ui/fidelity/*.png
+            .artifacts/ui/fidelity/review.html
+          retention-days: 3
   secrets:
     runs-on: ubuntu-latest
     steps:

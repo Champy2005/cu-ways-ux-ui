@@ -1,5 +1,5 @@
 import { WorkbenchFrame as AppFrame } from "../shared/WorkbenchFrame";
-import { useReducer, useState } from "react";
+import { useLayoutEffect, useReducer, useRef, useState } from "react";
 import {
   Action,
   ContentDialog,
@@ -15,6 +15,7 @@ import {
   Card,
   OperationProgress,
   ProofRecord,
+  StatusHeadingFrame,
   UnavailableState,
 } from "../../design-system/compositions/layout";
 import { createDemoState, reduceDemoState, canSubmitProof } from "./model.mjs";
@@ -48,9 +49,29 @@ export function ProofDelivery({
   const [focusReason, setFocusReason] = useState<
     "initial" | "draft" | "result"
   >("initial");
+  const [backgroundResult, setBackgroundResult] = useState<
+    "success" | "warning" | null
+  >(null);
+  const previousView = useRef(state.view);
+  useLayoutEffect(() => {
+    if (previousView.current === state.view) return;
+    previousView.current = state.view;
+    if (open) return;
+    document
+      .querySelector<HTMLElement>(
+        state.view === "jobs" ? "#page-heading" : '[data-ui="Page"]',
+      )
+      ?.focus();
+  }, [state.view, open]);
   const resolve = () => {
     if (state.pending === "save") {
-      send({ type: "resolve-save", outcome });
+      const event = { type: "resolve-save", outcome };
+      const next = reduceDemoState(state, event);
+      send(event);
+      if (state.view === "jobs")
+        setBackgroundResult(
+          ["A04", "A06"].includes(next.scenarioId) ? "success" : "warning",
+        );
       setOpen(false);
     } else if (state.pending === "check") {
       const event = { type: "resolve-check", outcome: "available" };
@@ -131,7 +152,8 @@ export function ProofDelivery({
   return (
     <AppFrame
       title={state.view === "jobs" ? "My Jobs" : "Proof of delivery"}
-      showHeading={!!state.job}
+      showHeading={state.view === "jobs" || !!state.job}
+      headingLayout={state.view === "jobs" ? "proof-list" : undefined}
       headingStatus={state.view === "job" ? state.job?.status : undefined}
       headingDescription={
         state.view !== "jobs" && state.job ? (
@@ -142,56 +164,90 @@ export function ProofDelivery({
         ) : undefined
       }
       feature="026"
+      onJobsNavigate={() => {
+        send({ type: "go-to-jobs" });
+        if (state.view === "jobs")
+          document.querySelector<HTMLElement>("#page-heading")?.focus();
+      }}
       backLabel={state.view === "jobs" ? "Story library" : "Back to My Jobs"}
       onBack={() =>
-        !state.job
+        state.view === "jobs"
           ? (window.location.href = "?id=us025--l-02&viewMode=story")
-          : send({ type: state.view === "jobs" ? "open-job" : "go-to-jobs" })
+          : send({ type: "go-to-jobs" })
       }
     >
-      {!state.job ? (
+      {state.job &&
+        state.pending &&
+        !open &&
+        (state.view === "jobs" || state.listStatus !== "loading") && (
+          <div className={s.progress} data-ui="ProofProgress">
+            <OperationProgress
+              title={
+                state.pending === "save"
+                  ? "Saving proof"
+                  : "Loading delivery evidence"
+              }
+              onReopen={
+                state.pending === "save"
+                  ? () => {
+                      if (state.view === "jobs") send({ type: "open-job" });
+                      setFocusReason("draft");
+                      setOpen(true);
+                    }
+                  : undefined
+              }
+              onStop={
+                state.pending !== "save"
+                  ? () => send({ type: "timeout" })
+                  : undefined
+              }
+            />
+          </div>
+        )}
+      {state.job &&
+        state.view === "jobs" &&
+        !state.pending &&
+        backgroundResult && (
+          <Feedback
+            title={
+              backgroundResult === "success"
+                ? "Proof saved"
+                : "Check the proof result"
+            }
+            tone={backgroundResult}
+          />
+        )}
+      {state.view === "jobs" ? (
+        <Card boundary="JobEntry">
+          {state.job ? (
+            <>
+              <StatusHeadingFrame
+                as="header"
+                badge={<LifecycleBadge status={state.job.status} />}
+              >
+                <span className={s.jobReference}>Job #{state.job.id}</span>
+              </StatusHeadingFrame>
+              <h2 className={s.jobTitle}>{state.job.title}</h2>
+              <div className={s.jobsActions}>
+                <Action
+                  role="entry"
+                  size="proof-job-entry"
+                  onClick={() => send({ type: "open-job" })}
+                >
+                  Open delivery evidence
+                </Action>
+              </div>
+            </>
+          ) : (
+            <h2 className={s.jobTitle}>No job selected</h2>
+          )}
+        </Card>
+      ) : !state.job ? (
         <UnavailableState title="Job unavailable" variant="proof">
           Your access has changed.
         </UnavailableState>
-      ) : state.view === "jobs" ? (
-        <Card boundary="JobEntry">
-          <div className={s.jobsHeading}>
-            <span className={s.jobReference}>Job #{state.job.id}</span>
-            <LifecycleBadge status={state.job.status} />
-          </div>
-          <h2 className={s.jobTitle}>{state.job.title}</h2>
-          <div className={s.jobsActions}>
-            <Action role="entry" onClick={() => send({ type: "open-job" })}>
-              Open delivery evidence
-            </Action>
-          </div>
-        </Card>
       ) : (
         <>
-          {state.pending && !open && state.listStatus !== "loading" && (
-            <div className={s.progress} data-ui="ProofProgress">
-              <OperationProgress
-                title={
-                  state.pending === "save"
-                    ? "Saving proof"
-                    : "Loading delivery evidence"
-                }
-                onReopen={
-                  state.pending === "save"
-                    ? () => {
-                        setFocusReason("draft");
-                        setOpen(true);
-                      }
-                    : undefined
-                }
-                onStop={
-                  state.pending !== "save"
-                    ? () => send({ type: "timeout" })
-                    : undefined
-                }
-              />
-            </div>
-          )}
           {notice &&
             !open &&
             state.listStatus !== "failed" &&

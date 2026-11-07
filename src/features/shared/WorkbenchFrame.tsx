@@ -38,11 +38,11 @@ type Props = Omit<
   | "mobileNavigation"
   | "brandHref"
   | "workspaceLinks"
-> & { feature: string };
-export function WorkbenchFrame({ feature, ...props }: Props) {
+> & { feature: string; onJobsNavigate?: () => void };
+export function WorkbenchFrame({ feature, onJobsNavigate, ...props }: Props) {
   const route = (item: NavigationItem) =>
-    feature === "025" && item.id === "jobs"
-      ? { ...item, onNavigate: props.onBack }
+    item.id === "jobs" && (onJobsNavigate || feature === "025")
+      ? { ...item, onNavigate: onJobsNavigate ?? props.onBack }
       : item;
   return (
     <AppFrame

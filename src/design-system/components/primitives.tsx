@@ -151,7 +151,13 @@ type ActionProps = Pick<
   children: ReactNode;
   role?: ActionRole;
   busy?: boolean;
-  size?: "default" | "list-entry" | "proof-entry" | "operation" | "proof-save";
+  size?:
+    | "default"
+    | "list-entry"
+    | "proof-entry"
+    | "operation"
+    | "proof-save"
+    | "proof-job-entry";
 };
 /** Semantic action. Consumers own placement; this component owns paint and targets. */
 export function Action({
@@ -629,9 +635,7 @@ export function Pagination({
           <Icon name="back" />
         </button>
       )}
-      <span>
-        Page {page} of {pages}
-      </span>
+      <span>{`Page ${page} of ${pages}`}</span>
       {page < pages && (
         <button
           className={s.pager}
@@ -698,7 +702,7 @@ export function ProofLink({
       aria-label={`${parsed.href} (opens in a new tab)`}
     >
       <span className={s.proofHost}>
-        {parsed.protocol}//{parsed.host}
+        {`${parsed.protocol}//${parsed.host}`}
       </span>
       <Icon name="external" />
       {tail && (

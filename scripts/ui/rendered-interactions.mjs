@@ -254,6 +254,168 @@ export async function verifyRenderedInteractions(browser, serverUrl) {
     await p.clock.runFor(250);
     await expect(progress).toBeFocused();
     await expect(progress).toBeInViewport({ ratio: 1 });
+    await p.goto(
+      `${serverUrl}/iframe.html?id=us026--a-01&globals=theme:dark;textScale:200`,
+    );
+    const proofEmpty = p.locator(
+      '[data-ui="EmptyState"][data-variant="proof"]',
+    );
+    expect(
+      await proofEmpty
+        .locator("svg")
+        .evaluate((e) => getComputedStyle(e).color),
+    ).toBe(
+      await proofEmpty.locator("p").evaluate((e) => getComputedStyle(e).color),
+    );
+    await p.getByRole("link", { name: "Back to My Jobs", exact: true }).focus();
+    await p.keyboard.press("Enter");
+    await expect(
+      p.getByRole("heading", { name: "My Jobs", exact: true }),
+    ).toBeFocused();
+    const entry = p.locator('[data-ui="JobEntry"]');
+    const statusRow = entry.locator('[data-ui="StatusHeading"]');
+    await expect(statusRow).toHaveCount(1);
+    const entryBadge = statusRow.locator('[data-ui="LifecycleBadge"]');
+    const reference = statusRow.getByText("Job #41", { exact: true });
+    const badgeBox = await entryBadge.boundingBox();
+    const referenceBox = await reference.boundingBox();
+    expect(badgeBox.y + badgeBox.height).toBeLessThanOrEqual(referenceBox.y);
+    expect(
+      await entryBadge.evaluate((e) => {
+        const style = getComputedStyle(e);
+        return Math.abs(
+          e.clientHeight -
+            parseFloat(style.lineHeight) -
+            parseFloat(style.paddingTop) -
+            parseFloat(style.paddingBottom),
+        );
+      }),
+    ).toBeLessThanOrEqual(1);
+    await p
+      .getByRole("button", { name: "Open delivery evidence", exact: true })
+      .focus();
+    await p.keyboard.press("Enter");
+    await expect(p.locator('[data-ui="Page"]')).toBeFocused();
+    expect(
+      await p
+        .locator('[data-ui="Page"]')
+        .evaluate((e) => getComputedStyle(e).outlineStyle),
+    ).toBe("auto");
+    await expect(p.locator('[data-ui="ProofWorkspace"]')).toBeVisible();
+    await p.getByRole("link", { name: "Back to My Jobs", exact: true }).click();
+    await p.getByRole("link", { name: "Story library", exact: true }).click();
+    await expect(p).toHaveURL(/id=us025--l-02/);
+    await p.goto(`${serverUrl}/iframe.html?id=us026--a-03&args=timing:hold`);
+    await expect(p.getByRole("dialog")).toBeVisible();
+    await p.keyboard.press("Escape");
+    await p.getByRole("link", { name: "Back to My Jobs", exact: true }).click();
+    await expect(
+      p.getByRole("heading", { name: "My Jobs", exact: true }),
+    ).toBeFocused();
+    await expect(p.getByText("Saving proof", { exact: true })).toBeVisible();
+    await p.getByRole("button", { name: "View progress", exact: true }).focus();
+    await p.keyboard.press("Enter");
+    await expect(
+      p.getByRole("textbox", { name: "Delivery link", exact: true }),
+    ).toBeFocused();
+    await expect(
+      p.getByRole("button", { name: "Saving proof…", exact: true }),
+    ).toBeDisabled();
+    for (const width of [390, 1440]) {
+      await p.setViewportSize({ width, height: 844 });
+      await p.goto(
+        `${serverUrl}/iframe.html?id=us026--a-03&args=timing:hold&globals=theme:dark`,
+      );
+      await expect(p.getByRole("dialog")).toBeVisible();
+      await p.keyboard.press("Escape");
+      await p.clock.runFor(250);
+      const jobs = p
+        .getByRole("link", { name: /^(My Jobs|Jobs)$/ })
+        .filter({ visible: true })
+        .first();
+      await jobs.focus();
+      await p.keyboard.press("Enter");
+      await expect(p).toHaveURL(/id=us026--a-03/);
+      await expect(p.locator("html")).toHaveAttribute("data-cu-theme", "dark");
+      await expect(
+        p.getByRole("heading", { name: "My Jobs", exact: true }),
+      ).toBeFocused();
+      await jobs.focus();
+      await p.keyboard.press("Enter");
+      await expect(
+        p.getByRole("heading", { name: "My Jobs", exact: true }),
+      ).toBeFocused();
+      await p
+        .getByRole("button", { name: "View progress", exact: true })
+        .click();
+      await expect(
+        p.getByRole("textbox", { name: "Delivery link", exact: true }),
+      ).toHaveAttribute("readonly", "");
+    }
+    for (const width of [390, 1440]) {
+      await p.setViewportSize({ width, height: 844 });
+      for (const destination of ["back", "product"]) {
+        await p.goto(
+          `${serverUrl}/iframe.html?id=us026--c-03&globals=theme:dark`,
+        );
+        await expect(
+          p.getByRole("heading", { name: "Job unavailable", exact: true }),
+        ).toBeVisible();
+        const link =
+          destination === "back"
+            ? p.getByRole("link", { name: "Back to My Jobs", exact: true })
+            : p
+                .getByRole("link", { name: /^(My Jobs|Jobs)$/ })
+                .filter({ visible: true })
+                .first();
+        await link.focus();
+        await p.keyboard.press("Enter");
+        await expect(p).toHaveURL(/id=us026--c-03/);
+        await expect(
+          p.getByRole("heading", { name: "My Jobs", exact: true }),
+        ).toBeFocused();
+        await expect(
+          p.getByRole("heading", { name: "No job selected", exact: true }),
+        ).toBeVisible();
+        await expect(
+          p.getByRole("heading", { name: "Job unavailable", exact: true }),
+        ).toHaveCount(0);
+        await expect(
+          p.getByRole("button", {
+            name: "Open delivery evidence",
+            exact: true,
+          }),
+        ).toHaveCount(0);
+        await expect(
+          p.getByRole("textbox", { name: "Delivery link", exact: true }),
+        ).toHaveCount(0);
+        await expect(p.locator('[data-ui="Page"]')).not.toContainText(
+          "Campus Dining",
+        );
+        await expect(p.locator('[data-ui="Page"]')).not.toContainText(
+          "example.com",
+        );
+        await p
+          .getByRole("link", { name: "Story library", exact: true })
+          .click();
+        await expect(p).toHaveURL(/id=us025--l-02/);
+      }
+    }
+    await p.goto(`${serverUrl}/iframe.html?id=us026--a-03&args=timing:auto`);
+    await expect(p.getByRole("dialog")).toBeVisible();
+    await p.keyboard.press("Escape");
+    await p.getByRole("link", { name: "Back to My Jobs", exact: true }).click();
+    await p.clock.runFor(1000);
+    await expect(
+      p.getByRole("heading", { name: "Proof saved", exact: true }),
+    ).toBeVisible();
+    await expect(
+      p.getByRole("button", { name: "View progress", exact: true }),
+    ).toHaveCount(0);
+    await p
+      .getByRole("button", { name: "Open delivery evidence", exact: true })
+      .click();
+    await expect(p.locator('[data-ui="ProofRecord"]')).toHaveCount(1);
     return [
       "pagination navigation",
       "native job links preserve terminal lifecycle in in-place and fresh-page reads",
@@ -270,6 +432,10 @@ export async function verifyRenderedInteractions(browser, serverUrl) {
       "local spacing leaves protected sibling paint and other feature geometry unchanged",
       "enlarged dialog footer remains keyboard reachable and Escape preserves job status",
       "short enlarged proof dismissal exposes focus and keyboard reopening preserves document scroll and draft",
+      "proof job entry uses canonical enlarged status placement, heading/content focus and a real library exit",
+      "pending proof remains reachable from job entry and its background result survives navigation",
+      "desktop/mobile product Jobs preserves proof operation, appearance and repeated-selection focus",
+      "revoked proof access returns through back/product Jobs without restoring private details",
     ];
   } finally {
     await interactionContext.close();

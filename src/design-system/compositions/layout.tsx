@@ -312,7 +312,7 @@ export function AppFrame({
   workspaceLinks?: { label: string; href: string }[];
   busy?: boolean;
   headingAction?: ReactNode;
-  headingLayout?: "list";
+  headingLayout?: "list" | "proof-list";
   action?: ReactNode;
   showBack?: boolean;
   actionHidden?: boolean;
@@ -660,6 +660,7 @@ export function AppFrame({
       </header>
       <main
         className={s.main}
+        tabIndex={-1}
         data-ui="Page"
         data-kind={kind}
         aria-busy={busy || undefined}

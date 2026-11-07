@@ -262,7 +262,8 @@
       "rules": [
         "Sticky header with 10px lower corners, original logo/role artwork and theme control. Desktop bounded selection; mobile icon-based selection without filled tile. Floating Start tray above a separate navigation dock, 12px upper corners, measured bottom clearance and short-height fallback. No content-modal blur on navigation menus. Global shell changes require full checks.",
         "Proof chrome retains desktop navigation at wide enlarged reading, matching its source specialization; other feature chrome uses the original enlarged compact mode. Flow proof content ends with 1.25rem padding.",
-        "Keep page focus clear of actual fixed/sticky chrome with the source 8px guard. Proof document scroll padding is 6rem above and measured dock clearance plus 1rem below. Proof main disables retained-sibling scroll anchoring to preserve source document position across progress dismissal/reopening."
+        "Keep page focus clear of actual fixed/sticky chrome with the source 8px guard. Proof document scroll padding is 6rem above and measured dock clearance plus 1rem below. Proof main disables retained-sibling scroll anchoring to preserve source document position across progress dismissal/reopening.",
+        "The embedded application frame owns an isolated paint/stacking boundary corresponding to the standalone document root. No transforms, opacity tweaks or font/color substitutions are used for raster parity. Proof flow navigation keeps its source top border, and a programmatically focused proof main preserves browser-default focus rather than action-ring paint."
       ],
       "checks": ["scripts/ui/rendered.spec.mjs"],
       "original": {
@@ -354,7 +355,8 @@
       "source": "src/design-system/components/primitives.tsx",
       "style": "src/design-system/components/system.module.css",
       "rules": [
-        "Align the icon with the heading; compact content without filler or hollow minimum height."
+        "Align the icon with the heading; compact content without filler or hollow minimum height.",
+        "Proof empty-state icon uses text-muted ink and surface-field background, matching its supporting copy; neutral lifecycle ink is a different semantic role."
       ],
       "checks": ["scripts/ui/rendered.spec.mjs"]
     },
@@ -632,12 +634,16 @@
       "aliases": [
         "status row",
         "review verification placement",
-        "identity badge layout"
+        "identity badge layout",
+        "Open delivery evidence",
+        "Proof jobs entry"
       ],
       "source": "src/design-system/compositions/layout.tsx",
       "style": "src/design-system/compositions/layout.module.css",
       "rules": [
-        "One owner for entity, proof identity, and review author/status placement. On narrow enlarged reading, badge occupies the first row and full-width copy follows. Review variant owns author/date stacking."
+        "One owner for entity, proof identity, and review author/status placement. On narrow enlarged reading, badge occupies the first row and full-width copy follows. Review variant owns author/date stacking.",
+        "Proof job-entry navigation uses the same canonical status row, including enlarged-text stacking. JobEntry preserves the original 36rem inline-size beneath its 42rem cap and 6rem minimum height; proof-list headings retain source spacing, 18ch bounds and visible keyboard focus. Revoked access still returns to My Jobs with No job selected, without resurrecting private content. Returning to proof focuses content; library exit must not reopen proof.",
+        "Pending proof progress remains above the job entry and can reopen the retained dialog. A completed background save exposes its result in the jobs context without discarding saved rows."
       ],
       "checks": ["scripts/ui/rendered.spec.mjs"]
     }
@@ -664,7 +670,12 @@
       "transitions": ".artifacts/ui/fidelity-audit/current-transition-review/report.json",
       "models": ".artifacts/ui/model-correspondence.json",
       "proofRecoveryReview": ".artifacts/ui/fidelity-audit/proof-recovery-current/summary.json",
-      "status": "Inspect source fingerprints; a captured or inspected subset does not establish migration acceptance."
+      "status": "Inspect source fingerprints; a captured or inspected subset does not establish migration acceptance.",
+      "proofJobEntryReview": ".artifacts/ui/fidelity-audit/proof-job-entry-current/summary.json",
+      "pendingProofReview": ".artifacts/ui/fidelity-audit/pending-nav-review/final-review-summary.json",
+      "navRasterReview": ".artifacts/ui/fidelity-audit/nav-raster-cause/summary.json",
+      "proofProductNavigationReview": ".artifacts/ui/fidelity-audit/pending-nav-review/final-product-jobs-summary.json",
+      "regionalAdjudication": ".artifacts/ui/fidelity-audit/recovery-scope-current/raster-adjudication/summary.json"
     }
   }
 }

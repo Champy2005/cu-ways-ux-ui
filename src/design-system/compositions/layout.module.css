@@ -1,4 +1,7 @@
 .frame {
+  /* A standalone product document owns its paint boundary. Preserve that
+     boundary when embedding the frame inside a workbench host. */
+  isolation: isolate;
   font-size: 0.9375rem;
   min-height: 100dvh;
   background: var(--surface-canvas);
@@ -29,6 +32,13 @@
      not anchor-scroll the document when its progress panel disappears. */
   overflow-anchor: none;
   padding-block-end: calc(var(--dock-height, 0px) + 2rem);
+}
+.main[data-kind="proof"]:focus-visible {
+  /* The original programmatic page destination keeps browser-default focus;
+     action/field focus continues to use the shared themed ring. */
+  color-scheme: light dark;
+  outline: revert;
+  outline-offset: revert;
 }
 @media (min-width: 64rem) {
   .main[data-kind="proof"] {
@@ -264,6 +274,13 @@
   gap: 0.625rem;
   margin-bottom: 1.5rem;
 }
+.pageHeading[data-layout="proof-list"] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-content: stretch;
+  gap: 0.625rem;
+  margin: 0.5rem 0 1.5rem;
+}
 .frame[data-kind="proof"] .dock {
   border-top: 1px solid var(--border);
 }
@@ -294,6 +311,12 @@
 }
 .pageHeading h1:focus {
   outline: none;
+}
+.pageHeading[data-layout="proof-list"] h1 {
+  max-inline-size: 18ch;
+}
+.pageHeading[data-layout="proof-list"] h1:focus-visible {
+  outline: 3px solid var(--focus);
 }
 .card {
   background: var(--surface-card);
@@ -369,6 +392,8 @@
 .card[data-ui="JobEntry"] {
   display: grid;
   gap: 0.875rem;
+  inline-size: min(100%, 36rem);
+  min-block-size: 6rem;
   max-width: 42rem;
   padding: 1.25rem;
 }
@@ -974,6 +999,9 @@
   background: var(--surface-bottom);
   box-shadow: var(--depth-bottom);
   border-radius: 12px 12px 0 0;
+}
+.frame[data-kind="proof"][data-chrome-layout="flow"] .bottom {
+  border-top: 1px solid var(--border);
 }
 .frame[data-chrome-layout="flow"] .dock[data-material="glass"] .bottom {
   background: var(--chrome-glass-bottom);

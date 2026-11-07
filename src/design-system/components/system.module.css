@@ -58,7 +58,8 @@
   padding: 0.55em 0.8em;
 }
 @media (max-width: 30rem) {
-  .action[data-size="proof-save"] {
+  .action[data-size="proof-save"],
+  .action[data-size="proof-job-entry"] {
     padding-inline: min(0.875em, 16px);
   }
   .action[data-size="proof-entry"] {
@@ -533,6 +534,8 @@ svg[data-spinner] {
 .empty[data-variant="proof"] .emptyIcon {
   width: 2rem;
   height: 2rem;
+  color: var(--text-muted);
+  background: var(--surface-field);
 }
 .empty[data-variant="proof"] .emptyIcon svg {
   width: 1.1rem;
@@ -976,6 +979,7 @@ svg[data-spinner] {
   }
 }
 .disclosureText {
+  white-space: pre-wrap;
   overflow-wrap: break-word;
   font-size: 0.95rem;
   line-height: 1.65;
